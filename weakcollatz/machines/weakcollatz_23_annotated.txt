@@ -1,0 +1,148 @@
+; ============================================================================
+; A 23-state, 2-symbol Turing machine that HALTS IFF THE COLLATZ MAP HAS A
+; CYCLE OTHER THAN 1 -> 4 -> 2 -> 1 (the weak Collatz conjecture is false).
+; Collatz map: C(x) = x/2 for even x, 3x+1 for odd x.
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/WeakCollatz/M23.lean, theorem TM.WeakCollatz.M23.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 25-state design of build.py / weakcollatz.txt with
+;   states merged. States are merged only when their defined transitions
+;   agree, so each state below plays one or more ROLES of the design (its name
+;   joins them). Each transition line is tagged [role] with the role(s) that
+;   use it. A '-' line is never used.
+;
+; ALGORITHM: rounds n = 1, 2, 3, ...: x := n, then x := C(x) until x >= n or
+;   x = 1; HALT iff x = n. A nontrivial cycle with largest element M makes
+;   round M halt; a round can only run forever if its orbit stays in [2, n-1],
+;   i.e. falls into a nontrivial cycle whose round already halted.
+;
+; TAPE: one block of n+2 cells (0 .. n+1), all 1 except the HOLE H (a single
+;   0) at cell x, 1 <= x <= n.  Cells 0 and n+1 stay 1 between steps.
+;
+; STEP (head on H):
+;   parity  run left to cell 0, walk right to H counting parity.
+;   even    a second hole G walks from x-1 to the left end, 2 cells per round;
+;           H moves left 1 cell per round: H ends at x/2.  x/2 = 1: next round.
+;   odd     G := x, H := x+1; G walks to the left end 1 cell per round, H
+;           moves right 2 cells per round: H ends at 3x+1.  H runs off the
+;           block (3x+1 > n): next round.  3x+1 = n: HALT.
+;   next    the block grows by one cell; H := the new last value cell n+1.
+;   seed    write the tape of an aborted round 0.
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed   seed: write cell 0, then continue as after an odd step (hf)
+; sp     even: H moves to x-1; G starts (virtually) at x-1
+start_sp
+    0 1 R hf                   ; [seed]
+    1 0 L gm1                  ; [sp]
+
+; ---------- STEP START AND PARITY ---------------------------------------
+
+; s0     step start: run left to H, step over it
+s0
+    0 0 L gl                   ; [s0]
+    1 1 L s0                   ; [s0]
+; gl     run left to the left end of the block, then count parity (p0)
+gl
+    0 0 R p0                   ; [gl]
+    1 1 L gl                   ; [gl]
+; p0     parity walk, even so far; 0: H reached, x even (spawn the even loop)
+p0
+    0 1 L start_sp             ; [p0]
+    1 1 R p1                   ; [p0]
+; p1     parity walk, odd so far; 0: H reached, x odd (spawn the odd loop)
+p1
+    0 0 R os_hx2               ; [p1]
+    1 1 R p0                   ; [p1]
+
+; ---------- x EVEN: H := x/2 --------------------------------------------
+
+; gm1    even loop: G moves left 2: step over the first cell
+gm1
+    -
+    1 1 L gm2                  ; [gm1]
+; gm2    even loop: G lands 2 cells left; 0: G ran off the left end (c0)
+gm2
+    0 0 R c0                   ; [gm2]
+    1 0 R hr                   ; [gm2]
+; hr     even loop: run right to H, fill it
+hr
+    0 1 L hm                   ; [hr]
+    1 1 R hr                   ; [hr]
+; hm     even loop: H moves left 1 cell
+hm
+    -
+    1 0 L ge                   ; [hm]
+; ge     even loop: run left to G, fill it
+ge
+    0 1 L gm1                  ; [ge]
+    1 1 L ge                   ; [ge]
+; c0     even done: step over cell 0
+c0
+    -
+    1 1 R c1                   ; [c0]
+; c1     even done: 0: H at cell 1, x = 1: next round (b1); 1: continue the parity walk (p0)
+c1
+    0 1 R b1                   ; [c1]
+    1 1 R p0                   ; [c1]
+
+; ---------- x ODD: H := 3x+1 --------------------------------------------
+
+; os     odd: H := x+1 (the old hole is G)
+; hx2    odd loop: H lands 2 cells right; 0: off the block: next round (a2)
+os_hx2
+    0 0 L a2                   ; [hx2]
+    1 0 L go                   ; [os, hx2]
+; go     odd loop: run left to G, fill it
+go
+    0 1 L og                   ; [go]
+    1 1 L go                   ; [go]
+; og     odd loop: G moves left 1; 0: G ran off the left end, find H (hf)
+og
+    0 0 R hf                   ; [og]
+    1 0 R hr2                  ; [og]
+; hr2    odd loop: run right to H, fill it
+hr2
+    0 1 R hx1                  ; [hr2]
+    1 1 R hr2                  ; [hr2]
+; hx1    odd loop: H moves right: first cell; 0: off the block: next round (a2)
+hx1
+    0 0 L a2                   ; [hx1]
+    1 1 R os_hx2               ; [hx1]
+
+; ---------- CHECK 3x+1 = n; HALT if so ----------------------------------
+
+; hf     odd done: run right to H, step over it
+hf
+    0 0 R pk1                  ; [hf]
+    1 1 R hf                   ; [hf]
+; pk1    check: 0: H at cell n+1 (3x+1 > n): the block grows: next round
+pk1
+    0 1 L s0                   ; [pk1]
+    1 1 R pk2                  ; [pk1]
+; pk2    check: 0: H at cell n, 3x+1 = n: HALT; 1: next step (s0)
+pk2
+    0 0 R halt                 ; [pk2]
+    1 1 L s0                   ; [pk2]
+
+; ---------- NEXT ROUND --------------------------------------------------
+
+; a2     next round: run left to G, fill it, then grow (b1)
+a2
+    0 1 R b1                   ; [a2]
+    1 1 L a2                   ; [a2]
+; b1     next round: run right to the end, one more cell
+b1
+    0 1 L b2                   ; [b1]
+    1 1 R b1                   ; [b1]
+; b2     next round: the old last cell becomes H; count parity from cell 0 (gl)
+b2
+    -
+    1 0 L gl                   ; [b2]
