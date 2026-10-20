@@ -3,7 +3,7 @@
 ; CYCLE OTHER THAN 1 -> 4 -> 2 -> 1 (the weak Collatz conjecture is false).
 ; Collatz map: C(x) = x/2 for even x, 3x+1 for odd x.
 ; Start on a blank tape in the first state. A transition to `halt` halts.
-; Lean proof: lean/TinyCryptids/WeakCollatz/M23.lean, theorem TM.WeakCollatz.M23.halts_iff.
+; Lean proof: lean/TinyCryptids/WeakCollatzV1/M23.lean, theorem TM.WeakCollatzV1.M23.halts_iff.
 ; ============================================================================
 ;
 ; HOW TO READ THIS FILE

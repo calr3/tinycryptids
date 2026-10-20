@@ -3,9 +3,11 @@ import TinyCryptids.Defs
 /-!
 # The statement and the arithmetic of a round
 
-The machine runs rounds `n = 1, 2, 3, …`: from `x = n` it applies `collatz`
-until the value `v` satisfies `Cond n v` (`v = 1` or `v ≥ n`), and halts iff
-then `v = n`.
+The machine works with the shortcut map `tc x = x / 2` (x even), `(3x + 1) / 2`
+(x odd), whose orbit of 1 is `1, 2, 1, …`. It runs rounds `n = 2, 3, …`: from
+`x = n` it applies `tc` until the value `v` satisfies `Cond n v` (`v = 1` or
+`v ≥ n`), and halts iff then `v = n`. (`Cycle.lean` relates cycles of `tc` to
+cycles of `collatz`.)
 
 * `reach_cond`: if no nontrivial cycle lies in `[2, n)` (`NoCyc n`), every
   orbit from `x ∈ [1, n)` reaches a value `1` or `≥ n`. So rounds end.
@@ -19,44 +21,47 @@ namespace TM.WeakCollatz
 
 open TinyCryptids
 
-abbrev it (k x : Nat) : Nat := iterate collatz k x
+/-- the shortcut Collatz map -/
+def tc (x : Nat) : Nat := if x % 2 = 0 then x / 2 else (3 * x + 1) / 2
+
+abbrev it (k x : Nat) : Nat := iterate tc k x
 
 theorem it_zero (x : Nat) : it 0 x = x := rfl
 
-theorem it_succ (k x : Nat) : it (k + 1) x = collatz (it k x) := rfl
+theorem it_succ (k x : Nat) : it (k + 1) x = tc (it k x) := rfl
 
 theorem it_add (a b x : Nat) : it (a + b) x = it a (it b x) := by
   induction a with
   | zero => simp [it_zero]
   | succ a ih => rw [Nat.add_right_comm, it_succ, it_succ, ih]
 
-theorem it_succ' (k x : Nat) : it (k + 1) x = it k (collatz x) := by
+theorem it_succ' (k x : Nat) : it (k + 1) x = it k (tc x) := by
   rw [it_add]; rfl
 
-theorem collatz_pos (x : Nat) (h : 0 < x) : 0 < collatz x := by
-  unfold collatz; split <;> omega
+theorem tc_pos (x : Nat) (h : 0 < x) : 0 < tc x := by
+  unfold tc; split <;> omega
 
 theorem it_pos (k x : Nat) (h : 0 < x) : 0 < it k x := by
   induction k with
   | zero => exact h
-  | succ k ih => rw [it_succ]; exact collatz_pos _ ih
+  | succ k ih => rw [it_succ]; exact tc_pos _ ih
 
-theorem collatz_ne_self (x : Nat) (h : 0 < x) : collatz x ≠ x := by
-  unfold collatz; split <;> omega
+theorem tc_ne_self (x : Nat) (h : 0 < x) : tc x ≠ x := by
+  unfold tc; split <;> omega
 
-theorem collatz_even (x : Nat) (h : x % 2 = 0) : collatz x = x / 2 := by
-  unfold collatz; rw [if_pos h]
+theorem tc_even (x : Nat) (h : x % 2 = 0) : tc x = x / 2 := by
+  unfold tc; rw [if_pos h]
 
-theorem collatz_odd (x : Nat) (h : x % 2 = 1) : collatz x = 3 * x + 1 := by
-  unfold collatz; rw [if_neg (by omega)]
+theorem tc_odd (x : Nat) (h : x % 2 = 1) : tc x = (3 * x + 1) / 2 := by
+  unfold tc; rw [if_neg (by omega)]
 
-/-- the orbit of 1 is `1, 4, 2, 1, …` -/
-theorem it_one (t : Nat) : it t 1 = 1 ∨ it t 1 = 2 ∨ it t 1 = 4 := by
+/-- the orbit of 1 is `1, 2, 1, …` -/
+theorem it_one (t : Nat) : it t 1 = 1 ∨ it t 1 = 2 := by
   induction t with
   | zero => exact Or.inl rfl
   | succ t ih =>
     rw [it_succ]
-    rcases ih with h | h | h <;> rw [h] <;> decide
+    rcases ih with h | h <;> rw [h] <;> decide
 
 /-- the stopping condition of the round for `n` -/
 def Cond (n v : Nat) : Prop := v = 1 ∨ n ≤ v
@@ -97,18 +102,18 @@ theorem reach_cond : ∀ n, NoCyc n → ∀ x, 1 ≤ x → x < n → ∃ i, Cond
       intro hn1
       rcases Nat.lt_or_ge n 2 with h2 | h2
       · exact ⟨0, Or.inl (by rw [it_zero]; omega)⟩
-      rcases Classical.em (Cond (n + 1) (collatz n)) with hy | hy
+      rcases Classical.em (Cond (n + 1) (tc n)) with hy | hy
       · exact ⟨1, hy⟩
-      have hy1 : 1 ≤ collatz n := collatz_pos n (by omega)
-      have hyn : collatz n < n := by
-        have := collatz_ne_self n (by omega); unfold Cond at hy; omega
-      obtain ⟨j, hj, hfirst⟩ := first_index (ih' (collatz n) hy1 hyn)
+      have hy1 : 1 ≤ tc n := tc_pos n (by omega)
+      have hyn : tc n < n := by
+        have := tc_ne_self n (by omega); unfold Cond at hy; omega
+      obtain ⟨j, hj, hfirst⟩ := first_index (ih' (tc n) hy1 hyn)
       rcases hj with hj | hj
       · exact ⟨j + 1, Or.inl (by rw [it_succ']; exact hj)⟩
-      rcases Nat.lt_or_ge n (it j (collatz n)) with hj2 | hj2
+      rcases Nat.lt_or_ge n (it j (tc n)) with hj2 | hj2
       · exact ⟨j + 1, Or.inr (by rw [it_succ']; exact hj2)⟩
       exfalso
-      have heq : it j (collatz n) = n := by omega
+      have heq : it j (tc n) = n := by omega
       apply hc
       refine ⟨n, j + 1, by omega, by rw [it_succ']; exact heq, ?_⟩
       intro t ht
@@ -117,7 +122,7 @@ theorem reach_cond : ∀ n, NoCyc n → ∀ x, 1 ≤ x → x < n → ∃ i, Cond
       · rw [it_succ']
         rcases Nat.lt_or_ge t j with htj | htj
         · have h1 := hfirst t htj
-          have h2 := it_pos t (collatz n) hy1
+          have h2 := it_pos t (tc n) hy1
           unfold Cond at h1; omega
         · obtain rfl : t = j := by omega
           omega
@@ -138,11 +143,11 @@ theorem reach_cond : ∀ n, NoCyc n → ∀ x, 1 ≤ x → x < n → ∃ i, Cond
 
 /-- Without a nontrivial cycle in `[2, n)`, the round for `n` stops. -/
 theorem round_stops (n : Nat) (hn : 1 ≤ n) (hc : NoCyc n) : ∃ i, Cond n (it (i + 1) n) := by
-  rcases Classical.em (Cond n (collatz n)) with hy | hy
+  rcases Classical.em (Cond n (tc n)) with hy | hy
   · exact ⟨0, hy⟩
-  have hy1 : 1 ≤ collatz n := collatz_pos n (by omega)
-  have hyn : collatz n < n := by unfold Cond at hy; omega
-  obtain ⟨i, hi⟩ := reach_cond n hc (collatz n) hy1 hyn
+  have hy1 : 1 ≤ tc n := tc_pos n (by omega)
+  have hyn : tc n < n := by unfold Cond at hy; omega
+  obtain ⟨i, hi⟩ := reach_cond n hc (tc n) hy1 hyn
   exact ⟨i, by rw [it_succ']; exact hi⟩
 
 /-- Without a nontrivial cycle in `[2, n]`, the round for `n` stops elsewhere than at `n`. -/
@@ -166,8 +171,8 @@ theorem round_no_return (n : Nat) (hn : 1 ≤ n) (hc : NoCyc (n + 1)) (i : Nat)
     · obtain rfl : t = i := by omega
       omega
 
-/-- The weak Collatz conjecture fails: some `n ∉ {1, 2, 4}` lies on a cycle. -/
-def Counter : Prop := ∃ n k, 0 < n ∧ 0 < k ∧ it k n = n ∧ n ≠ 1 ∧ n ≠ 2 ∧ n ≠ 4
+/-- `tc` has a cycle other than `1 → 2 → 1`: some `n ≥ 3` lies on a cycle. -/
+def Counter : Prop := ∃ n k, 3 ≤ n ∧ 0 < k ∧ it k n = n
 
 /-- A cycle in `[2, n)` is a counterexample. -/
 theorem nocyc_of_not (h : ¬ Counter) (n : Nat) : NoCyc n := by
@@ -175,13 +180,11 @@ theorem nocyc_of_not (h : ¬ Counter) (n : Nat) : NoCyc n := by
   have h0 := hv 0 (Nat.zero_le _)
   have h1 := hv 1 hk
   rw [it_zero] at h0
-  apply h ⟨c, k, by omega, hk, hc, by omega, ?_, ?_⟩
-  · rintro rfl; exact absurd h1.1 (by decide)
-  · rintro rfl
-    rcases Nat.lt_or_ge k 2 with hk2 | hk2
-    · obtain rfl : k = 1 := by omega
-      exact absurd hc (by decide)
-    · exact absurd (hv 2 hk2).1 (by decide)
+  refine h ⟨c, k, ?_, hk, hc⟩
+  rcases Nat.lt_or_ge c 3 with h3 | h3
+  · obtain rfl : c = 2 := by omega
+    exact absurd h1.1 (by decide)
+  · exact h3
 
 /-- `bnd x k` bounds the first `k + 1` values of the orbit of `x`. -/
 def bnd (x : Nat) : Nat → Nat
@@ -211,7 +214,8 @@ theorem it_mod (c k : Nat) (hc : it k c = c) : ∀ s, it (s + k) c = it s c := b
 `[2, M]` through `M`. -/
 theorem exists_top (h : Counter) :
     ∃ M, 2 ≤ M ∧ NoCyc M ∧ ∃ k, 0 < k ∧ it k M = M ∧ ∀ t, t ≤ k → 2 ≤ it t M ∧ it t M ≤ M := by
-  obtain ⟨n0, k0, hn0, hk0, hc0, h1, h2, h4⟩ := h
+  obtain ⟨n0, k0, hn3, hk0, hc0⟩ := h
+  have hn0 : 0 < n0 := by omega
   -- the orbit of `n0` avoids 1
   have hne1 : ∀ j, it j n0 ≠ 1 := by
     intro j hj
@@ -227,7 +231,7 @@ theorem exists_top (h : Counter) :
     have : it (k0 - j % k0) (it (j % k0) n0) = n0 := by
       rw [← it_add, show k0 - j % k0 + j % k0 = k0 by omega, hc0]
     rw [hj'] at this
-    rcases it_one (k0 - j % k0) with e | e | e <;> rw [e] at this <;> omega
+    rcases it_one (k0 - j % k0) with e | e <;> rw [e] at this <;> omega
   have hbad : ¬ NoCyc (bnd n0 k0 + 1) := fun hn => hn ⟨n0, k0, hk0, hc0, fun j hj =>
     ⟨by have := it_pos j n0 hn0; have := hne1 j; omega, by have := le_bnd n0 k0 j hj; omega⟩⟩
   obtain ⟨m0, hm0, hmin⟩ := first_index (P := fun m => ¬ NoCyc m) ⟨_, hbad⟩

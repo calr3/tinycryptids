@@ -1,0 +1,95 @@
+; ============================================================================
+; A 16-state, 2-symbol Turing machine that HALTS IFF THE COLLATZ MAP HAS A
+; CYCLE OTHER THAN 1 -> 4 -> 2 -> 1 (the weak Collatz conjecture is false).
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/WeakCollatz16/Main.lean, theorem TM.WeakCollatz16.halts_iff.
+; Standard text: 1RP1LA_0LC0LC_0RD1LC_1RP1RE_1LB0RF_1LG1RF_0RI0LH_1RE1LH_0LA0LJ_1LK1LJ_0RN0RL_1RM1RL_0LA1RI_0RO1RN_0RZ1LB_0LC1RP
+; ============================================================================
+;
+; SHORTCUT MAP: T(v) = v/2 (v even), (3v+1)/2 (v odd).  T has a cycle through
+;   some n >= 3 iff the Collatz map has a cycle other than 1 -> 4 -> 2 -> 1.
+;
+; ALGORITHM: rounds M = 2, 3, ...: v := M, then v := T(v) until v = 1 or
+;   v >= M; HALT iff v = M.
+;
+; TAPE C(M, v): cells 0 .. M-1 hold 1 except the HOLE at cell v-1; the rest
+;   is blank.  Head on cell 0 in `disp`.  (v = M: M-1 ones, the hole is the
+;   first blank.)
+;
+; STEP:
+;   v = 1    fill the hole, run right: the first blank is the next round's hole.
+;   halving  a MARKER starts at cell 1; per round trip it moves right one cell
+;            and the hole moves left one.  Same cell (v even): the result hole
+;            is the cell before.  Neighbours (v = 2k+1): the marker is at k.
+;   odd      the hole restarts at k+1; per round trip the marker moves left one
+;            cell and the hole right two.  When the marker passes cell 0 the
+;            hole is at 3k+1 = T(v)-1; a blank after it means T(v) = M: HALT.
+;            The hole running off the block (T(v) > M): fill the marker, grow.
+;   home     run left to cell -1, step right.
+; ============================================================================
+
+blank_symbol: 0
+
+fill    ; seed (blank tape: write cell 0); after the hole ran off the block: run left, fill the marker
+    0 1 R grow    ; fill the marker (seed: write cell 0)
+    1 1 L fill
+
+cut    ; write the result hole, then go home
+    0 0 L home    ; the hole (after peek)
+    1 0 L home    ; the result hole (v even)
+
+home    ; run left over 1s; at cell -1 step right: the next macro step
+    0 0 R disp    ; cell -1
+    1 1 L home
+
+disp    ; dispatch on cell 0: 0 = the hole (v = 1), 1 = start halving
+    0 1 R grow    ; v = 1: next round
+    1 1 R mark    ; v >= 2
+
+mark    ; halving: place the marker; 0: it meets the hole (v even)
+    0 1 L cut    ; met the hole: v even
+    1 0 R toH    ; the marker
+
+toH    ; halving: run right to the hole, fill it
+    0 1 L stepH    ; fill the hole
+    1 1 R toH
+
+stepH    ; halving: the hole moves left; 0: the marker is there (v odd)
+    0 0 R hop2    ; the marker: v odd
+    1 0 L back    ; the new hole
+
+back    ; halving: run left to the marker, fill it
+    0 1 R mark    ; fill the marker
+    1 1 L back
+
+hop2    ; odd: second cell of the hole's jump, the new hole; 0: off the block
+    0 0 L fill    ; off the block: T(v) > M
+    1 0 L backO    ; the new hole
+
+backO    ; odd: run left to the marker, fill it
+    0 1 L markO    ; fill the marker
+    1 1 L backO
+
+markO    ; odd: the marker moves left; 0: it passed cell 0
+    0 0 R toHN    ; passed cell 0
+    1 0 R toHO    ; the marker
+
+toHO    ; odd: run right to the hole, fill it
+    0 1 R hop1    ; fill the hole
+    1 1 R toHO
+
+hop1    ; odd: first cell of the hole's jump; 0: off the block
+    0 0 L fill    ; off the block: T(v) > M
+    1 1 R hop2
+
+toHN    ; end of the odd step: run right to the hole
+    0 0 R peek    ; the hole
+    1 1 R toHN
+
+peek    ; the cell after the hole: 0 = T(v) = M, halt; 1 = go home
+    0 0 R halt    ; T(v) = M: a cycle
+    1 1 L cut    ; T(v) < M
+
+grow    ; run right over 1s; the first blank is the hole of the next round
+    0 0 L home    ; the new hole
+    1 1 R grow

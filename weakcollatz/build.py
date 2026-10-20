@@ -1,23 +1,40 @@
-"""Generator for a 2-symbol Turing machine that halts iff the Collatz map
-C(x) = x/2 (x even), 3x+1 (x odd) has a cycle other than 1 -> 4 -> 2 -> 1.
+"""Generator for a 14-state, 2-symbol Turing machine that halts iff the Collatz
+map C(x) = x/2 (x even), 3x+1 (x odd) has a cycle other than 1 -> 4 -> 2 -> 1.
 
-Algorithm.  Round n = 1, 2, 3, ...: x := n, then repeat x := C(x) until
-x >= n or x = 1; halt iff x = n.  Every nontrivial cycle has a largest element
-M, and round M halts (the orbit of M stays in [2, M] and returns to M).  A round
-cannot run forever unless the orbit stays in [2, n-1], i.e. falls into a
-nontrivial cycle with a smaller largest element, whose round already halted.
+The machine works with the shortcut map T(x) = x/2 (x even), (3x+1)/2 (x odd),
+whose only small cycle is 1 -> 2 -> 1; T has a cycle through some n >= 3 iff C
+has a cycle other than 1 -> 4 -> 2 -> 1.
 
-Tape: one block, cells 0 .. n+1, all 1 except the hole H (a single 0) at cell
-x, 1 <= x <= n.  Cells 0 and n+1 are always 1 between steps.
-Step (head at H):
-  go to cell 0, walk right to H counting parity.
-  x even: a second hole G walks from x-1 to the left end, 2 cells per round,
-    while H moves left 1 cell per round: H ends at x/2.  If x/2 = 1, abort.
-  x odd: G walks from x to the left end, 1 cell per round, while H (spawned at
-    x+1) moves right 2 cells per round: H ends at 3x+1.  If H runs off the
-    block (3x+1 > n) abort; if H = n, halt.
-Abort (next round): the block grows by one cell, H := the new last value cell.
-The seed writes the tape of an aborted round 0.
+Algorithm.  Rounds M = 2, 3, 4, ...: v := M, then repeat v := T(v) until
+v = 1 or v >= M; halt iff v = M.  (A nontrivial cycle with largest element M
+makes round M halt; a round can only run forever inside a nontrivial cycle
+whose round already halted.)  Only an odd step can give v >= M.
+
+Tape C(M, v), 1 <= v <= M: cells 0 .. M-1 hold 1, except a HOLE at cell v-1;
+everything else is 0.  The head is on cell 0 in `disp`.  For v = M the block
+is just M-1 ones: the hole is the first blank.
+
+Step:
+  v = 1     `disp` reads the hole on cell 0: fill it and go home; the first
+            blank, cell M, is now the hole: C(M+1, M+1).
+  halving   `disp` writes a MARKER (a second 0) on cell 0.  Per round trip the
+            hole moves left one cell and the marker right one cell, so they meet:
+            on neighbouring cells (`stepH` reads the marker, v = 2k): the
+            marker, cell k-1, is the result hole;  on the same cell (`mark`
+            reads the hole, v = 2k+1): the hole is on cell k.
+  odd       the hole moves to cell k+1 and the marker to cell k-1; per round
+            trip the marker moves left one cell and the hole right two, until
+            the marker passes cell 0: k round trips, the hole ends at cell
+            3k+1 = T(v) - 1.  If the hole runs past cell M-1 (T(v) > M): fill
+            the marker and go home, C(M+1, M+1).  At the end, if the cell after
+            the hole is blank (T(v) = M): HALT.
+  home      run left over 1s to cell -1, step right.
+On the blank tape (= C(1, 1)) the start state `disp` makes C(2, 2).
+
+The design is the 16-state machine of "Two exact binary Collatz Turing
+machines" (m16/) with two states removed: its `grow` (fill the marker, then
+go home directly) and its `cut` (the marker starts on cell 0, so an even
+meeting leaves the result hole where the marker is).
 """
 import sys
 ST = {}
@@ -27,44 +44,28 @@ def S(name, t0, t1):
     ST[name] = [t0, t1]; ORDER.append(name)
 def T(w, d, n): return (w, d, n)
 
-def build(halt_state='halt', trivial=False):
-    """trivial=True: test variant without the x = 1 abort; it halts on 4 -> 2 -> 1 -> 4."""
+def build(halt_state='halt'):
     ST.clear(); ORDER.clear()
-    S('seed', T(1,'R','hf'), None)               # cell 0 := 1, then as after an odd step
-    # start of a step: at H, go to cell 0, count parity up to H
-    S('s0', T(0,'L','gl'), T(1,'L','s0'))
-    S('gl', T(0,'R','p0'), T(1,'L','gl'))
-    S('p0', T(1,'L','sp'), T(1,'R','p1'))
-    S('p1', T(0,'R','os'), T(1,'R','p0'))
-    # even: H := x-1, G walks left 2 per round from (virtual) x-1, H left 1 per round
-    S('sp', None, T(0,'L','gm1'))
-    S('gm1', None, T(1,'L','gm2'))
-    S('gm2', T(0,'R','c0'), T(0,'R','hr'))         # 0: G ran off the left end
-    S('hr', T(1,'L','hm'), T(1,'R','hr'))
-    S('hm', None, T(0,'L','ge'))
-    S('ge', T(1,'L','gm1'), T(1,'L','ge'))
-    S('c0', None, T(1,'R','c1'))
-    S('c1', T(0,'R','os') if trivial else T(1,'R','b1'), T(1,'R','p0'))  # 0: x/2 = 1, abort
-    # odd: G := x, H := x+1; G walks left 1 per round, H right 2 per round
-    S('os', None, T(0,'L','go'))
-    S('go', T(1,'L','og'), T(1,'L','go'))
-    S('og', T(0,'R','hf'), T(0,'R','hr2'))         # 0: G ran off the left end
-    S('hr2', T(1,'R','hx1'), T(1,'R','hr2'))
-    S('hx1', T(0,'L','a2'), T(1,'R','hx2'))        # 0: H ran off the block
-    S('hx2', T(0,'L','a2'), T(0,'L','go'))
-    # after an odd step: find H, H = n+1 -> abort, H = n -> halt
-    S('hf', T(0,'R','pk1'), T(1,'R','hf'))
-    S('pk1', T(1,'L','s0'), T(1,'R','pk2'))        # 0: H at cell n+1: the next round
-    S('pk2', T(0,'R',halt_state), T(1,'L','s0'))   # 0: H = n: a cycle
-    # abort with G in the block: fill G; then grow the block, H := last value cell
-    S('a2', T(1,'R','b1'), T(1,'L','a2'))
-    S('b1', T(1,'L','b2'), T(1,'R','b1'))
-    S('b2', None, T(0,'L','gl'))
+    S('disp', T(1,'L','home'), T(0,'R','toH'))     # 0: v = 1; 1: the marker on cell 0
+    # halving: the hole moves left, the marker right
+    S('toH',  T(1,'L','stepH'), T(1,'R','toH'))
+    S('stepH', T(0,'L','home'), T(0,'L','back'))    # 0: the marker is next to the hole (v even)
+    S('back', T(1,'R','mark'), T(1,'L','back'))
+    S('mark', T(0,'R','hop2'), T(0,'R','toH'))      # 0: the marker meets the hole (v odd)
+    # odd: the marker moves left, the hole right by two
+    S('hop2', T(0,'L','fill'), T(0,'L','backO'))    # 0: the hole ran off the block
+    S('backO', T(1,'L','markO'), T(1,'L','backO'))
+    S('markO', T(0,'R','toHN'), T(0,'R','toHO'))    # 0: the marker passed cell 0
+    S('toHO', T(1,'R','hop1'), T(1,'R','toHO'))
+    S('hop1', T(0,'L','fill'), T(1,'R','hop2'))     # 0: the hole ran off the block
+    S('toHN', T(0,'R','peek'), T(1,'R','toHN'))
+    S('peek', T(0,'R',halt_state), T(1,'L','stepH'))  # 0: T(v) = M
+    S('home', T(0,'R','disp'), T(1,'L','home'))
+    S('fill', T(1,'L','home'), T(1,'L','fill'))     # fill the marker, go home
     refs = {t[2] for v in ST.values() for t in v if t}
     assert not (refs - set(ST) - {halt_state}), refs - set(ST)
     assert not (set(ST) - refs - {ORDER[0]}), set(ST) - refs
-    what = 'the Collatz map has a cycle (test variant: 1 -> 4 -> 2 counts)' if trivial else 'the Collatz map has a cycle other than 1 -> 4 -> 2 -> 1'
-    lines = [f'; Halts iff {what}.',
+    lines = ['; Halts iff the Collatz map has a cycle other than 1 -> 4 -> 2 -> 1.',
              f'; {len(ORDER)} states, 2 symbols. Generated by build.py.', '', 'blank_symbol: 0', '']
     for n in ORDER:
         lines.append(n)

@@ -33,17 +33,23 @@ Each hand-designed machine folder has the same shape:
 
 | Theorem | Statement (`Halts delta start ↔ …`) |
 |---------|-----------|
-| `TM.WeakCollatz.halts_iff`, `M23` | `∃ n k, 0 < n ∧ 0 < k ∧ iterate collatz k n = n ∧ n ≠ 1 ∧ n ≠ 2 ∧ n ≠ 4` |
+| `TM.WeakCollatz.halts_iff`; `TM.WeakCollatz16.halts_iff` (m16); `TM.WeakCollatzV1.halts_iff`, `M23` (v1) | `∃ n k, 0 < n ∧ 0 < k ∧ iterate collatz k n = n ∧ n ≠ 1 ∧ n ≠ 2 ∧ n ≠ 4` |
+| `TM.WeakCollatz.halts_iff_counter` | `Counter` (a cycle of the shortcut map through some `n ≥ 3`) |
 
 ## Proof outlines
 
-**Weak Collatz** (`TinyCryptids/WeakCollatz`). One block of `n + 2` cells with the value `x`
-as a hole. `Step`: the parity walk, the even loop (`EL`: H to `x/2`), the odd loop (`OL`:
-H to `3x + 1`, overflow when it runs off the block), the check, the next round (`RS`);
-`step_cases` and `round_run` (a round stops at the first `i` with `Cond n (C^(i+1) n)`).
-`Spec`: rounds stop when no nontrivial cycle lies below `n` (`reach_cond`, by induction on
-`n`), do not return to `n` without a cycle (`round_no_return`), and a cycle gives a least
-`M` whose round halts (`exists_top`).
+**Weak Collatz** (`TinyCryptids/WeakCollatz`), the 14-state machine. One block with the
+value `v` as a hole at cell `v − 1` (`CS M v`), iterating the shortcut map `tc`. `Step`: going
+home (`go_home`), `v = 1` (`step_one`), the halving loop (`HL`: a marker from cell 0 meets the
+hole; for even `v` the marker is the result, `hl_even`, `step_even`), the odd loop (`OL`: the
+marker walks back while the hole moves two cells, `hl_odd`, `ol_over`, `ol_end`, `step_odd`),
+`step_cases` and `round_run`. `Spec`: rounds stop when no nontrivial cycle lies below `n`
+(`reach_cond`, by induction on `n`), do not return to `n` without a cycle (`round_no_return`),
+and a cycle gives a least `M` whose round halts (`exists_top`). `Cycle`: `tc`-cycles through
+`n ≥ 3` are exactly `collatz`-cycles outside `{1, 2, 4}` (`counter_iff`).
+`TinyCryptids/WeakCollatz16` is the same proof for the given 16-state machine (marker from
+cell 1, `cut` and `grow`), sharing `Spec` and `Cycle`. `TinyCryptids/WeakCollatzV1` is the
+earlier 25/23-state machine: parity walk, `EL`/`OL` loops, the same `Spec` for `collatz`.
 
 (→) by `not_halts_of_progress` over the round starts (each round strictly reaches the
 next when there is no counterexample); (←) by iterating the round up to the

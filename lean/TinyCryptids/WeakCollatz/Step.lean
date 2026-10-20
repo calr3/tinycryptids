@@ -2,12 +2,22 @@ import TinyCryptids.WeakCollatz.Tac
 import TinyCryptids.WeakCollatz.Spec
 
 /-!
-# One Collatz step on the tape
+# One shortcut step on the tape
 
-The tape of round `n` is one block, cells `0 .. n + 1`, all 1 except the hole
-`H` at cell `x` (`1 ≤ x ≤ n`); everything else is blank. A step starts with the
-parity walk from cell 0 and ends at the parity branch of the next step (`PB`),
-at the start of the next round (`RS (n + 1)`), or at the halting state.
+`CS M v` (`1 ≤ v ≤ M`): head on cell 0 in `disp`; cells `0 .. M - 1` hold 1
+except the hole at cell `v - 1`; everything else is blank. One macro step goes
+from `CS M v` to `CS M (tc v)`, to the next round `CS (M + 1) (M + 1)`, or to
+the halting state:
+
+* `v = 1` (`step_one`): fill the hole on cell 0, go home.
+* halving (`hl_loop`): `disp` writes a marker on cell 0; per round trip the
+  hole moves left and the marker right. For even `v` they end on neighbouring
+  cells and the marker is the result hole (`hl_even`, `step_even`).
+* odd `v = 2k + 1` (`step_odd`): they meet on cell `k`; the hole moves to
+  `k + 1` and the marker to `k - 1` (`hl_odd`); then the marker moves left one
+  cell per round trip while the hole moves right two (`ol_loop`). The hole ends
+  at `3k + 1 = tc v - 1` (`ol_end`), unless it runs off the block first
+  (`ol_over`).
 -/
 
 namespace TM.WeakCollatz
@@ -16,16 +26,14 @@ open TinyCryptids St
 
 local notation "F" => false
 
-def pst (x : Nat) : St := if x % 2 = 0 then p0 else p1
+/-- the hole at cell `a`, then `r` ones -/
+def CF (a r : Nat) : Cfg St := ⟨disp, blank, ones a (F ::: ones r blank)⟩
 
-theorem pst_add2 (x : Nat) : pst (x + 2) = pst x := by
-  unfold pst; rw [Nat.add_mod_right]
+/-- the tape of value `v` in round `M` -/
+def CS (M v : Nat) : Cfg St := CF (v - 1) (M - v)
 
-/-- parity branch: the head on the hole at `x`, in `p0` (x even) or `p1` (x odd) -/
-def PB (n x : Nat) : Cfg St := ⟨pst x, ones x blank, F ::: ones (n + 1 - x) blank⟩
-
-/-- round start: hole at `n` (its last value cell), head on cell `n - 1` in `gl` -/
-def RS (n : Nat) : Cfg St := cfgL gl (ones n blank) (F ::: ones 1 blank)
+/-- round start -/
+def RS (M : Nat) : Cfg St := CS M M
 
 def HaltAt (c : Cfg St) : Prop := ∃ L R, Rch c ⟨halt, L, R⟩
 
@@ -35,283 +43,237 @@ theorem HaltAt.back {a b : Cfg St} (hab : Rch a b) (h : HaltAt b) : HaltAt a :=
 theorem HaltAt.halts {c : Cfg St} (h : HaltAt c) : Halts delta c :=
   let ⟨_, _, h⟩ := h; Reach.halts delta h (halt_none rfl)
 
-/-! ## the parity walk -/
+/-! ## going home -/
 
-theorem parity : ∀ x (L R : Strm),
-    Rch ⟨p0, L, ones x R⟩ ⟨pst x, ones x L, R⟩ ∧ Rch ⟨p1, L, ones x R⟩ ⟨pst (x + 1), ones x L, R⟩ := by
-  intro x
-  induction x with
-  | zero => intro L R; exact ⟨Reach.refl delta _, Reach.refl delta _⟩
-  | succ x ih =>
-    intro L R
-    constructor
-    · gR
-      have := (ih (true ::: L) R).2
-      rw [← ones_succ'] at this; exact this
-    · gR
-      have := (ih (true ::: L) R).1
-      rw [← ones_succ', ← pst_add2 x] at this; exact this
-
-/-- `gl` goes to cell 0, then the parity walk reaches the hole -/
-theorem home (n a b r : Nat) (h : a + b + r = n + 1) :
-    Rch (cfgL gl (ones a blank) (ones b (F ::: ones r blank))) (PB n (a + b)) := by
-  sLn a
+theorem go_home (n : Nat) (R : Strm) : Rch (cfgL home (ones n blank) R) ⟨disp, blank, ones n R⟩ := by
+  sLn n
   gR
-  show Rch ⟨p0, F ::: blank, _⟩ _
-  rw [cons_blank, ones_add]
-  refine Rch.tr ((parity (a + b) blank _).1) ?_
-  unfold PB
-  rw [show n + 1 - (a + b) = r by omega]
+  show Rch ⟨disp, F ::: blank, _⟩ _
+  rw [cons_blank]; fin
+
+/-! ## v = 1 -/
+
+theorem step_one (M : Nat) (hM : 1 ≤ M) : Rch1 (CS M 1) (RS (M + 1)) := by
+  unfold CS RS CF
+  rw [Nat.sub_self, ones_zero]
+  refine Reach1.trans_reach delta (sL1 (s := blank) rfl) ?_
+  refine Rch.tr (go_home 0 _) ?_
+  obtain ⟨n, rfl⟩ : ∃ n, M = n + 1 := ⟨M - 1, by omega⟩
+  unfold CS CF
+  rw [Nat.sub_self, show n + 1 + 1 - 1 = n + 1 by omega, show n + 1 - 1 = n by omega, ones_zero,
+    ones_zero, cons_blank]
   fin
 
-theorem rs_pb (n : Nat) (hn : 1 ≤ n) : Rch1 (RS n) (PB n n) := by
-  obtain ⟨m, rfl⟩ : ∃ m, n = m + 1 := ⟨n - 1, by omega⟩
-  unfold RS
-  refine Reach1.trans_reach delta (sL1 rfl) ?_
-  exact home (m + 1) m 1 1 (by omega)
+/-! ## halving -/
 
-/-- grow the block by one cell; the hole goes to the new last value cell -/
-theorem grow (k m : Nat) (h : 1 ≤ k + m) : Rch ⟨b1, ones k blank, ones m blank⟩ (RS (k + m - 1)) := by
-  obtain ⟨j, hj⟩ : ∃ j, m + k = j + 1 := ⟨m + k - 1, by omega⟩
-  sRn m
-  refine blankR ?_
-  gL
-  rw [ones_add, hj]
-  gL
-  unfold RS
-  rw [show k + m - 1 = j by omega]
-  fin
+/-- halving loop: the marker on cell `m`, head on cell `m + 1` in `toH`, then `d` ones,
+the hole, `r` ones -/
+def HL (m d r : Nat) : Cfg St := ⟨toH, F ::: ones m blank, ones d (F ::: ones r blank)⟩
 
-/-! ## x even -/
-
-/-- even loop: head on cell `a` in `gm1`, then `d` ones, the hole, `r` ones -/
-def EL (a d r : Nat) : Cfg St := ⟨gm1, ones a blank, ones d (F ::: ones r blank)⟩
-
-theorem el_step (a d r : Nat) (hd : 1 ≤ d) : Rch (EL (a + 2) d r) (EL a (d + 1) (r + 1)) := by
-  obtain ⟨d, rfl⟩ : ∃ e, d = e + 1 := ⟨d - 1, by omega⟩
-  unfold EL
-  gL; gR
-  sRn (d + 1)
+theorem hl_step (m d r : Nat) : Rch (HL m (d + 2) r) (HL (m + 1) d (r + 1)) := by
+  unfold HL
+  sRn (d + 2)
   gL; gL
-  sLn d
+  sLn (d + 1)
+  gR; gR
+  fin
+
+theorem hl_loop : ∀ j m d r, Rch (HL m (d + 2 * j) r) (HL (m + j) d (r + j)) := by
+  intro j
+  induction j with
+  | zero => intro m d r; fin
+  | succ j ih =>
+    intro m d r
+    rw [show d + 2 * (j + 1) = d + 2 * j + 2 by omega]
+    refine Rch.tr (hl_step m _ r) ?_
+    have := ih (m + 1) d (r + 1)
+    rw [show m + 1 + j = m + (j + 1) by omega, show r + 1 + j = r + (j + 1) by omega] at this
+    exact this
+
+/-- the first step from a value `v ≥ 2`: the marker on cell 0 -/
+theorem disp_mark (a r : Nat) : Rch1 (CF (a + 1) r) (HL 0 a r) :=
+  stepR1 (δ := delta) (R := ones (a + 1) (F ::: ones r blank)) rfl
+
+/-- the hole is next to the marker: fill the hole, the marker is the result hole -/
+theorem hl_even (m r : Nat) : Rch (HL m 0 r) (CF m (r + 1)) := by
+  unfold HL
+  gL; gL
+  exact go_home m _
+
+theorem step_even (M v : Nat) (hv : v % 2 = 0) (h2 : 2 ≤ v) (hM : v ≤ M) :
+    Rch1 (CS M v) (CS M (v / 2)) := by
+  obtain ⟨k, rfl⟩ : ∃ k, v = 2 * k + 2 := ⟨v / 2 - 1, by omega⟩
+  unfold CS
+  rw [show 2 * k + 2 - 1 = (2 * k) + 1 by omega]
+  refine Reach1.trans_reach delta (disp_mark _ _) ?_
+  have := hl_loop k 0 0 (M - (2 * k + 2))
+  rw [Nat.zero_add, Nat.zero_add] at this
+  refine Rch.tr this ?_
+  refine Rch.tr (hl_even k _) ?_
+  rw [show (2 * k + 2) / 2 - 1 = k by omega, show M - (2 * k + 2) / 2 = M - (2 * k + 2) + k + 1 by omega]
+  fin
+
+/-! ## v odd -/
+
+/-- odd loop: head on cell `c - 1` in `markO` (`c` ones up to it), then `e` ones, the hole, `s` ones -/
+def OL (c e s : Nat) : Cfg St := cfgL markO (ones c blank) (ones e (F ::: ones s blank))
+
+/-- the marker meets the hole on cell `m + 1`: the hole moves to `m + 2`, the marker to `m` -/
+theorem hl_odd (m r : Nat) : Rch (HL m 1 r) (OL (m + 1) 1 r) := by
+  unfold HL OL
+  gR; gL; gL; gR; gR; gL; gL
+  fin
+
+theorem ol_step (c e s : Nat) : Rch (OL (c + 1) e (s + 2)) (OL c (e + 3) s) := by
+  unfold OL
+  gR
+  sRn e
+  gR; gR; gL
+  sLn (e + 2)
   gL
   fin
 
-theorem el_loop : ∀ k d r, 1 ≤ d → Rch (EL (2 * k) d r) (EL 0 (d + k) (r + k)) := by
-  intro k
-  induction k with
-  | zero => intro d r _; fin
-  | succ k ih =>
-    intro d r hd
-    rw [show 2 * (k + 1) = 2 * k + 2 by omega]
-    refine Rch.tr (el_step _ d r hd) ?_
-    rw [show d + (k + 1) = d + 1 + k by omega, show r + (k + 1) = r + 1 + k by omega]
-    exact ih (d + 1) (r + 1) (by omega)
+theorem ol_loop : ∀ i c e s, Rch (OL (c + i) e (s + 2 * i)) (OL c (e + 3 * i) s) := by
+  intro i
+  induction i with
+  | zero => intro c e s; fin
+  | succ i ih =>
+    intro c e s
+    rw [show c + (i + 1) = c + 1 + i by omega, show s + 2 * (i + 1) = s + 2 + 2 * i by omega]
+    refine Rch.tr (ih (c + 1) e (s + 2)) ?_
+    rw [show e + 3 * (i + 1) = e + 3 * i + 3 by omega]
+    exact ol_step c _ s
 
-theorem even_step (n x : Nat) (hx2 : x % 2 = 0) (h1 : 1 ≤ x) (hx : x ≤ n) :
-    (x / 2 = 1 → Rch (PB n x) (RS (n + 1))) ∧ (x / 2 ≠ 1 → Rch (PB n x) (PB n (x / 2))) := by
-  obtain ⟨k, rfl⟩ : ∃ k, x = 2 * k + 2 := ⟨x / 2 - 1, by omega⟩
-  obtain ⟨r, hr⟩ : ∃ r, n + 1 - (2 * k + 2) = r := ⟨_, rfl⟩
-  have hp : pst (2 * k + 2) = p0 := by unfold pst; rw [if_pos (by omega)]
-  have hloop : Rch (PB n (2 * k + 2)) ⟨c0, blank, ones (k + 1) (F ::: ones (r + 1 + k) blank)⟩ := by
-    unfold PB
-    rw [hp, hr]
-    gL; gL
-    refine Rch.tr (el_loop k 1 (r + 1) (Nat.le_refl _)) ?_
-    rw [show 1 + k = k + 1 by omega]
-    unfold EL
-    gL; gR
-    show Rch ⟨c0, F ::: blank, _⟩ _
-    rw [cons_blank]; fin
-  rw [show (2 * k + 2) / 2 = k + 1 by omega]
-  constructor
-  · intro hk
-    obtain rfl : k = 0 := by omega
-    refine Rch.tr hloop ?_
-    gR; gR
-    have := grow 2 (r + 1 + 0) (by omega)
-    rw [show 2 + (r + 1 + 0) - 1 = n + 1 by omega] at this
-    exact this
-  · intro hk
-    obtain ⟨j, rfl⟩ : ∃ j, k = j + 1 := ⟨k - 1, by omega⟩
-    refine Rch.tr hloop ?_
-    gR; gR
-    refine Rch.tr ((parity j _ _).1) ?_
-    unfold PB
-    rw [show j + 1 + 1 = j + 2 by omega, pst_add2,
-        show n + 1 - (j + 2) = r + 1 + (j + 1) by omega, ← ones_succ', ← ones_succ']
+/-- the hole runs off the block: fill the marker, go home -/
+theorem ol_over (c e s : Nat) (hs : s ≤ 1) : Rch (OL (c + 1) e s) (CF (c + e + s + 2) 0) := by
+  unfold OL
+  gR
+  sRn e
+  gR
+  rcases s with _ | s
+  · refine blankR ?_
+    gL
+    sLn (e + 1)
+    gL
+    refine Rch.tr (go_home c _) ?_
+    unfold CF
+    rw [cons_blank, ones_zero, cons_blank, ← ones_succ, ones_add, show c + (e + 1 + 1) = c + e + 0 + 2 by omega]
+    fin
+  · obtain rfl : s = 0 := by omega
+    gR
+    refine blankR ?_
+    gL
+    sLn (e + 2)
+    gL
+    refine Rch.tr (go_home c _) ?_
+    unfold CF
+    rw [cons_blank, ones_zero, cons_blank, ← ones_succ, ones_add, show c + (e + 2 + 1) = c + e + (0 + 1) + 2 by omega]
     fin
 
-/-! ## x odd -/
-
-/-- odd loop: head on cell `g - 1` in `og`, then `d` ones from cell `g`, the hole, `r` ones -/
-def OL (g d r : Nat) : Cfg St := cfgL og (ones g blank) (ones d (F ::: ones r blank))
-
-theorem ol_step (g d r : Nat) : Rch (OL (g + 1) d (r + 2)) (OL g (d + 3) r) := by
-  unfold OL
-  gR
-  sRn d
-  gR; gR; gL
-  sLn (d + 2)
-  gL
-  fin
-
-theorem ol_loop : ∀ k g d r, Rch (OL (g + k) d (r + 2 * k)) (OL g (d + 3 * k) r) := by
-  intro k
-  induction k with
-  | zero => intro g d r; fin
-  | succ k ih =>
-    intro g d r
-    rw [show g + (k + 1) = g + 1 + k by omega, show r + 2 * (k + 1) = r + 2 + 2 * k by omega]
-    refine Rch.tr (ih (g + 1) d (r + 2)) ?_
-    rw [show d + 3 * (k + 1) = d + 3 * k + 3 by omega]
-    exact ol_step g _ r
-
-/-- H runs off the block: fill G, grow the block -/
-theorem ol_over (g d r : Nat) (hr : r ≤ 1) : Rch (OL (g + 1) d r) (RS (g + d + r + 1)) := by
-  unfold OL
-  rcases r with _ | r
-  · gR
-    sRn d
-    gR
-    refine blankR ?_
-    gL
-    sLn (d + 1)
-    gR
-    rw [cons_blank]
-    have := grow (g + 1) (d + 1) (by omega)
-    rw [show g + 1 + (d + 1) - 1 = g + d + 0 + 1 by omega] at this
-    exact this
-  · obtain rfl : r = 0 := by omega
-    gR
-    sRn d
-    gR; gR
-    refine blankR ?_
-    gL
-    sLn (d + 2)
-    gR
-    rw [cons_blank]
-    have := grow (g + 1) (d + 2) (by omega)
-    rw [show g + 1 + (d + 2) - 1 = g + d + (0 + 1) + 1 by omega] at this
-    exact this
-
-/-- G runs off the left end: go to H and look at the two cells after it -/
-theorem ol_end (d r : Nat) (hd : 1 ≤ d) :
-    (r = 0 → Rch (OL 0 d r) (RS d)) ∧ (r = 1 → HaltAt (OL 0 d r)) ∧
-      (2 ≤ r → Rch (OL 0 d r) (PB (d + r - 1) d)) := by
-  have hf : Rch (OL 0 d r) ⟨pk1, F ::: ones d blank, ones r blank⟩ := by
+/-- the marker passed cell 0: look at the cell after the hole -/
+theorem ol_end (e s : Nat) :
+    (s = 0 → HaltAt (OL 0 e s)) ∧ (1 ≤ s → Rch (OL 0 e s) (CF e s)) := by
+  have hf : Rch (OL 0 e s) ⟨peek, F ::: ones e blank, ones s blank⟩ := by
     unfold OL
     gR
-    sRn d
+    sRn e
     gR
-    show Rch ⟨pk1, F ::: ones d (F ::: blank), _⟩ _
+    show Rch ⟨peek, F ::: ones e (F ::: blank), _⟩ _
     rw [cons_blank]; fin
-  refine ⟨fun h => ?_, fun h => ?_, fun h => ?_⟩
+  refine ⟨fun h => ?_, fun h => ?_⟩
   · subst h
-    refine Rch.tr hf ?_
-    refine blankR ?_
-    gL; gL
-    unfold RS; fin
-  · subst h
-    refine HaltAt.back hf ⟨F ::: true ::: F ::: ones d blank, tl blank, ?_⟩
-    gR
+    refine HaltAt.back hf ⟨F ::: F ::: ones e blank, tl blank, ?_⟩
     refine blankR ?_
     gR; fin
-  · obtain ⟨r, rfl⟩ : ∃ e, r = e + 2 := ⟨r - 2, by omega⟩
+  · obtain ⟨s, rfl⟩ : ∃ t, s = t + 1 := ⟨s - 1, by omega⟩
     refine Rch.tr hf ?_
-    gR; gL; gL; gL
-    exact home (d + (r + 2) - 1) d 0 (r + 2) (by omega)
+    gL; gL
+    exact go_home e _
 
-theorem odd_step (n x : Nat) (hx2 : x % 2 = 1) (hx : x ≤ n) :
-    (n < 3 * x + 1 → Rch (PB n x) (RS (n + 1))) ∧ (3 * x + 1 = n → HaltAt (PB n x)) ∧
-      (3 * x + 1 < n → Rch (PB n x) (PB n (3 * x + 1))) := by
-  have hp : pst x = p1 := by unfold pst; rw [if_neg (by omega)]
-  have hs : Rch (PB n x) (OL x 1 (n - x)) := by
-    unfold PB OL
-    rw [hp, show n + 1 - x = n - x + 1 by omega]
-    gR; gL; gL
-    fin
-  refine ⟨fun h => ?_, fun h => ?_, fun h => ?_⟩
-  · rcases Nat.lt_or_ge (n - x) (2 * x) with h2 | h2
-    · -- H runs off the block while G is still in it
-      obtain ⟨k, e, hk⟩ : ∃ k e, n - x = e + 2 * k ∧ e ≤ 1 := ⟨(n - x) / 2, (n - x) % 2, by omega, by omega⟩
-      obtain ⟨g, hg⟩ : ∃ g, x = g + 1 + k := ⟨x - 1 - k, by omega⟩
-      refine Rch.tr hs ?_
-      rw [hk.1, hg]
-      refine Rch.tr (ol_loop k (g + 1) 1 e) ?_
-      have := ol_over g (1 + 3 * k) e hk.2
-      rw [show g + (1 + 3 * k) + e + 1 = n + 1 by omega] at this
-      exact this
-    · -- 3x + 1 = n + 1
-      have hk : n - x = 0 + 2 * x := by omega
-      refine Rch.tr hs ?_
-      rw [hk]
-      have := ol_loop x 0 1 0
-      rw [Nat.zero_add] at this
-      refine Rch.tr this ?_
-      have := (ol_end (1 + 3 * x) 0 (by omega)).1 rfl
-      rw [show 1 + 3 * x = n + 1 by omega] at this ⊢
-      exact this
-  · have hk : n - x = 1 + 2 * x := by omega
-    refine HaltAt.back hs ?_
-    rw [hk]
-    have := ol_loop x 0 1 1
-    rw [Nat.zero_add] at this
-    exact HaltAt.back this ((ol_end (1 + 3 * x) 1 (by omega)).2.1 rfl)
-  · obtain ⟨e, hk⟩ : ∃ e, n - x = e + 2 * x := ⟨n - 3 * x, by omega⟩
-    refine Rch.tr hs ?_
-    rw [hk]
-    have := ol_loop x 0 1 e
-    rw [Nat.zero_add] at this
-    refine Rch.tr this ?_
-    have := (ol_end (1 + 3 * x) e (by omega)).2.2 (by omega)
-    rw [show 1 + 3 * x + e - 1 = n by omega] at this
-    rw [show 3 * x + 1 = 1 + 3 * x by omega]
+theorem step_odd (M v : Nat) (hv : v % 2 = 1) (h3 : 3 ≤ v) (hM : v ≤ M) :
+    (M < tc v → Rch1 (CS M v) (RS (M + 1))) ∧ (tc v = M → HaltAt (CS M v)) ∧
+      (tc v < M → Rch1 (CS M v) (CS M (tc v))) := by
+  obtain ⟨k, rfl⟩ : ∃ k, v = 2 * k + 3 := ⟨v / 2 - 1, by omega⟩
+  have ht : tc (2 * k + 3) = 3 * k + 5 := by rw [tc_odd _ hv]; omega
+  rw [ht]
+  obtain ⟨r, hr⟩ : ∃ r, r = M - (2 * k + 3) := ⟨_, rfl⟩
+  -- from the start to the odd loop: the marker on cell `k`
+  have hs : Rch1 (CS M (2 * k + 3)) (OL (k + 1) 1 (r + k)) := by
+    unfold CS
+    rw [show 2 * k + 3 - 1 = (2 * k + 1) + 1 by omega, ← hr]
+    refine Reach1.trans_reach delta (disp_mark _ _) ?_
+    have := hl_loop k 0 1 r
+    rw [show 1 + 2 * k = 2 * k + 1 by omega, Nat.zero_add] at this
+    exact Rch.tr this (hl_odd _ _)
+  -- a full odd loop: the hole ends at `3k + 4`
+  have hfull : k + 2 ≤ r → Rch1 (CS M (2 * k + 3)) (OL 0 (3 * k + 4) (r - k - 2)) := by
+    intro hk
+    refine Reach1.trans_reach delta hs ?_
+    have := ol_loop (k + 1) 0 1 (r - k - 2)
+    rw [show 0 + (k + 1) = k + 1 by omega, show r - k - 2 + 2 * (k + 1) = r + k by omega,
+      show 1 + 3 * (k + 1) = 3 * k + 4 by omega] at this
     exact this
+  refine ⟨fun h => ?_, fun h => ?_, fun h => ?_⟩
+  · -- the hole runs off the block
+    obtain ⟨i, e, he, he1⟩ : ∃ i e, r + k = e + 2 * i ∧ e ≤ 1 := ⟨(r + k) / 2, (r + k) % 2, by omega, by omega⟩
+    obtain ⟨c, hc⟩ : ∃ c, k + 1 = c + 1 + i := ⟨k - i, by omega⟩
+    refine Reach1.trans_reach delta hs ?_
+    rw [he, hc]
+    refine Rch.tr (ol_loop i (c + 1) 1 e) ?_
+    refine Rch.tr (ol_over c _ e he1) ?_
+    unfold RS CS
+    rw [show c + (1 + 3 * i) + e + 2 = M + 1 - 1 by omega, Nat.sub_self]
+    fin
+  · obtain ⟨L, R, hh⟩ := (ol_end (3 * k + 4) (r - k - 2)).1 (by omega)
+    exact ⟨L, R, Rch.tr (hfull (by omega)).reach hh⟩
+  · refine Reach1.trans_reach delta (hfull (by omega)) ?_
+    refine Rch.tr ((ol_end (3 * k + 4) (r - k - 2)).2 (by omega)) ?_
+    unfold CS
+    rw [show 3 * k + 5 - 1 = 3 * k + 4 by omega, show M - (3 * k + 5) = r - k - 2 by omega]
+    fin
 
 /-! ## one step -/
 
-theorem step_cases (n x : Nat) (h1 : 1 ≤ x) (hx : x ≤ n) :
-    (Cond n (collatz x) → collatz x ≠ n → Rch (PB n x) (RS (n + 1))) ∧
-      (collatz x = n → HaltAt (PB n x)) ∧
-      (¬ Cond n (collatz x) → Rch (PB n x) (PB n (collatz x))) := by
+theorem step_cases (n x : Nat) (h2 : 2 ≤ x) (hx : x ≤ n) :
+    (Cond n (tc x) → tc x ≠ n → Rch1 (CS n x) (RS (n + 1))) ∧
+      (tc x = n → HaltAt (CS n x)) ∧
+      (¬ Cond n (tc x) → Rch1 (CS n x) (CS n (tc x))) := by
   rcases Nat.mod_two_eq_zero_or_one x with hx2 | hx2
-  · have e := even_step n x hx2 h1 hx
-    rw [collatz_even x hx2]
-    refine ⟨fun hc hne => ?_, fun h => ?_, fun hc => ?_⟩
+  · have e := step_even n x hx2 h2 hx
+    rw [tc_even x hx2]
+    refine ⟨fun hc hne => ?_, fun h => ?_, fun _ => e⟩
     · rcases hc with hc | hc
-      · exact e.1 hc
+      · rw [hc] at e
+        exact Reach1.trans_reach delta e (step_one n (by omega)).reach
       · omega
     · omega
-    · exact e.2 (fun h => hc (Or.inl h))
-  · have o := odd_step n x hx2 hx
-    rw [collatz_odd x hx2]
+  · have o := step_odd n x hx2 (by omega) hx
     refine ⟨fun hc hne => ?_, fun h => o.2.1 h, fun hc => ?_⟩
     · rcases hc with hc | hc
-      · omega
+      · rw [tc_odd x hx2] at hc; omega
       · exact o.1 (by omega)
     · exact o.2.2 (by unfold Cond at hc; omega)
 
 /-- The round from `x`: it stops at the first `i` with `Cond n (it (i + 1) x)`. -/
-theorem round_run (n : Nat) : ∀ i x, 1 ≤ x → x ≤ n →
+theorem round_run (n : Nat) : ∀ i x, 2 ≤ x → x ≤ n →
     (∀ j, j < i → ¬ Cond n (it (j + 1) x)) → Cond n (it (i + 1) x) →
-    (it (i + 1) x = n → HaltAt (PB n x)) ∧ (it (i + 1) x ≠ n → Rch (PB n x) (RS (n + 1))) := by
+    (it (i + 1) x = n → HaltAt (CS n x)) ∧ (it (i + 1) x ≠ n → Rch1 (CS n x) (RS (n + 1))) := by
   intro i
   induction i with
   | zero =>
-    intro x h1 hx _ hc
-    have s := step_cases n x h1 hx
+    intro x h2 hx _ hc
+    have s := step_cases n x h2 hx
     exact ⟨s.2.1, s.1 hc⟩
   | succ i ih =>
-    intro x h1 hx hfirst hc
-    have h0 : ¬ Cond n (collatz x) := hfirst 0 (by omega)
-    have hpos := collatz_pos x (by omega)
-    have s := (step_cases n x h1 hx).2.2 h0
-    have hy : 1 ≤ collatz x ∧ collatz x ≤ n := by unfold Cond at h0; omega
-    have := ih (collatz x) hy.1 hy.2
+    intro x h2 hx hfirst hc
+    have h0 : ¬ Cond n (tc x) := hfirst 0 (by omega)
+    have s := (step_cases n x h2 hx).2.2 h0
+    have hy : 2 ≤ tc x ∧ tc x ≤ n := by
+      have := tc_pos x (by omega); unfold Cond at h0; omega
+    have := ih (tc x) hy.1 hy.2
       (fun j hj => by rw [← it_succ']; exact hfirst (j + 1) (by omega))
       (by rw [← it_succ']; exact hc)
     rw [← it_succ'] at this
-    exact ⟨fun h => HaltAt.back s (this.1 h), fun h => Rch.tr s (this.2 h)⟩
+    exact ⟨fun h => HaltAt.back s.reach (this.1 h), fun h => Reach1.trans_reach delta s (this.2 h).reach⟩
 
 end TM.WeakCollatz
