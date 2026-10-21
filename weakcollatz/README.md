@@ -21,6 +21,8 @@ Standard text (bbchallenge format):
 the 16-state cycle detector of the release *Two exact binary Collatz Turing machines*, which
 introduced the shortcut map, the halving by a marker meeting the hole, and the odd step that
 reuses the marker. The 14-state machine is that machine with two states removed (see below).
+`sym3/` is a 10-state machine with 3 symbols (BB(10, 3)): the same algorithm with the end of
+the block marked by a 2.
 
 ## The search
 
@@ -93,3 +95,5 @@ nothing; see `RECORDS.md`.
 * `m16/`: the given 16-state machine, with its own proof (`TM.WeakCollatz16.halts_iff`).
 * `v1/`: the earlier 25-state design and its 23-state merge, with their own proof
   (`../lean/TinyCryptids/WeakCollatzV1/`).
+* `sym3/`: a 10-state, 3-symbol machine, with its own proof (`TM3.WeakCollatz.halts_iff`,
+  `../lean/TinyCryptids/WeakCollatz3/`).

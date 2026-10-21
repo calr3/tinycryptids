@@ -1,0 +1,87 @@
+; ============================================================================
+; A 10-state, 3-symbol Turing machine that HALTS IFF THE COLLATZ MAP HAS A
+; CYCLE OTHER THAN 1 -> 4 -> 2 -> 1 (the weak Collatz conjecture is false).
+; Start on a blank tape (0) in the first state. A transition to `halt` halts;
+; `-` marks transitions that are never used (they would halt too).
+; Lean proof: lean/TinyCryptids/WeakCollatz3/Main.lean, theorem TM3.WeakCollatz.halts_iff.
+; Standard text: 2RG0RB---_1LC1RB2LC_0LI0LD2LD_1RE1LD1LF_2RC0RB---_0RJ2RG---_1RH1RG1RH_2LI1RC1RH_0RA1LI1LI_0LI1RJ1RZ
+; ============================================================================
+;
+; SHORTCUT MAP: T(v) = v/2 (v even), (3v+1)/2 (v odd).  T has a cycle through
+;   some n >= 3 iff the Collatz map has a cycle other than 1 -> 4 -> 2 -> 1.
+;
+; ALGORITHM: rounds M = 3, 4, ...: v := M, then v := T(v) until v = 1 or
+;   v >= M; HALT iff v = M.
+;
+; TAPE C(M, v): cells 0 .. M-2 hold 1 except the HOLE (0) at cell v-1; cell
+;   M-1 holds the END MARK 2; the rest is blank.  Head on cell 0 in `disp`.
+;   (v = M: M-1 ones, then the end mark, which is the hole.)
+;
+; STEP:
+;   v = 1    write 2 on the hole (cell 0), make the end mark a 1, write a new
+;            end mark after it, go home (turning the 2 on cell 0 into a 1).
+;   halving  `disp` writes a MARKER (0) on cell 0; per round trip the hole moves
+;            left one cell and the marker right one.  Neighbours (v = 2k): the
+;            marker (cell k-1) is the result hole.  Same cell (v = 2k+1): the
+;            hole is on cell k.
+;   odd      the ODD MARKER (2) goes on cell k, the hole on k+1; per round trip
+;            the odd marker moves left one cell and the hole right two (on the
+;            end mark the hole leaves the 2).  When the marker passes cell 0
+;            the hole is at 3k+1 = T(v)-1: if it is the end mark, T(v) = M:
+;            HALT.  If the hole has to pass the end mark first (T(v) > M): the
+;            end mark becomes a 1, a new one goes after it, go home.
+;   home     run left over 1s and 2s (writing 1s) to cell -1, step right.
+; The blank tape acts as v = 1 and gives C(3, 3).
+; ============================================================================
+
+blank_symbol: 0
+
+disp    ; dispatch on cell 0: 0 = the hole (v = 1); 1 = write the marker, start halving
+    0 2 R toHO    ; v = 1: next round
+    1 0 R toH    ; the marker
+    -
+
+toH    ; halving: run right to the hole, fill it (the end mark stays 2)
+    0 1 L newH    ; fill the hole
+    1 1 R toH
+    2 2 L newH    ; the hole is the end mark (v = M)
+
+newH    ; the new hole: one cell left (halving) or two right (odd); 0: the marker (v even)
+    0 0 L home    ; the marker (v even): it is the result hole
+    1 0 L back    ; the new hole
+    2 2 L back    ; the end mark: the hole is on it
+
+back    ; run left to a marker, fill it: 0 = halving marker, 2 = odd marker
+    0 1 R mark    ; fill the halving marker
+    1 1 L back
+    2 1 L markO    ; fill the odd marker
+
+mark    ; halving: the marker moves right; 0: it meets the hole (v odd)
+    0 2 R newH    ; met the hole: v odd, the odd marker
+    1 0 R toH    ; the marker
+    -
+
+markO    ; odd: the odd marker moves left; 0: it passed cell 0
+    0 0 R check    ; passed cell 0
+    1 2 R toHO    ; the odd marker
+    -
+
+toHO    ; odd: run right to the hole, fill it; also v = 1: run to the end mark
+    0 1 R hop    ; fill the hole
+    1 1 R toHO
+    2 1 R hop    ; the hole is on the end mark: T(v) > M
+
+hop    ; odd: skip a cell; past the end mark: write the new end mark
+    0 2 L home    ; the new end mark
+    1 1 R newH
+    2 1 R hop    ; past the end mark: T(v) > M
+
+home    ; run left over 1s and 2s; at cell -1 step right: the next macro step
+    0 0 R disp    ; cell -1
+    1 1 L home
+    2 1 L home    ; a marker or the v = 1 2: fill it
+
+check    ; end of the odd step: run right to the hole; the end mark means T(v) = M
+    0 0 L home    ; the hole: T(v) < M
+    1 1 R check
+    2 1 R halt    ; T(v) = M: a cycle

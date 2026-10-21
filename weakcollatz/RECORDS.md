@@ -11,6 +11,9 @@ has a cycle other than 1 → 4 → 2 → 1
 | 23 | `v1/machines/weakcollatz_23.txt` | `minimize.py` (`cadical195`) on the 25-state `v1/` design; 22 is UNSAT for merging that design | Proven in Lean: `TM.WeakCollatzV1.M23.halts_iff` |
 | 25 | `v1/machines/weakcollatz_25.txt` | `v1/build.py`: one block, the value as a hole, cycle search by largest element | Proven in Lean: `TM.WeakCollatzV1.halts_iff` |
 
+With 3 symbols: **10** states, `sym3/machines/weakcollatz3_10.txt`, proven in Lean
+(`TM3.WeakCollatz.halts_iff`); see `sym3/RECORDS.md`.
+
 For comparison, the bbchallenge wiki's cryptid list gives a 124-state machine
 (`weak_Collatz_conjecture_124_2.txt`, marked unverified) for the same conjecture.
 

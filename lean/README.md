@@ -14,6 +14,7 @@ Every main theorem depends only on `propext`, `Classical.choice` and `Quot.sound
 | `TinyCryptids/Core/Sys.lean` | Deterministic step systems: `run`, `Reach`, `Reach1`, `Halts`, `not_halts_of_progress` |
 | `TinyCryptids/Core/Basic.lean` | **The machine model** shared by every machine: 2 symbols, stream tapes, `step`; `TM.Halts δ c` is `Sys.Halts (step δ) c`. Also `sim_run` and `halts_iff_of_sim` (a merged machine halts iff the original does) |
 | `TinyCryptids/Core/Lemmas.lean` | Single steps, scans, `Clean` words and the 2-state hole parsers |
+| `TinyCryptids/Core/Basic3.lean` | The same model with 3 symbols (`TM3`: `Sym` = `s0 s1 s2`, `s0` blank) and its single steps and scans, for `weakcollatz/sym3/` |
 | `TinyCryptids/Defs.lean` | **The definitions used in the theorem statements**, namespace `TinyCryptids`: `iterate`, `collatz` |
 | `TinyCryptids/<Machine>/` | One hand-designed machine per folder, namespace `TM.<Machine>` |
 | `Check.lean` | Every main theorem with `#check` and `#print axioms` |
@@ -35,6 +36,7 @@ Each hand-designed machine folder has the same shape:
 |---------|-----------|
 | `TM.WeakCollatz.halts_iff`; `TM.WeakCollatz16.halts_iff` (m16); `TM.WeakCollatzV1.halts_iff`, `M23` (v1) | `∃ n k, 0 < n ∧ 0 < k ∧ iterate collatz k n = n ∧ n ≠ 1 ∧ n ≠ 2 ∧ n ≠ 4` |
 | `TM.WeakCollatz.halts_iff_counter` | `Counter` (a cycle of the shortcut map through some `n ≥ 3`) |
+| `TM3.WeakCollatz.halts_iff` (3 symbols, `Core/Basic3.lean`) | the same statement as `TM.WeakCollatz` |
 
 ## Proof outlines
 
@@ -50,6 +52,10 @@ and a cycle gives a least `M` whose round halts (`exists_top`). `Cycle`: `tc`-cy
 `TinyCryptids/WeakCollatz16` is the same proof for the given 16-state machine (marker from
 cell 1, `cut` and `grow`), sharing `Spec` and `Cycle`. `TinyCryptids/WeakCollatzV1` is the
 earlier 25/23-state machine: parity walk, `EL`/`OL` loops, the same `Spec` for `collatz`.
+`TinyCryptids/WeakCollatz3` is the 10-state, 3-symbol machine (`TM3`: `Core/Basic3.lean`, the
+model of `Core/Basic.lean` with symbols `s0 s1 s2`). The end of the block is a 2 that is also
+the hole of `v = M` (`RS`, `HE`, `OE`); `ol_run` sorts the odd loop's outcomes. It shares
+`WeakCollatz/Spec` and `Cycle`.
 
 (→) by `not_halts_of_progress` over the round starts (each round strictly reaches the
 next when there is no counterexample); (←) by iterating the round up to the
