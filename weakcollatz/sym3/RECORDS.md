@@ -19,7 +19,8 @@ reference's next `C(M', v')`, or the machine must halt where the reference halts
 * **Local search** around the 10-state machine. It deleted each state `X ≠ disp`, redirected its
   incoming transitions to each other state `Y`, and changed up to two further transitions (any
   write, move, next state, or halt). Each candidate was tested on every macro step with `M ≤ 9`
-  and on the blank tape: 83 million candidates, **none** passed.
+  and on the blank tape: 83 million candidates, **none** passed. With up to three further
+  changes: 37.4 billion candidates, **none** passed.
 
 This is not a proof that 9 states is impossible: another tape layout or round structure could
 do better.
