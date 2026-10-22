@@ -66,29 +66,6 @@ State budget of the 127-state design: seed 24, enumeration 43, setup 1, powers 3
 next base and adding into A 10, compare 9, clear and restore 9 (with `HE`). After
 merging, every seed state does double duty as part of another routine.
 
-### How the design got here
-
-The first design (174 states) checked every tuple with powers computed by copying and a
-zig-zag compare; a 165-state redesign (a permanent exponent cursor, parsers instead of walks
-home, the seed tuple (4,1,1,1)) merged to 102 states. A 149-state design then let the
-exponent and base cursors sit next to a separator, started each round without a base hole
-(the marker), cut the next R from the end of the block merged into A, and made the setup a
-next-base step from the anchor: 95 states merged. The current design came from the steps
-below, each checked by the tests and merged with `kissat`:
-
-| Change | Design states | Merged |
-|---|---:|---:|
-| The merge parser is entered from the separator after the base (no walk back to the marker) | 147 | 95 |
-| A single 0 between R and Q instead of `00`: no parser crosses it | 143 | 93 |
-| R's hole stays put during a copy; the copy cursor is a second hole punched on R's first cell, which may reach R's last cell (no look-ahead, no reset walk) | 139 | |
-| The single 0 between A and R is R's hole, R has no hole of its own; adding R into A fills that 0 and cuts the new R from the end (3 states instead of 9) | 132 | 93 |
-| A may be empty again (A and R separated by three 0s) | 130 | 92 |
-| The way back after a merge is a 1-state scan to R's hole instead of a parser | 129 | 91 |
-| The compare tests "R runs out with one cell of A left" instead of first erasing a cell of A | 127 | 90 |
-
-Two changes that only removed states the merger was absorbing anyway did not help on their
-own: a direct marker placement in the `E >= 4` enumeration case, and removing the 1-cell block
-M (a gap of four 0s after B4 instead; the SAT search was much slower).
 
 ## Files and checks
 
@@ -162,15 +139,3 @@ and `TM.Fermat.M90.halts_iff`, derived from `TM.Fermat.halts_iff` through
 The merged machine in bbchallenge standard text (states numbered, `Z` = halt):
 
     1R1,1R5_0R2,1R40_1R3,1R0_1R4,1L31_1R5,0R35_1R6,1R6_0R7,1R24_0R8,1L12_1R9,1R14_1R10,0R25_1R11,---_0R12,1R11_0R13,1L33_1R14,1R30_1R15,1R25_1R16,---_0R17,1R16_0R18,0R70_1R19,1R72_1R20,1L7_1R21,---_0R22,---_0R23,0L61_1R38,1R23_0L9,1R24_0R26,1R29_1L27,---_0L28,1L27_0L27,1R42_0R7,1R11_0L34,1L3_1L32,---_0L32,0L19_0L28,1L36_0L30,1L34_1L22,1R35_0L37,1L36_0L36,1R22_0R39,1R1_0R68,0R38_1R38,1R41_0L27,1L36_0R16,---_1R44,---_0R48,0R45_0R46,1R45_0R45,0R49_0R48,1R47_0R47,1R57_0R50,1R49_1L51,1R50_0L52,1L51_1R53,1L52_0L54,0R49_0L55,1L54_0L56,1L55_0L55,1R43_1R58,1R57_0L59,1R58_1R65,0L60_0L61,1L60_0L62,1L61_0L61,1L63_0L64,1L63_0L63,1R59_0L68,0R66_0R67,1R66_0R66,1R44_0R69,1L68_1L89,1R17_0R71,1R70_0R70,1L15_0R77,0R73_0R74,1R73_0R73,1L75_1R35,---_0R77,1R76_0R76,1L78_0L78,0L79_0R82,1R80_0R80,0R81_0L83,1L78_0R82,0R85_0L83,0L84_0RZ,0L86_0L87,0R85_0L87,0L86_0L87,1R38_0L89,1L88_0L88,1R1
-
-## Where the next savings are
-
-* After merging, 26 of the states are the 13 two-state parsers (each still a singleton)
-  and 10 are the zig-zag and the clear. The parsers come in pairs that travel to the
-  same place and differ only in what they do on arrival: `MC`/`MM` (copy or merge, both
-  from the base to R), `MQ`/`CP` (add into A or compare, both to R), `MB`/`MN` (next
-  round or next base, both from the exponent cursor to the marker), and `HE`/`HS`/`HU`/
-  `HL` (all to the anchor). Merging any pair needs the decision to be readable from the
-  tape at the destination; none of the attempts so far managed that cheaply.
-* The enumeration (43 design states) is the NEXCOM step of the first design. B1's
-  different minimum length (5, against 3) costs its own branch (`en1`–`en5`, `e6`–`e9`).
