@@ -17,3 +17,7 @@ Run `lake env lean Check.lean` after `lake build`. -/
 #print axioms TM.WeakCollatzV1.M23.halts_iff
 #check @TM3.WeakCollatz.halts_iff
 #print axioms TM3.WeakCollatz.halts_iff
+#check @TM.Fermat.halts_iff
+#print axioms TM.Fermat.halts_iff
+#check @TM.Fermat.M90.halts_iff
+#print axioms TM.Fermat.M90.halts_iff

@@ -1,0 +1,479 @@
+; ============================================================================
+; A 90-state, 2-symbol Turing machine that HALTS IFF FERMAT'S LAST THEOREM
+; IS FALSE, i.e. iff x^E + y^E = z^E for some E >= 3 and x, y, z >= 1.
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/Fermat/M90.lean, theorem TM.Fermat.M90.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 127-state design of build.py / fermat.txt with states
+;   merged. States are merged only when their defined transitions agree, so
+;   each state below plays one or more ROLES of the design (its name joins
+;   them). Each transition line is tagged [role] with the role(s) that use it.
+;   A '-' line is never used. The seed roles seed0..seed23 run once at the
+;   start and only ever read 0, so many states double as a seed step.
+;
+; TAPE LAYOUT (unary blocks of 1s, separated by 00; a block of length v+2
+; holds the value v):
+;
+;      B1=E 00 B2=x 00 B3=y 00 B4=z 00 M 00 A 0 R 0 Q
+;
+;   B1..B4  the current tuple (E, x, y, z), with E >= 3 and x, y, z >= 1
+;   M       a 1-cell block ending the tuple
+;   A       accumulator: 1 + x^E + y^E is built up here (empty between tuples)
+;   R       running power base^k, r cells for the value r, after a single 0
+;   Q       scratch area for copies of R, after another single 0
+;   A HOLE is a single 0 inside a block, used as a cursor. B1 always holds
+;   one: the exponent counter, on cell 1 (the anchor) between powers and on
+;   cells 1 .. E+1 during a power (on the last cell it sits next to the
+;   separator). The base being powered holds a MARKER hole on its cell 1 and,
+;   during a round, a cursor on cells 3 .. base+1. The single 0 between A and
+;   R is R's hole (with A empty, it and the separator after M make three 0s);
+;   during a copy, R also holds a copy cursor. "Scan to the next hole"
+;   routines (2 states each) find them: a hole is a run of one or three 0s,
+;   unlike the 00 separators.
+;
+; ALGORITHM
+;   seed      write the first tuple (4,1,1,1), i.e. the 24-cell pattern
+;             10 1111 00 111 00 111 00 111 00 1 (B1 with its hole, B2..B4, M),
+;             then restore A and R via `cr4`. One seed role per pattern cell.
+;   enumerate step (E,x,y,z) to the next tuple (NEXCOM order of compositions,
+;             which reaches every tuple). On values: E>=4 -> (E-1, x+1, y, z);
+;             else (E = 3) x>=2 -> (x+1, 1, y+1, z); else y>=2 -> (y+1, 1, 1, z+1);
+;             else z>=2 -> (z+3, 1, 1, 1); this is done by moving separators.
+;   setup     the anchor plays the marker of a "next base" step: the marker
+;             goes on x, R = 1 is added into the empty A (A = 1), R = 1.
+;   power     E rounds: R := R * base (copy R onto Q base-1 times, then merge
+;             Q into R). Then the marker moves to the next base (x, y, then z)
+;             and R is added into A: the 0 between them is filled and a new
+;             R = 1 is cut from the end of the block. After z, A = 1 + x^E + y^E
+;             and R = z^E: compare.
+;   compare   erase one cell of A (from the right) and one of R (from the
+;             left) in turn; if R runs out with exactly one cell of A left,
+;             x^E + y^E = z^E: HALT. Otherwise clear the work area, restore A
+;             and R and go back to enumerate.
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0 seed: write 1 (cell 0 of the seed pattern)
+; en3   enumerate: walk over B1 (minimum length)
+start_en3
+    0 1 R en1_u5                   ; [seed0]
+    1 1 R en4                      ; [en3]
+
+; ---------- ENUMERATE: (E,x,y,z) -> next tuple --------------------------
+
+; seed1 seed: write 0 (cell 1 of the seed pattern)
+; en1   enumerate: on the E hole (B1 cell 1), step right
+; u5    move a unit into B1: walk over the block
+en1_u5
+    0 0 R en2                      ; [seed1, en1]
+    1 1 R u6                       ; [u5]
+; seed2 seed: write 1 (cell 2 of the seed pattern)
+; en2   enumerate: walk over B1 (minimum length)
+en2
+    0 1 R n2_g1                    ; [seed2]
+    1 1 R start_en3                ; [en2]
+; seed5 seed: write 1 (cell 5 of the seed pattern)
+; en4   enumerate: walk over B1 (minimum length)
+en4
+    0 1 R en5                      ; [seed5]
+    1 1 R en5                      ; [en4]
+; seed6 seed: write 0 (cell 6 of the seed pattern)
+; en5   enumerate: is E > 3? 1: case E>=4 (e6); 0: find the first non-minimal block after B1 (f1)
+en5
+    0 0 R f1_n7                    ; [seed6, en5]
+    1 1 R e6                       ; [en5]
+; e6    case E>=4: run to the end of B1
+e6
+    0 0 L e7                       ; [e6]
+    1 1 R e6                       ; [e6]
+; seed9 seed: write 1 (cell 9 of the seed pattern)
+; e7    case E>=4: erase the last 1 of B1 (E-1)
+e7
+    0 1 R seed10                   ; [seed9]
+    1 0 R e8_f4                    ; [e7]
+; e8    case E>=4: step over the separator
+; f4    find non-minimal block: cell 2 of the block
+e8_f4
+    0 0 R e9                       ; [e8]
+    1 1 R f5                       ; [f4]
+; e9    case E>=4: write 1 before B2 (x+1), then go back to the E hole
+e9
+    0 1 L HS1                      ; [e9]
+    -
+; HS1   scan left to the next hole, then set up the powers (su0)
+HS1
+    0 0 L HS2                      ; [HS1]
+    1 1 L HS1                      ; [HS1]
+; HS2   scan left to the next hole, then set up the powers (su0); entered mid-separator
+HS2
+    0 0 L HS1                      ; [HS2]
+    1 1 R su0                      ; [HS2]
+; seed7 seed: write 0 (cell 7 of the seed pattern)
+; f1    find non-minimal block: step over the separator
+; n7    B_h still non-minimal? walk left over B_h
+f1_n7
+    0 0 R f2                       ; [seed7, f1]
+    1 1 L k2_n8                    ; [n7]
+; seed8 seed: write 1 (cell 8 of the seed pattern)
+; f2    find non-minimal block: cell 0 of the block
+f2
+    0 1 R e7                       ; [seed8]
+    1 1 R f3                       ; [f2]
+; seed14 seed: write 1 (cell 14 of the seed pattern)
+; f3    find non-minimal block: cell 1 of the block
+f3
+    0 1 R nb0                      ; [seed14]
+    1 1 R e8_f4                    ; [f3]
+; f5    find non-minimal block: cell 3? 0 = block is minimal, try the next one; 1 = found B_h (k1)
+f5
+    0 0 R f1_n7                    ; [f5]
+    1 1 R k1                       ; [f5]
+; seed11 seed: write 0 (cell 11 of the seed pattern)
+; k1    found non-minimal B_h: run to its end
+k1
+    0 0 R k2_n8                    ; [seed11, k1]
+    1 1 R k1                       ; [k1]
+; seed12 seed: write 0 (cell 12 of the seed pattern)
+; k2    is B_h the last block? step over the separator
+; n8    B_h still non-minimal? walk left over B_h
+k2_n8
+    0 0 R k3                       ; [seed12, k2]
+    1 1 L n9                       ; [n8]
+; seed13 seed: write 1 (cell 13 of the seed pattern)
+; k3    is B_h the last block? next cell
+k3
+    0 1 R f3                       ; [seed13]
+    1 1 R k4_HL2                   ; [k3]
+; k4    is B_h the last block? 0: yes, B_h = B4 (HL); 1: no, shift a unit from B_h to B_h+1 (n2)
+; HL2   scan left to the next hole, then grow B1 at its left end (g1)
+k4_HL2
+    0 0 L HL1                      ; [k4, HL2]
+    1 1 L n2_g1                    ; [k4, HL2]
+; seed3 seed: write 1 (cell 3 of the seed pattern)
+; n2    shift unit B_h -> B_h+1: walk back
+; g1    grow B1: write 1 left of B1 (the new cell 0)
+n2_g1
+    0 1 R g2                       ; [seed3, g1]
+    1 1 L n3                       ; [n2]
+; n3    shift unit B_h -> B_h+1: fill separator cell (B_h+1 grows)
+n3
+    0 1 L n4_n5                    ; [n3]
+    -
+; n4    shift unit B_h -> B_h+1: step over the separator
+; n5    shift unit B_h -> B_h+1: erase the last 1 of B_h (separator moved left)
+n4_n5
+    0 0 L n4_n5                    ; [n4]
+    1 0 L n6                       ; [n5]
+; seed19 seed: write 1 (cell 19 of the seed pattern)
+; n6    B_h still non-minimal? walk left over B_h
+n6
+    0 1 R seed20                   ; [seed19]
+    1 1 L f1_n7                    ; [n6]
+; n9    B_h still non-minimal? 1: move its excess to B1 a unit at a time (HU); 0: done (HS2)
+n9
+    0 0 L HS2                      ; [n9]
+    1 1 L HU1                      ; [n9]
+; HL1   scan left to the next hole, then grow B1 at its left end (g1)
+HL1
+    0 0 L k4_HL2                   ; [HL1]
+    1 1 L HL1                      ; [HL1]
+; seed4 seed: write 1 (cell 4 of the seed pattern)
+; g2    grow B1: the old cell 0 becomes the E hole
+g2
+    0 1 R en4                      ; [seed4]
+    1 0 R g3_q1                    ; [g2]
+; g3    grow B1: fill the old hole; go to the new hole (uh)
+; q1    A 0 R -> A+R: run to the end of R, write 1 past it (the new R = 1)
+g3_q1
+    0 1 L uh_q2                    ; [g3, q1]
+    1 1 R g3_q1                    ; [q1]
+; HU1   scan left to the next hole, then move one unit into B1 (uh)
+HU1
+    0 0 L HU2                      ; [HU1]
+    1 1 L HU1                      ; [HU1]
+; HU2   scan left to the next hole, then move one unit into B1 (uh)
+HU2
+    0 0 L HU1                      ; [HU2]
+    1 1 R uh_q2                    ; [HU2]
+; seed22 seed: write 0 (cell 22 of the seed pattern)
+; uh    move a unit into B1: on the E hole, step right
+; q2    erase the cell before it: the new 0 after A; back to the exponent cursor (LF)
+uh_q2
+    0 0 R u1                       ; [seed22, uh]
+    1 0 L LF1                      ; [q2]
+; seed23 seed: write 1 (cell 23 of the seed pattern)
+; u1    move a unit into B1: run to the end of the block, fill the separator
+u1
+    0 1 R u2_u4_cr4                ; [seed23, u1]
+    1 1 R u1                       ; [u1]
+; u2    move a unit into B1: second separator cell
+; u4    move a unit into B1: walk over the block
+; cr4   restore A (empty) and R = 1: write 0
+u2_u4_cr4
+    0 0 R u3_cr5                   ; [u2, cr4]
+    1 1 R en1_u5                   ; [u4]
+; u3    move a unit into B1: erase cell 0 of the next block (separator moved right)
+; cr5   restore A (empty) and R = 1: write 0
+u3_cr5
+    0 0 R eD1_cr6                  ; [cr5]
+    1 0 R u2_u4_cr4                ; [u3]
+; u6    move a unit into B1: 0 = block was minimal, refill it and shift its separator too (u2); 1 = this is B_h (u7)
+u6
+    0 1 R u2_u4_cr4                ; [u6]
+    1 1 R u7                       ; [u6]
+; u7    move a unit into B1: B_h still non-minimal? 1: another unit (HU1); 0: done (HS1)
+u7
+    0 0 L HS1                      ; [u7]
+    1 1 L HU1                      ; [u7]
+
+; ---------- SETUP: the marker on x, A = 1, R = 1 ------------------------
+
+; su0   setup: on the E hole (the anchor plays the marker): step right into the next-base step (nb1)
+su0
+    0 0 R nb1                      ; [su0]
+    -
+
+; ---------- POWER: R := R * base, E times -------------------------------
+
+; bAt   base step: on the base hole, fill it
+bAt
+    0 1 R bA2                      ; [bAt]
+    -
+; bA2   base step: 0 = the cursor was on the last cell, round done: merge (MM2); 1 = punch the new base hole, copy R once more (MC)
+bA2
+    0 0 R MM2                      ; [bA2]
+    1 0 R MC1                      ; [bA2]
+; MC1   scan right to the next hole, then punch the copy cursor on R's first cell; copy R onto Q (c1)
+MC1
+    0 0 R MC2                      ; [MC1]
+    1 1 R MC1                      ; [MC1]
+; MC2   scan right to the next hole, then punch the copy cursor on R's first cell; copy R onto Q (c1)
+MC2
+    0 0 R MC1                      ; [MC2]
+    1 0 R c1                       ; [MC2]
+; MM1   scan right to the next hole, then merge Q into R (m1)
+MM1
+    0 0 R MM2                      ; [MM1]
+    1 1 R MM1                      ; [MM1]
+; MM2   scan right to the next hole, then merge Q into R (m1); entered on the separator after the base
+MM2
+    0 0 R MM1                      ; [MM2]
+    1 1 R m1                       ; [MM2]
+; c1    copy one R cell: run to the end of R, over the single 0
+c1
+    0 0 R c2                       ; [c1]
+    1 1 R c1                       ; [c1]
+; c2    copy one R cell: run to the end of Q, append 1
+c2
+    0 1 L c3                       ; [c2]
+    1 1 R c2                       ; [c2]
+; c3    copy one R cell: run back over Q and the single 0
+c3
+    0 0 L c4                       ; [c3]
+    1 1 L c3                       ; [c3]
+; c4    copy one R cell: run back to the copy cursor, fill it
+c4
+    0 1 R c5                       ; [c4]
+    1 1 L c4                       ; [c4]
+; c5    copy cursor: 0 = end of R, the copy is done (c6); 1 = punch it here, copy the next cell (c1)
+c5
+    0 0 L c6                       ; [c5]
+    1 0 R c1                       ; [c5]
+; c6    copy done: run back over R to its hole (the 0 after A); to the base cursor (NB)
+c6
+    0 0 L NB1                      ; [c6]
+    1 1 L c6                       ; [c6]
+; NB1   scan left to the next hole, then base step (bAt)
+NB1
+    0 0 L NB2                      ; [NB1]
+    1 1 L NB1                      ; [NB1]
+; NB2   scan left to the next hole, then base step (bAt)
+NB2
+    0 0 L NB1                      ; [NB2]
+    1 1 R bAt                      ; [NB2]
+; m1    merge R 0 Q: run to the end of R, fill the single 0
+m1
+    0 1 R m2                       ; [m1]
+    1 1 R m1                       ; [m1]
+; m2    merge R 0 Q: run to the end of Q
+m2
+    0 0 L m3_eAt                   ; [m2]
+    1 1 R m2                       ; [m2]
+; m3    merge R 0 Q: erase the last cell
+; eAt   exponent step: on the E hole, fill it
+m3_eAt
+    0 1 R eA2                      ; [eAt]
+    1 0 L m4                       ; [m3]
+; m4    back over R to its hole (the 0 after A); then to the exponent cursor (LF)
+m4
+    0 0 L LF1                      ; [m4]
+    1 1 L m4                       ; [m4]
+; LF1   scan left to the next hole, then skip it (the marker)
+LF1
+    0 0 L LF2                      ; [LF1]
+    1 1 L LF1                      ; [LF1]
+; LF2   scan left to the next hole, then skip it (the marker)
+LF2
+    0 0 L LF1                      ; [LF2]
+    1 1 L LG1                      ; [LF2]
+; LG1   scan left to the next hole, then exponent step (eAt)
+LG1
+    0 0 L LG2                      ; [LG1]
+    1 1 L LG1                      ; [LG1]
+; LG2   scan left to the next hole, then exponent step (eAt)
+LG2
+    0 0 L LG1                      ; [LG2]
+    1 1 R m3_eAt                   ; [LG2]
+; eA2   exponent step: 0 = the cursor was on the last cell of B1, the power is done (eD1); 1 = punch the new E hole; next round (MB)
+eA2
+    0 0 L eD1_cr6                  ; [eA2]
+    1 0 R MB1                      ; [eA2]
+; MB1   scan right to the next hole, then next round: base step on the first base cell (bA2)
+MB1
+    0 0 R MB2                      ; [MB1]
+    1 1 R MB1                      ; [MB1]
+; MB2   scan right to the next hole, then next round: base step on the first base cell (bA2)
+MB2
+    0 0 R MB1                      ; [MB2]
+    1 1 R bA2                      ; [MB2]
+; eD1   power done: run back to the start of B1
+; cr6   restore A (empty) and R = 1: write 0
+eD1_cr6
+    0 0 R eD2_cr7                  ; [eD1, cr6]
+    1 1 L eD1_cr6                  ; [eD1]
+; eD2   power done: B1 cell 0
+; cr7   restore A (empty) and R = 1: write 1, then enumerate (HE2)
+eD2_cr7
+    0 1 L HE2                      ; [cr7]
+    1 1 R eD3_nb2                  ; [eD2]
+; seed17 seed: write 0 (cell 17 of the seed pattern)
+; eD3   power done: the anchor (E hole on cell 1); to the marker (MN)
+; nb2   next base: step over the separator
+eD3_nb2
+    0 0 R nb3                      ; [seed17, nb2]
+    1 0 R MN1                      ; [eD3]
+; MN1   scan right to the next hole, then next base (nb0)
+MN1
+    0 0 R MN2                      ; [MN1]
+    1 1 R MN1                      ; [MN1]
+; MN2   scan right to the next hole, then next base (nb0)
+MN2
+    0 0 R MN1                      ; [MN2]
+    1 1 L nb0                      ; [MN2]
+
+; ---------- NEXT BASE: add R into A, or compare if done -----------------
+
+; seed15 seed: write 1 (cell 15 of the seed pattern)
+; nb0   next base: fill the marker
+nb0
+    0 1 R nb1                      ; [seed15, nb0]
+    -
+; seed16 seed: write 0 (cell 16 of the seed pattern)
+; nb1   next base: run to the end of the block
+nb1
+    0 0 R eD3_nb2                  ; [seed16, nb1]
+    1 1 R nb1                      ; [nb1]
+; seed18 seed: write 1 (cell 18 of the seed pattern)
+; nb3   next base: cell 0 of the next block
+nb3
+    0 1 R n6                       ; [seed18]
+    1 1 R nb4                      ; [nb3]
+; nb4   next base: 0 = that was the block M, so R = z^E: compare (CP2); 1 = punch the new marker, add R into A (MQ)
+nb4
+    0 0 R CP2                      ; [nb4]
+    1 0 R MQ1                      ; [nb4]
+; MQ1   scan right to the next hole, then add R into A (q0)
+MQ1
+    0 0 R MQ2                      ; [MQ1]
+    1 1 R MQ1                      ; [MQ1]
+; MQ2   scan right to the next hole, then add R into A (q0)
+MQ2
+    0 0 R MQ1                      ; [MQ2]
+    1 1 L q0                       ; [MQ2]
+; q0    A 0 R -> A+R: fill the 0 between them
+q0
+    0 1 R g3_q1                    ; [q0]
+    -
+
+; ---------- COMPARE A with R = z^E; HALT if A has one cell more ---------
+
+; CP1   scan right to the next hole, then compare: the zig-zag starts on the 0 after A (zH1)
+CP1
+    0 0 R CP2                      ; [CP1]
+    1 1 R CP1                      ; [CP1]
+; CP2   scan right to the next hole, then compare: the zig-zag starts on the 0 after A (zH1)
+CP2
+    0 0 R CP1                      ; [CP2]
+    1 1 L zH1                      ; [CP2]
+; zH1   zig-zag: run left over the gap; erase A's rightmost 1
+zH1
+    0 0 L zH1                      ; [zH1]
+    1 0 L zA1                      ; [zH1]
+; zA1   zig-zag: 0 = A is now empty, A <= R: clear R (zK1); 1 = run right to R (zG1)
+zA1
+    0 0 R zK1                      ; [zA1]
+    1 1 R zG1                      ; [zA1]
+; zG1   zig-zag: run right over the gap; erase R's leftmost 1
+zG1
+    0 0 R zG1                      ; [zG1]
+    1 0 R zZ1                      ; [zG1]
+; zZ1   zig-zag: 0 = R is now empty: check A (zX1); 1 = back to A (zH1)
+zZ1
+    0 0 L zX1                      ; [zZ1]
+    1 1 L zH1                      ; [zZ1]
+; zK1   A empty: run right over the gap, erase R's first 1, then the rest (cr1)
+zK1
+    0 0 R zK1                      ; [zK1]
+    1 0 R cr1                      ; [zK1]
+; zX1   R empty: run left over the gap, erase one more cell of A
+zX1
+    0 0 L zX1                      ; [zX1]
+    1 0 L zX2                      ; [zX1]
+; zX2   R empty: 0 = A is empty too, x^E + y^E = z^E: HALT; 1 = erase the rest of A (zX3)
+zX2
+    0 0 R halt                     ; [zX2]
+    1 0 L zX3                      ; [zX2]
+
+; ---------- CLEAR the work area, restore A and R, back to enumerate -----
+
+; cr1   clear: erase the rest of R
+cr1
+    0 0 L cr3                      ; [cr1]
+    1 0 R cr1                      ; [cr1]
+; zX3   clear: erase the rest of A
+zX3
+    0 0 L cr3                      ; [zX3]
+    1 0 L zX3                      ; [zX3]
+; cr3   clear: run left to the block M
+cr3
+    0 0 L cr3                      ; [cr3]
+    1 1 R u2_u4_cr4                ; [cr3]
+; HE1   scan left to the next hole, then enumerate (en1)
+HE1
+    0 0 L HE2                      ; [HE1]
+    1 1 L HE1                      ; [HE1]
+; HE2   scan left to the next hole, then enumerate (en1); entered on R's hole
+HE2
+    0 0 L HE1                      ; [HE2]
+    1 1 R en1_u5                   ; [HE2]
+
+; ---------- SEED only ---------------------------------------------------
+
+; seed10 seed: write 1 (cell 10 of the seed pattern)
+seed10
+    0 1 R k1                       ; [seed10]
+    -
+; seed20 seed: write 1 (cell 20 of the seed pattern)
+seed20
+    0 1 R seed21                   ; [seed20]
+    -
+; seed21 seed: write 0 (cell 21 of the seed pattern)
+seed21
+    0 0 R uh_q2                    ; [seed21]
+    -

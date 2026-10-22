@@ -1,0 +1,275 @@
+; Minimised from fermat.txt by minimize.py
+; 90 states, 2 symbols
+
+blank_symbol: 0
+
+seed0
+    0 1 R seed1
+    1 1 R seed5
+seed1
+    0 0 R seed2
+    1 1 R u6
+seed2
+    0 1 R seed3
+    1 1 R seed0
+seed3
+    0 1 R seed4
+    1 1 L n3
+seed4
+    0 1 R seed5
+    1 0 R g3
+seed5
+    0 1 R seed6
+    1 1 R seed6
+seed6
+    0 0 R seed7
+    1 1 R e6
+seed7
+    0 0 R seed8
+    1 1 L seed12
+seed8
+    0 1 R seed9
+    1 1 R seed14
+seed9
+    0 1 R seed10
+    1 0 R e8
+seed10
+    0 1 R seed11
+    -
+seed11
+    0 0 R seed12
+    1 1 R seed11
+seed12
+    0 0 R seed13
+    1 1 L n9
+seed13
+    0 1 R seed14
+    1 1 R k4
+seed14
+    0 1 R seed15
+    1 1 R e8
+seed15
+    0 1 R seed16
+    -
+seed16
+    0 0 R seed17
+    1 1 R seed16
+seed17
+    0 0 R seed18
+    1 0 R MN1
+seed18
+    0 1 R seed19
+    1 1 R nb4
+seed19
+    0 1 R seed20
+    1 1 L seed7
+seed20
+    0 1 R seed21
+    -
+seed21
+    0 0 R seed22
+    -
+seed22
+    0 0 R seed23
+    1 0 L LF1
+seed23
+    0 1 R u2
+    1 1 R seed23
+e6
+    0 0 L seed9
+    1 1 R e6
+e8
+    0 0 R e9
+    1 1 R f5
+e9
+    0 1 L HS1
+    -
+HS1
+    0 0 L HS2
+    1 1 L HS1
+HS2
+    0 0 L HS1
+    1 1 R su0
+f5
+    0 0 R seed7
+    1 1 R seed11
+k4
+    0 0 L HL1
+    1 1 L seed3
+n3
+    0 1 L n4
+    -
+n4
+    0 0 L n4
+    1 0 L seed19
+n9
+    0 0 L HS2
+    1 1 L HU1
+HL1
+    0 0 L k4
+    1 1 L HL1
+g3
+    0 1 L seed22
+    1 1 R g3
+HU1
+    0 0 L HU2
+    1 1 L HU1
+HU2
+    0 0 L HU1
+    1 1 R seed22
+u2
+    0 0 R u3
+    1 1 R seed1
+u3
+    0 0 R eD1
+    1 0 R u2
+u6
+    0 1 R u2
+    1 1 R u7
+u7
+    0 0 L HS1
+    1 1 L HU1
+su0
+    0 0 R seed16
+    -
+bAt
+    0 1 R bA2
+    -
+bA2
+    0 0 R MM2
+    1 0 R MC1
+MC1
+    0 0 R MC2
+    1 1 R MC1
+MC2
+    0 0 R MC1
+    1 0 R c1
+MM1
+    0 0 R MM2
+    1 1 R MM1
+MM2
+    0 0 R MM1
+    1 1 R mR
+c1
+    0 0 R c3
+    1 1 R c1
+c3
+    0 1 L c4
+    1 1 R c3
+c4
+    0 0 L c6
+    1 1 L c4
+c6
+    0 1 R a2
+    1 1 L c6
+a2
+    0 0 L d1
+    1 0 R c1
+d1
+    0 0 L NB1
+    1 1 L d1
+NB1
+    0 0 L NB2
+    1 1 L NB1
+NB2
+    0 0 L NB1
+    1 1 R bAt
+mR
+    0 1 R m3
+    1 1 R mR
+m3
+    0 0 L m5
+    1 1 R m3
+m5
+    0 1 R eA2
+    1 0 L LE1
+LE1
+    0 0 L LF1
+    1 1 L LE1
+LF1
+    0 0 L LF2
+    1 1 L LF1
+LF2
+    0 0 L LF1
+    1 1 L LG1
+LG1
+    0 0 L LG2
+    1 1 L LG1
+LG2
+    0 0 L LG1
+    1 1 R m5
+eA2
+    0 0 L eD1
+    1 0 R MB1
+MB1
+    0 0 R MB2
+    1 1 R MB1
+MB2
+    0 0 R MB1
+    1 1 R bA2
+eD1
+    0 0 R eD2
+    1 1 L eD1
+eD2
+    0 1 L HE2
+    1 1 R seed17
+MN1
+    0 0 R MN2
+    1 1 R MN1
+MN2
+    0 0 R MN1
+    1 1 L seed15
+nb4
+    0 0 R CP2
+    1 0 R MQ1
+MQ1
+    0 0 R MQ2
+    1 1 R MQ1
+MQ2
+    0 0 R MQ1
+    1 1 L q0
+q0
+    0 1 R g3
+    -
+CP1
+    0 0 R CP2
+    1 1 R CP1
+CP2
+    0 0 R CP1
+    1 1 L zH1
+zH1
+    0 0 L zH1
+    1 0 L zA1
+zA1
+    0 0 R zK1
+    1 1 R zG1
+zG1
+    0 0 R zG1
+    1 0 R zZ1
+zZ1
+    0 0 L X1
+    1 1 L zH1
+zK1
+    0 0 R zK1
+    1 0 R cr1
+X1
+    0 0 L X1
+    1 0 L X2
+X2
+    0 0 R halt
+    1 0 L X3
+cr1
+    0 0 L cr3
+    1 0 R cr1
+X3
+    0 0 L cr3
+    1 0 L X3
+cr3
+    0 0 L cr3
+    1 1 R u2
+HE1
+    0 0 L HE2
+    1 1 L HE1
+HE2
+    0 0 L HE1
+    1 1 R seed1

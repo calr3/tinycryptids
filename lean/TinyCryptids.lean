@@ -6,3 +6,4 @@ import TinyCryptids.WeakCollatz.Main
 import TinyCryptids.WeakCollatz16.Main
 import TinyCryptids.WeakCollatzV1.M23
 import TinyCryptids.WeakCollatz3.Main
+import TinyCryptids.Fermat.M90
