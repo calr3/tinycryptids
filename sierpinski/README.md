@@ -1,5 +1,8 @@
 # A Turing machine for the Sierpiński problem (below 78557)
 
+A [Sierpiński number](https://en.wikipedia.org/wiki/Sierpi%C5%84ski_number) is an odd number k such that `k·2^n + 1` is [composite](https://en.wikipedia.org/wiki/Composite_number) for all n.
+The Sierpiński conjecture is that 78,557 is the smallest Sierpiński number. This machine halts iff that is the case.
+
 **Current best: `machines/sierpinski_60.txt`, a 60-state, 2-symbol Turing machine**
 (named-state format, see `../tools/tm.py`). Started on a blank tape, it **halts iff no odd
 k < 78557 is a Sierpiński number**: iff every odd `k < 78557` has some `n ≥ 1` with
