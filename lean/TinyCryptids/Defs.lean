@@ -7,6 +7,11 @@ no Mathlib). Proofs may use other forms internally, linked to these by lemmas.
 
 namespace TinyCryptids
 
+/-- `p` is prime: at least 2, and no `d` with `2 ≤ d < p` divides it. -/
+def Prime (p : Nat) : Prop := 2 ≤ p ∧ ∀ d, d < p → 2 ≤ d → p % d ≠ 0
+
+instance : DecidablePred Prime := fun p => by unfold Prime; exact inferInstance
+
 /-- `f` applied `k` times. -/
 def iterate (f : Nat → Nat) : Nat → Nat → Nat
   | 0, x => x

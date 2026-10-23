@@ -16,11 +16,13 @@ def _out(ns, name):
     return os.path.join(ROOT, 'lean', 'TinyCryptids', ns, name + '.lean')
 
 def _delta_lines(name, order, states, halt, st):
+    # state names that clash with the directions `Dir.L` / `Dir.R` are qualified
+    q = lambda n: f'{st}.{n}' if n in ('L', 'R') else n
     L = [f'def {name} : {st} → Bool → Option (Bool × Dir × {st})']
     for n in order:
         for b, t in enumerate(states[n]):
-            L.append(f'  | {n}, {"true" if b else "false"} => ' + ('none' if t is None else
-                     f'some ({"true" if t[0] else "false"}, {t[1]}, {t[2] if t[2] in states else halt})'))
+            L.append(f'  | {q(n)}, {"true" if b else "false"} => ' + ('none' if t is None else
+                     f'some ({"true" if t[0] else "false"}, {t[1]}, {q(t[2]) if t[2] in states else halt})'))
     return L + [f'  | {halt}, _ => none']
 
 def machine_lean(design, ns):

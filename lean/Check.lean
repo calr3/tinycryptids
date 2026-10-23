@@ -21,3 +21,7 @@ Run `lake env lean Check.lean` after `lake build`. -/
 #print axioms TM.Fermat.halts_iff
 #check @TM.Fermat.M90.halts_iff
 #print axioms TM.Fermat.M90.halts_iff
+#check @TM.Sierpinski.halts_iff
+#print axioms TM.Sierpinski.halts_iff
+#check @TM.Sierpinski.M60.halts_iff
+#print axioms TM.Sierpinski.M60.halts_iff
