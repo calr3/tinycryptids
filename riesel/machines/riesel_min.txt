@@ -1,0 +1,209 @@
+; Minimised from riesel/riesel.txt by minimize_clique.py
+; 68 states, 2 symbols
+
+blank_symbol: 0
+
+seed0
+    0 0 R seed1
+    -
+seed1
+    0 0 R seed2
+    1 1 L seed1
+seed2
+    0 1 R seed3
+    1 1 R ma2
+seed3
+    0 1 R seed4
+    1 0 R g6
+seed4
+    0 1 R seed5
+    -
+seed5
+    0 1 R seed6
+    -
+seed6
+    0 1 R seed7
+    -
+seed7
+    0 1 R seed8
+    -
+seed8
+    0 0 R seed9
+    1 1 R seed8
+seed9
+    0 1 R seed10
+    1 1 L seed9
+seed10
+    0 0 R seed11
+    1 1 R seed10
+seed11
+    0 0 R seed12
+    1 1 R x2
+seed12
+    0 1 R seed13
+    1 0 R e2
+seed13
+    0 0 R seed14
+    1 1 L seed13
+seed14
+    0 1 R seed15
+    1 1 R x2
+seed15
+    0 1 R seed16
+    -
+seed16
+    0 0 R seed17
+    -
+seed17
+    0 0 R seed18
+    -
+seed18
+    0 0 R seed19
+    -
+seed19
+    0 1 R seed20
+    -
+seed20
+    0 1 R seed21
+    -
+seed21
+    0 0 R seed22
+    -
+seed22
+    0 0 R seed23
+    -
+seed23
+    0 0 R seed24
+    -
+seed24
+    0 1 R seed25
+    -
+seed25
+    0 0 R seed26
+    -
+seed26
+    0 1 R seed27
+    -
+seed27
+    0 1 R seed28
+    -
+seed28
+    0 1 R seed29
+    -
+seed29
+    0 1 R seed30
+    -
+seed30
+    0 1 R seed31
+    -
+seed31
+    0 0 R g2
+    -
+ma1
+    0 1 R ma2
+    1 0 L PM1
+ma2
+    0 0 L seed1
+    1 0 R PR1
+PR1
+    0 0 R PR2
+    1 1 R PR1
+PR2
+    0 0 R PR1
+    1 1 L ra1
+ra1
+    0 1 R ra2
+    1 1 L seed9
+ra2
+    0 1 R x2
+    1 1 R ra3
+ra3
+    0 0 L e1
+    1 1 L ma1
+PM1
+    0 0 L PM2
+    1 1 L PM1
+PM2
+    0 0 L PM1
+    1 1 R ma1
+e1
+    0 0 L e2
+    1 1 L e1
+e2
+    0 0 L ra1
+    1 0 R f6
+f6
+    0 0 L w1
+    1 1 L PM2
+x2
+    0 1 L seed13
+    1 1 R g2
+g2
+    0 1 R s6
+    1 1 R g3
+g3
+    0 1 R a4
+    1 0 R g4
+g4
+    0 1 L a6
+    1 0 R seed3
+g6
+    0 0 R g7
+    1 0 R g7
+g7
+    0 0 L s1
+    1 1 R g7
+w1
+    0 0 L w1
+    1 0 L w2
+w2
+    0 1 R g7
+    1 0 L w2
+s1
+    0 0 L t1
+    1 0 R g2
+s6
+    0 0 R s6c
+    1 1 R s6
+s6c
+    0 1 L s7
+    1 1 R s6c
+s7
+    0 0 L s7c
+    1 1 L s7
+s7c
+    0 0 L s1
+    1 1 L s7c
+t1
+    0 0 R a1
+    1 1 L D0
+a1
+    0 0 R g3
+    -
+a4
+    0 1 R a4b
+    1 1 R a4
+a4b
+    0 0 L a6
+    1 1 R a5
+a5
+    0 1 R g4
+    1 1 R a5
+a6
+    0 0 L PM1
+    1 1 L a6
+Dm
+    0 0 R halt
+    1 1 L D0
+D0
+    0 1 L D1
+    1 0 R seed8
+D1
+    0 1 L D2
+    1 0 R seed8
+D2
+    0 1 L D3
+    1 0 R seed8
+D3
+    0 1 L Dm
+    1 0 R seed8
