@@ -51,6 +51,8 @@ theorem kt_pseudo_ck (w : Nat) (hw : w + 1 < 1048576) : Rch (KT 3 (w + 1)) (CK 3
   refine Rch.tr (cnt_dec w hw _) (Rch.tr (newk_pseudo _) ?_)
   refine Rch.tr (loop0 _ 0) ?_
   unfold CK XK
+  rw [show 3 * 2 ^ 1 - 1 - 4 = 1 by decide, show 3 + 4 = 7 from rfl,
+    show ones 0 (F ::: ones 0 blank) = blank by simp only [ones_zero, cons_blank]]
   exact dfin0 _
 
 /-- the seed's step to `k = 3`: its candidate `5 = 3·2 - 1` is a prime; then `k = 5` -/
@@ -59,7 +61,7 @@ theorem kt_pseudo (w : Nat) (hw : w + 1 < 1048576) : Rch (KT 3 (w + 1)) (KT 5 w)
   have t := (test (XK 3 w) 1 3 (Nat.le_refl _) (fun e h1 h2 => by
     rw [show e = 2 by omega]; decide)).1 prime5
   refine Rch.tr t (Rch.tr (wipe _ _) ?_)
-  rw [show true ::: ones 7 (F ::: Cs w) = ones (5 + 3) (F ::: Cs w) from rfl]
+  unfold XK
   exact kloop 5 w
 
 /-! ## one candidate -/
@@ -82,11 +84,11 @@ theorem reach1_of_ne {a b : Cfg St} (h : Rch a b) (hne : a ≠ b) : Rch1 a b := 
   | zero => simp [run, Sys.run] at hn; exact absurd hn hne
   | succ n => exact ⟨n, hn⟩
 
-theorem cand (k n v : Nat) (hk : 5 ≤ k) (hn : 1 ≤ n) :
+theorem cand (k n v : Nat) (hk : k % 2 = 1) (hk3 : 3 ≤ k) (hn : 1 ≤ n) :
     (Prime (k * 2 ^ n - 1) → Rch (CK k n v) (KT (k + 2) v)) ∧
     (¬ Prime (k * 2 ^ n - 1) → Rch1 (CK k n v) (CK k (n + 1) v)) := by
-  have hodd := cand_odd k n (by omega) hn
-  have hge := cand_ge k n (by omega) hn
+  have hodd := cand_odd k n hk hn
+  have hge := cand_ge k n hk3 hn
   have t := test (XK k v) (k * 2 ^ n - 1 - 4) 3 (Nat.le_refl _) (fun e h1 h2 => by
     rw [show e = 2 by omega, show 3 + (k * 2 ^ n - 1 - 4) + 1 = k * 2 ^ n - 1 by omega]; omega)
   rw [show 3 + (k * 2 ^ n - 1 - 4) + 1 = k * 2 ^ n - 1 by omega] at t
@@ -96,35 +98,37 @@ theorem cand (k n v : Nat) (hk : 5 ≤ k) (hn : 1 ≤ n) :
     rw [show true ::: ones (k + 4) (F ::: Cs v) = ones (k + 2 + 3) (F ::: Cs v) from rfl]
     exact kloop (k + 2) v
   · obtain ⟨d, r, hdr, hd, h⟩ := t.2 hp
+    have hk1 : 1 ≤ k := by omega
     have st := Rch.tr h (Rch.tr (comp_end _ d r hd) (Rch.tr (loop0 _ _) (dfin _ _ (by omega))))
-    have e : 2 * (d + r - 2) + 3 = k * 2 ^ (n + 1) - 1 - 4 := by rw [cand_succ]; omega
+    have e : 2 * (d + r - 2) + 3 = k * 2 ^ (n + 1) - 1 - 4 := by rw [cand_succ k n hk1]; omega
     rw [e] at st
     refine reach1_of_ne st fun hc => ?_
     have := congrArg (fun c => c.R (k * 2 ^ n - 1 - 4 + 1 + 4)) hc
     simp only [CK] at this
-    rw [mw_R, mw_R, cand_succ] at this
+    rw [mw_R, mw_R, cand_succ k n hk1] at this
     simp at this; omega
 
 /-! ## the search over n, then over k -/
 
-theorem search (k v : Nat) (hk : 5 ≤ k) :
+theorem search (k v : Nat) (hk : k % 2 = 1) (hk3 : 3 ≤ k) :
     ∀ j n, 1 ≤ n → Prime (k * 2 ^ (n + j) - 1) → Rch (CK k n v) (KT (k + 2) v)
-  | 0, n, hn, hp => (cand k n v hk hn).1 hp
+  | 0, n, hn, hp => (cand k n v hk hk3 hn).1 hp
   | j + 1, n, hn, hp => by
     by_cases h : Prime (k * 2 ^ n - 1)
-    · exact (cand k n v hk hn).1 h
-    · refine Rch.tr ((cand k n v hk hn).2 h).reach (search k v hk j (n + 1) (by omega) ?_)
+    · exact (cand k n v hk hk3 hn).1 h
+    · refine Rch.tr ((cand k n v hk hk3 hn).2 h).reach (search k v hk hk3 j (n + 1) (by omega) ?_)
       rw [show n + 1 + j = n + (j + 1) by omega]; exact hp
 
-theorem good_reach (k v : Nat) (hk : 5 ≤ k) (hg : Good k) : Rch (CK k 1 v) (KT (k + 2) v) := by
+theorem good_reach (k v : Nat) (hk : k % 2 = 1) (hk3 : 3 ≤ k) (hg : Good k) :
+    Rch (CK k 1 v) (KT (k + 2) v) := by
   obtain ⟨N, hN, hp⟩ := hg
-  exact search k v hk (N - 1) 1 (Nat.le_refl _) (by rw [show 1 + (N - 1) = N by omega]; exact hp)
+  exact search k v hk hk3 (N - 1) 1 (Nat.le_refl _) (by rw [show 1 + (N - 1) = N by omega]; exact hp)
 
-theorem bad_loops (k w : Nat) (hk : 5 ≤ k) (hb : ¬ Good k) : ¬ Halts delta (CK k 1 w) := by
+theorem bad_loops (k w : Nat) (hk : k % 2 = 1) (hk3 : 3 ≤ k) (hb : ¬ Good k) : ¬ Halts delta (CK k 1 w) := by
   refine not_halts_of_progress delta (fun c => ∃ n, 1 ≤ n ∧ c = CK k n w) ?_ _ ⟨1, Nat.le_refl _, rfl⟩
   rintro c ⟨n, hn, rfl⟩
   exact ⟨CK k (n + 1) w, ⟨n + 1, by omega, rfl⟩,
-    (cand k n w hk hn).2 (fun hp => hb ⟨n, hn, hp⟩)⟩
+    (cand k n w hk hk3 hn).2 (fun hp => hb ⟨n, hn, hp⟩)⟩
 
 /-- the counter: one decrement for each tested `k = 3, 5, …, 509201` -/
 def C0 : Nat := 254599
@@ -148,7 +152,7 @@ theorem reach_i : ∀ i, i ≤ C0 + 1 → (∀ k, k % 2 = 1 → 3 ≤ k → k < 
     obtain ⟨w, hw⟩ : ∃ w, C0 + 1 - (i + 1) = w + 1 := ⟨C0 - (i + 1), by omega⟩
     rw [hw] at ih
     have st := kt_next (3 + 2 * (i + 1)) w (by omega) (by unfold C0 at hw; omega)
-    have g := good_reach (3 + 2 * (i + 1)) w (by omega)
+    have g := good_reach (3 + 2 * (i + 1)) w (by omega) (by omega)
       (hg (3 + 2 * (i + 1)) (by omega) (by omega) (by omega))
     rw [show C0 + 1 - (i + 2) = w by omega,
       show 3 + 2 * (i + 2) = 3 + 2 * (i + 1) + 2 by omega]
@@ -170,7 +174,7 @@ theorem halts_iff :
     Halts delta start ↔ ∀ k, k % 2 = 1 → k < 509203 → ∃ n, 1 ≤ n ∧ Prime (k * 2 ^ n - 1) := by
   constructor
   · intro hH
-    have key : ∀ i, i ≤ C0 → ∀ k, k % 2 = 1 → 3 ≤ k → k < 3 + 2 * i → Good k := by
+    have key : ∀ i, i ≤ C0 + 1 → ∀ k, k % 2 = 1 → 3 ≤ k → k < 3 + 2 * i → Good k := by
       intro i
       induction i with
       | zero => intro _ k _ _ h; omega
@@ -188,12 +192,15 @@ theorem halts_iff :
             have r2 := Rch.tr r (kt_next (3 + 2 * i) w (by omega) (by unfold C0 at hw; omega))
             apply Classical.byContradiction
             intro hb
-            exact bad_loops (3 + 2 * i) w (by omega) hb (halts_det hH r2)
+            exact bad_loops (3 + 2 * i) w (by omega) (by omega) hb (halts_det hH r2)
     intro k h1 h2
     rcases Nat.lt_or_ge k 3 with h | h
     · obtain rfl : k = 1 := by omega
       exact good_one
-    · exact key C0 (Nat.le_refl _) k h1 h (by unfold C0; omega)
+    · refine key (C0 + 1) (Nat.le_refl _) k h1 h ?_
+      have e : 3 + 2 * (C0 + 1) = 509203 := by unfold C0; decide
+      rw [e]
+      exact h2
   · intro h; exact (haltAt_of h).halts
 
 end TM.Riesel

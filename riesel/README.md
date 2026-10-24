@@ -13,7 +13,7 @@ k < 509203 is a Riesel number**: iff every odd `k < 509203` has some `n ≥ 1` w
 
 where `Prime p := 2 ≤ p ∧ ∀ d, d < p → 2 ≤ d → p % d ≠ 0` (`../lean/TinyCryptids/Defs.lean`).
 The Lean development in `../lean/TinyCryptids/Riesel/` states this for the design machine
-(`TM.Riesel.halts_iff`).
+(`TM.Riesel.halts_iff`) and, via `halts_iff_of_sim`, for the merged one (`TM.Riesel.M68.halts_iff`).
 
 The statement is Σ₁ ("for each of finitely many k there is an n"), so unlike the other
 machines this one halts iff the statement is **true**. 509203 is a Riesel number (every
@@ -113,6 +113,7 @@ State budget of the 91-state design: seed 32, mod walk and divisor test 16, shif
 | `test_routines.py` | The counter decrement on 1,172 values (and the halt at 0), the loop on R (`m = 0 … 39`) and on K (`|K| = 1 … 39`), and trial division of every odd Q from 5 to 399, on hand-placed tapes |
 | `test_e2e.py` | From a blank tape: the region for every candidate reached in 3·10⁸ steps, with C, K, D and R checked at the end of each doubling; variants with a counter `c0 = 0 … 5` halt after `k = 2·c0 + 3`; 10⁸ steps of the real machine |
 | `gen_lean.py` | Emits `../lean/TinyCryptids/Riesel/Machine.lean` |
+| `gen_reduced_lean.py` | Emits `../lean/TinyCryptids/Riesel/M68.lean` (the merged machine and its theorem) |
 | `annotate.py` | The annotated listing for a merged machine |
 
 Shared tools in `../tools/`: `tm.py` (format, standard text), `sim.c` (`gcc -O2 -o ../tools/sim
