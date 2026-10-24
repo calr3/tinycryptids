@@ -9,4 +9,5 @@ import TinyCryptids.WeakCollatzV1.M23
 import TinyCryptids.WeakCollatz3.Main
 import TinyCryptids.Fermat.M90
 import TinyCryptids.Sierpinski.M60
+import TinyCryptids.Riesel.M76
 import TinyCryptids.OddPerfect.M37

@@ -1,0 +1,419 @@
+; ============================================================================
+; A 76-state, 2-symbol Turing machine that HALTS IFF NO ODD k < 509203 IS A
+; RIESEL NUMBER, i.e. iff every odd k < 509203 has some n >= 1 with
+; k*2^n - 1 prime. (A Sigma_1 statement: the machine halts iff it is TRUE.)
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/Riesel/M76.lean, theorem TM.Riesel.M76.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 113-state design of build.py / riesel.txt with
+;   states merged. States are merged only when their defined transitions agree,
+;   so each state below plays one or more ROLES of the design (its name joins
+;   them). Each transition line is tagged [role] with the role(s) that use it.
+;   A '-' line is never used. The seed roles run once at the start and only
+;   ever read 0, so most of them double as a step of some other routine.
+;
+; TAPE LAYOUT (blocks of 1s separated by 00):
+;
+;      C 00 K 00 D 00 R
+;
+;   C  a binary counter c: five groups of four bits b3 b2 b1 b0, each followed
+;      by a marker 1, most significant group first; c is the number of k
+;      still to come after the current one
+;   K  k + 7 cells while k is tested (no hole)
+;   D  d+2 cells: the trial divisor d >= 3; its HOLE (a single 0) at cell c+1
+;      is a cyclic counter c in [0, d)
+;   R  r+2 cells: r = P - d; during the mod walk its hole counts the steps
+;
+; ALGORITHM (k = 5, 7, ..., 509201; for each k, P = k*2 - 1, k*4 - 1, ...)
+;   mod walk r times: advance the D hole cyclically, then
+;             the R hole. When the R hole runs off its block, d | P iff the D
+;             hole is back at cell 1: then P is composite.
+;   shift     d := d+1, r := r-1; when r = 0, P is prime.
+;   composite rebuild D := 3, R := P - 1 cells with a hole at cell 1, then the
+;             loop doubles R: the next P is 2P + 1 = k*2^(n+1) - 1.
+;   prime     wipe D and R; the loop moves K one cell at a time into K' on its
+;             right and copies each cell to T beyond K'; then decrement C
+;             (HALT if it was 0: k was 509201); K and K' join (k := k + 2); T
+;             becomes D := 3 and R, and the loop doubles R: P = 2k - 1.
+;   loop      erase the last cell of X; it reappears as the first cell of X'
+;             (the separator moves left) and one more cell is appended to T.
+;             It stops at the first 0: the R hole, or the separator left of K.
+;   seed      write C = 254599 and K for the step to k = 5 (k = 1: 3 and
+;             k = 3: 5 are prime).
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0  seed: write 1 and step right
+; h1     make the R hole at cell 1 (the loop stops there)
+start_h1
+    0 1 R ma1_maw3             ; [seed0]
+    1 0 R h3_s8                ; [h1]
+
+; ---------- MOD WALK: does d divide P? ----------------------------------
+
+; seed1  seed: write 1 and step right
+; ma1    advance the D hole: fill it
+; maw3   wrap around: new hole at cell 1, then go to the R hole (PR)
+ma1_maw3
+    0 1 R ma2_ra1              ; [seed1, ma1]
+    1 0 R PR1                  ; [maw3]
+; seed2  seed: write 1 and step right
+; ma2    advance the D hole: step over the next cell
+; ra1    advance the R hole: fill it
+ma2_ra1
+    0 1 R ra2                  ; [seed2, ra1]
+    1 1 R ma3                  ; [ma2]
+; ma3    advance the D hole: is that cell the last one of D? 0: yes, wrap around
+ma3
+    0 0 L maw1                 ; [ma3]
+    1 1 L ma4                  ; [ma3]
+; seed4  seed: write 1 and step right
+; ma4    advance the D hole: make the new hole, then go to the R hole (PR)
+ma4
+    0 1 R sh1                  ; [seed4]
+    1 0 R PR1                  ; [ma4]
+; seed9  seed: write 0 and step right
+; maw1   wrap around: run left to the start of D
+maw1
+    0 0 R maw2                 ; [seed9, maw1]
+    1 1 L maw1                 ; [maw1]
+; seed10 seed: write 1 and step right
+; maw2   wrap around: step over cell 0
+maw2
+    0 1 R ret2_b7              ; [seed10]
+    1 1 R ma1_maw3             ; [maw2]
+; PR1    scan right to the next hole, then advance the R hole (ra1)
+PR1
+    0 0 R PR2                  ; [PR1]
+    1 1 R PR1                  ; [PR1]
+; PR2    scan right to the next hole, then advance the R hole (ra1)
+PR2
+    0 0 R PR1                  ; [PR2]
+    1 1 L ma2_ra1              ; [PR2]
+; seed3  seed: write 1 and step right
+; ra2    advance the R hole: step over the next cell
+ra2
+    0 1 R ma4                  ; [seed3]
+    1 1 R ra3                  ; [ra2]
+; ra3    advance the R hole: last cell of R? 0: yes, the walk is over: test the D hole (PK)
+ra3
+    0 0 L PK1                  ; [ra3]
+    1 1 L ra4_sh2_sh7          ; [ra3]
+; seed6  seed: write 0 and step right
+; ra4    advance the R hole: make the new hole, then back to the D hole (PM)
+; sh2    shift: d+1 (fill the first separator cell)
+; sh7    make the R hole at cell 1, then start the mod walk (PM)
+ra4_sh2_sh7
+    0 0 R sh3                  ; [seed6, sh2]
+    1 0 L PM1                  ; [ra4, sh7]
+; PM1    scan left to the next hole, then advance the D hole (ma1)
+PM1
+    0 0 L PM2                  ; [PM1]
+    1 1 L PM1                  ; [PM1]
+; PM2    scan left to the next hole, then advance the D hole (ma1)
+PM2
+    0 0 L PM1                  ; [PM2]
+    1 1 R ma1_maw3             ; [PM2]
+; PK1    scan left to the next hole, then test whether the hole is at cell 1 (k1)
+PK1
+    0 0 L PK2                  ; [PK1]
+    1 1 L PK1                  ; [PK1]
+; PK2    scan left to the next hole, then test whether the hole is at cell 1 (k1)
+PK2
+    0 0 L PK1                  ; [PK2]
+    1 1 L k1                   ; [PK2]
+; seed18 seed: write 0 and step right
+; k1     divisor test: 0: the D hole is at cell 1, d | P: composite, rebuild (x1); 1: no
+k1
+    0 0 R x1                   ; [seed18, k1]
+    1 1 R k2                   ; [k1]
+; seed26 seed: write 1 and step right
+; k2     not a divisor: step right
+k2
+    0 1 R h0                   ; [seed26]
+    1 1 R k3                   ; [k2]
+; k3     not a divisor: fill the D hole
+k3
+    0 1 L rs1                  ; [k3]
+    -
+; seed23 seed: write 0 and step right
+; rs1    not a divisor: run left to the start of D
+rs1
+    0 0 R rs2                  ; [seed23, rs1]
+    1 1 L rs1                  ; [rs1]
+; seed24 seed: write 0 and step right
+; rs2    not a divisor: step over cell 0
+rs2
+    0 0 R seed25               ; [seed24]
+    1 1 R rs3_a3               ; [rs2]
+; rs3    not a divisor: hole back at cell 1, then shift
+; a3     doubling: fill the gap
+rs3_a3
+    0 1 R a4                   ; [a3]
+    1 0 R sh1                  ; [rs3]
+
+; ---------- SHIFT: d+1, r-1 ---------------------------------------------
+
+; seed5  seed: write 1 and step right
+; sh1    shift: run right to the end of D
+sh1
+    0 1 R ra4_sh2_sh7          ; [seed5, sh1]
+    1 1 R sh1                  ; [sh1]
+; seed7  seed: write 1 and step right
+; sh3    shift: r-1 (erase the first cell of R)
+sh3
+    0 1 R sh4                  ; [seed7]
+    1 0 R sh4                  ; [sh3]
+; seed8  seed: write 0 and step right
+; sh4    step over cell 0 of R
+sh4
+    0 0 R maw1                 ; [seed8]
+    1 1 R sh5_b2               ; [sh4]
+; seed12 seed: write 1 and step right
+; sh5    step over cell 1 of R
+; b2     new k: fill the gap (K gets 2 cells)
+sh5_b2
+    0 1 R c6b_b3               ; [seed12, b2]
+    1 1 R sh6                  ; [sh5]
+; sh6    does R have a cell 2? 0: no, r = 0: P is prime, wipe (w1); 1: yes
+sh6
+    0 0 L w1                   ; [sh6]
+    1 1 L ra4_sh2_sh7          ; [sh6]
+
+; ---------- COMPOSITE: rebuild D := 3, R with a hole --------------------
+
+; seed19 seed: write 1 and step right
+; x1     rebuild: step over cell 0 of D
+x1
+    0 1 R seed20               ; [seed19]
+    1 1 R x2                   ; [x1]
+; x2     rebuild: step over the D hole (cell 1)
+x2
+    0 0 R c1                   ; [x2]
+    -
+; c1     rebuild: run right over the rest of D
+c1
+    0 1 R c2                   ; [c1]
+    1 1 R c1                   ; [c1]
+; c2     rebuild: fill the old separator
+c2
+    0 1 R c3                   ; [c2]
+    -
+; c3     rebuild: run right over R, then back left
+c3
+    0 0 L c4_s4                ; [c3]
+    1 1 R c3                   ; [c3]
+; c4     rebuild: run left to the D hole
+; s4     loop: step over the separator
+c4_s4
+    0 0 R c5_s5                ; [c4, s4]
+    1 1 L c4_s4                ; [c4]
+; c5     D := 3: step over cell 2 (a new k enters here from b7)
+; s5     loop: the cell joins X' on its left
+c5_s5
+    0 1 R s6                   ; [s5]
+    1 1 R c6                   ; [c5]
+; seed34 seed: write 0 and step right (then the loop, s4)
+; c6     D := 3: step over cell 3
+c6
+    0 0 R c4_s4                ; [seed34]
+    1 1 R c6b_b3               ; [c6]
+; seed13 seed: write 1 and step right
+; c6b    D := 3: step over cell 4
+; b3     new k: fill the gap
+c6b_b3
+    0 1 R b4                   ; [seed13, b3]
+    1 1 R c7                   ; [c6b]
+; seed17 seed: write 1 and step right
+; c7     D := 3: separator after D
+c7
+    0 1 R k1                   ; [seed17]
+    1 0 R c8_w2                ; [c7]
+; c8     D := 3: separator after D
+; w2     prime: step over the separator
+c8_w2
+    0 0 L w3                   ; [w2]
+    1 0 R h0                   ; [c8]
+; seed27 seed: write 1 and step right
+; h0     step over cell 0 of R
+h0
+    0 1 R seed28               ; [seed27]
+    1 1 R start_h1             ; [h0]
+; h3     run right to the end of R, then the loop (s1)
+; s8     loop: step over the erased cell, to the new last cell of X
+h3_s8
+    0 0 L s1                   ; [h3, s8]
+    1 1 R h3_s8                ; [h3]
+
+; ---------- PRIME: wipe D and R -----------------------------------------
+
+; w1     prime: erase R
+w1
+    0 0 L c8_w2                ; [w1]
+    1 0 L w1                   ; [w1]
+; w3     prime: erase D
+w3
+    0 0 L w4                   ; [w3]
+    1 0 L w3                   ; [w3]
+; w4     prime: erase D across its hole; at the separator: the loop on K (s1)
+w4
+    0 0 L s1                   ; [w4]
+    1 0 L w3                   ; [w4]
+
+; ---------- LOOP: X moves to X', copied to T ----------------------------
+
+; s1     loop: erase the last cell of X; 0: X is used up (t1)
+s1
+    0 0 L t1                   ; [s1]
+    1 0 R c4_s4                ; [s1]
+; s6     loop: run right over X'
+s6
+    0 0 R s6b                  ; [s6]
+    1 1 R s6                   ; [s6]
+; s6b    loop: step over the X'/T separator
+s6b
+    0 0 R s6c                  ; [s6b]
+    -
+; s6c    loop: run right over T, append a cell
+s6c
+    0 1 L s7                   ; [s6c]
+    1 1 R s6c                  ; [s6c]
+; s7     loop: run left over T
+s7
+    0 0 L s7b                  ; [s7]
+    1 1 L s7                   ; [s7]
+; s7b    loop: step over the X'/T separator
+s7b
+    0 0 L s7c                  ; [s7b]
+    -
+; s7c    loop: run left over X'
+s7c
+    0 0 L h3_s8                ; [s7c]
+    1 1 L s7c                  ; [s7c]
+; t1     loop end: 1: X was R (stopped at its hole), finish the doubling (a1); 0: X was K, decrement C (Dm)
+t1
+    0 0 L Dm                   ; [t1]
+    1 1 R a1                   ; [t1]
+
+; ---------- END OF THE DOUBLING -----------------------------------------
+
+; a1     doubling: step over the R hole
+a1
+    0 0 R a2                   ; [a1]
+    -
+; a2     doubling: fill the gap
+a2
+    0 1 R rs3_a3               ; [a2]
+    -
+; a4     doubling: run right over X', fill the X'/T separator
+a4
+    0 1 R a5                   ; [a4]
+    1 1 R a4                   ; [a4]
+; a5     doubling: fill the X'/T separator
+a5
+    0 1 L a6                   ; [a5]
+    -
+; a6     doubling: run left past the R hole, then to the D hole (PM): the mod walk for the next P
+a6
+    0 0 L PM1                  ; [a6]
+    1 1 L a6                   ; [a6]
+
+; ---------- COUNTER: decrement C, HALT if it was 0 ----------------------
+
+; Dm     counter: a group marker; 0: past the top group, c was 0: HALT
+Dm
+    0 0 R halt                 ; [Dm]
+    1 1 L D0                   ; [Dm]
+; D0     counter: bit 0 of the group; 0: borrow (write 1, go on); 1: write 0, done (ret1)
+D0
+    0 1 L D1                   ; [D0]
+    1 0 R ret1                 ; [D0]
+; D1     counter: bit 1 of the group; 0: borrow; 1: write 0, done
+D1
+    0 1 L D2                   ; [D1]
+    1 0 R ret1                 ; [D1]
+; D2     counter: bit 2 of the group; 0: borrow; 1: write 0, done
+D2
+    0 1 L D3                   ; [D2]
+    1 0 R ret1                 ; [D2]
+; D3     counter: bit 3 of the group; 0: borrow, to the next group; 1: write 0, done
+D3
+    0 1 L Dm                   ; [D3]
+    1 0 R ret1                 ; [D3]
+; ret1   counter: run right to the separator left of K
+ret1
+    0 0 R ret2_b7              ; [ret1]
+    1 1 R ret1                 ; [ret1]
+; seed11 seed: write 0 and step right
+; ret2   counter: step over the separator
+; b7     new k: the D hole at cell 1 of T, then D := 3 (c5)
+ret2_b7
+    0 0 R sh5_b2               ; [seed11, ret2]
+    1 0 R c5_s5                ; [b7]
+
+; ---------- NEW k: K += 2, T becomes the region -------------------------
+
+; seed14 seed: write 0 and step right
+; b4     new k: run right over K' (now part of K)
+b4
+    0 0 R b5                   ; [seed14, b4]
+    1 1 R b4                   ; [b4]
+; seed15 seed: write 0 and step right
+; b5     new k: step over the separator
+b5
+    0 0 R b6                   ; [seed15, b5]
+    -
+; seed16 seed: write 0 and step right
+; b6     new k: step over cell 0 of T
+b6
+    0 0 R c7                   ; [seed16]
+    1 1 R ret2_b7              ; [b6]
+
+; ---------- SEED only ---------------------------------------------------
+
+; seed20 seed: write 1 and step right
+seed20
+    0 1 R seed21               ; [seed20]
+    -
+; seed21 seed: write 1 and step right
+seed21
+    0 1 R seed22               ; [seed21]
+    -
+; seed22 seed: write 1 and step right
+seed22
+    0 1 R rs1                  ; [seed22]
+    -
+; seed25 seed: write 1 and step right
+seed25
+    0 1 R k2                   ; [seed25]
+    -
+; seed28 seed: write 1 and step right
+seed28
+    0 1 R seed29               ; [seed28]
+    -
+; seed29 seed: write 1 and step right
+seed29
+    0 1 R seed30               ; [seed29]
+    -
+; seed30 seed: write 1 and step right
+seed30
+    0 1 R seed31               ; [seed30]
+    -
+; seed31 seed: write 1 and step right
+seed31
+    0 1 R seed32               ; [seed31]
+    -
+; seed32 seed: write 1 and step right
+seed32
+    0 1 R seed33               ; [seed32]
+    -
+; seed33 seed: write 1 and step right
+seed33
+    0 1 R c6                   ; [seed33]
+    -

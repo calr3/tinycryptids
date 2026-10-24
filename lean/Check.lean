@@ -25,6 +25,10 @@ Run `lake env lean Check.lean` after `lake build`. -/
 #print axioms TM.Sierpinski.halts_iff
 #check @TM.Sierpinski.M60.halts_iff
 #print axioms TM.Sierpinski.M60.halts_iff
+#check @TM.Riesel.halts_iff
+#print axioms TM.Riesel.halts_iff
+#check @TM.Riesel.M76.halts_iff
+#print axioms TM.Riesel.M76.halts_iff
 #check @TM.OddPerfect.halts_iff
 #print axioms TM.OddPerfect.halts_iff
 #check @TM.OddPerfect.M37.halts_iff

@@ -41,6 +41,7 @@ Each hand-designed machine folder has the same shape:
 | `TM.Fermat.halts_iff`, `M90` | `∃ E x y z, 3 ≤ E ∧ 1 ≤ x ∧ 1 ≤ y ∧ 1 ≤ z ∧ x ^ E + y ^ E = z ^ E` |
 | `TM.OddPerfect.halts_iff`, `M37` | `∃ n, n % 2 = 1 ∧ properDivSum n = n` |
 | `TM.Sierpinski.halts_iff`, `M60` | `∀ k, k % 2 = 1 → k < 78557 → ∃ n, 1 ≤ n ∧ Prime (k * 2 ^ n + 1)` (Σ₁: the machine halts iff it is true) |
+| `TM.Riesel.halts_iff`, `M76` | `∀ k, k % 2 = 1 → k < 509203 → ∃ n, 1 ≤ n ∧ Prime (k * 2 ^ n - 1)` (Σ₁ likewise) |
 
 ## Proof outlines
 
@@ -98,3 +99,9 @@ advancing the T counter by `d` (saturating at `n + 1`: `add_unit`); `shift` move
 separator. `dloop`: over `d = 1 .. n−1` the counter becomes `min (properDivSum n) (n + 1)`.
 `round_end` (`re_fill`, `check`, `reset`): halt iff the counter is `n`; otherwise the round for
 `n + 2` starts. `seed_reach`: a pseudo-round `n = −1` reaches `RN 1`.
+
+**Riesel** (`TinyCryptids/Riesel`). The proof of an earlier 110-state Sierpiński design (a copy loop
+with two-cell separators, trial division from `d = 3`) with `k·2^n − 1`: the rebuild keeps all
+cells (`comp_end`), so the next candidate is `2P + 1` (`cand_succ`); the counter has five groups,
+with its lemmas proven for any number of groups (`Cg`, `cg_dec`, `cg_zero`); the search starts
+at `k = 5` (`good_one`, `good_three` for `k = 1, 3`).
