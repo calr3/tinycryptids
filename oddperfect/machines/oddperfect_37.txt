@@ -1,0 +1,116 @@
+; Minimised from oddperfect.txt (the 50-state design) by ../tools/minimize_clique.py: optimal for that design
+; 37 states, 2 symbols
+
+blank_symbol: 0
+
+seed0
+    0 1 R seed1
+    1 0 R PR1
+seed1
+    0 0 R seed2
+    1 1 R ra3
+seed2
+    0 0 R seed3
+    1 0 R f5
+seed3
+    0 0 R seed4
+    1 1 L seed3
+seed4
+    0 1 R seed5
+    1 1 R t1
+seed5
+    0 0 R seed6
+    1 1 L seed5
+seed6
+    0 0 R f6
+    1 1 R seed0
+ma1
+    0 1 R ma2
+    -
+ma2
+    0 0 L seed5
+    1 0 R PR1
+PR1
+    0 0 R PR2
+    1 1 R PR1
+PR2
+    0 0 R PR1
+    1 1 L seed0
+ra3
+    0 0 L e1
+    1 1 L ra4
+ra4
+    0 1 R PZ2
+    1 0 L PM1
+PM1
+    0 0 L PM2
+    1 1 L PM1
+PM2
+    0 0 L PM1
+    1 1 R ma1
+e1
+    0 0 L e2
+    1 1 L e1
+e2
+    0 0 L e3
+    -
+e3
+    0 1 L a2
+    1 1 L f1
+f1
+    0 1 R f2
+    1 1 L f1
+f2
+    0 0 R seed1
+    1 1 R f2
+f5
+    0 1 R x2
+    1 0 R f6
+f6
+    0 0 R h1
+    1 1 L PM2
+a2
+    0 0 R f2
+    1 0 L PT1
+PT1
+    0 0 L PT2
+    1 1 L PT1
+PT2
+    0 0 L PT1
+    1 1 R t1
+t1
+    0 1 R t2
+    1 0 L PC1
+t2
+    0 0 L t2
+    1 0 R PA1
+PA1
+    0 0 R PA2
+    1 1 R PA1
+PA2
+    0 0 R PA1
+    1 1 L e3
+h1
+    0 1 L h1
+    1 1 L seed3
+PC1
+    0 0 L PC2
+    1 1 L PC1
+PC2
+    0 0 L PC1
+    1 1 R f5
+x2
+    0 0 L z1
+    1 1 R x3
+x3
+    0 0 L halt
+    1 1 L z1
+z1
+    0 0 L ra4
+    1 1 L z1
+PZ1
+    0 0 R PZ2
+    1 1 R PZ1
+PZ2
+    0 0 R PZ1
+    1 0 R seed2

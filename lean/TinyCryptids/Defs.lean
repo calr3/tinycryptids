@@ -24,4 +24,15 @@ def collatz (x : Nat) : Nat := if x % 2 = 0 then x / 2 else 3 * x + 1
 example : iterate collatz 3 1 = 1 := by decide
 example : iterate collatz 7 3 = 1 := by decide
 
+/-- sum of the divisors `d ≤ k` of `n` with `d < n` -/
+def divSumBelow (n : Nat) : Nat → Nat
+  | 0 => 0
+  | k + 1 => divSumBelow n k + (if k + 1 < n ∧ n % (k + 1) = 0 then k + 1 else 0)
+
+/-- sum of the proper divisors of `n` (`properDivSum 1 = 0`); `n` is perfect iff it equals `n` -/
+def properDivSum (n : Nat) : Nat := divSumBelow n n
+
+example : properDivSum 6 = 6 := by decide
+example : properDivSum 28 = 28 := by decide
+
 end TinyCryptids

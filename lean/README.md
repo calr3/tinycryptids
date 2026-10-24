@@ -16,7 +16,7 @@ Every main theorem depends only on `propext`, `Classical.choice` and `Quot.sound
 | `TinyCryptids/Core/Lemmas.lean` | Single steps, scans, `Clean` words and the 2-state hole parsers |
 | `TinyCryptids/Core/Routines.lean` | Generic routines: cyclic advance of a hole (`Dadv`, `DadvL`, `DW`), parsers in `ones` form |
 | `TinyCryptids/Core/Basic3.lean` | The same model with 3 symbols (`TM3`: `Sym` = `s0 s1 s2`, `s0` blank) and its single steps and scans, for `weakcollatz/sym3/` |
-| `TinyCryptids/Defs.lean` | **The definitions used in the theorem statements**, namespace `TinyCryptids`: `iterate`, `collatz`, `Prime` |
+| `TinyCryptids/Defs.lean` | **The definitions used in the theorem statements**, namespace `TinyCryptids`: `iterate`, `collatz`, `Prime`, `properDivSum` |
 | `TinyCryptids/<Machine>/` | One hand-designed machine per folder, namespace `TM.<Machine>` |
 | `Check.lean` | Every main theorem with `#check` and `#print axioms` |
 
@@ -39,6 +39,7 @@ Each hand-designed machine folder has the same shape:
 | `TM.WeakCollatz.halts_iff_counter` | `Counter` (a cycle of the shortcut map through some `n ≥ 3`) |
 | `TM3.WeakCollatz.halts_iff` (3 symbols, `Core/Basic3.lean`) | the same statement as `TM.WeakCollatz` |
 | `TM.Fermat.halts_iff`, `M90` | `∃ E x y z, 3 ≤ E ∧ 1 ≤ x ∧ 1 ≤ y ∧ 1 ≤ z ∧ x ^ E + y ^ E = z ^ E` |
+| `TM.OddPerfect.halts_iff`, `M37` | `∃ n, n % 2 = 1 ∧ properDivSum n = n` |
 | `TM.Sierpinski.halts_iff`, `M60` | `∀ k, k % 2 = 1 → k < 78557 → ∃ n, 1 ≤ n ∧ Prime (k * 2 ^ n + 1)` (Σ₁: the machine halts iff it is true) |
 
 ## Proof outlines
@@ -89,3 +90,11 @@ candidate is `2P − 1`) and the `wipe` after a prime. `Counter`: four groups of
 `k = 1`. `Main`: checkpoints `CK k n v` (testing `k·2^n + 1`) and `KT k v` (the step to `k`),
 `cand`, `kt_next`, `kt_pseudo`, `kt_halt`, the `search` over `n`, `reach_i` over `k`; (→) by
 `bad_loops` (a `k` without a prime never leaves `CK k n v`), (←) by `reach_i` up to the counter's 0.
+
+**Odd perfect numbers** (`TinyCryptids/OddPerfect`). `RN n` is the end of the round for
+`n` (T holding `min (properDivSum n) (n + 1)`). `walk` (`../Sierpinski`'s mod walk, D's home
+on its last cell): the D hole ends home iff `d ∣ n`; then `add` walks it down to cell 0,
+advancing the T counter by `d` (saturating at `n + 1`: `add_unit`); `shift` moves the
+separator. `dloop`: over `d = 1 .. n−1` the counter becomes `min (properDivSum n) (n + 1)`.
+`round_end` (`re_fill`, `check`, `reset`): halt iff the counter is `n`; otherwise the round for
+`n + 2` starts. `seed_reach`: a pseudo-round `n = −1` reaches `RN 1`.
