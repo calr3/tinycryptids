@@ -11,6 +11,7 @@ Each machine comes with a formalized proof in Lean 4 (core library only, no Math
 |--------|------------|:-----:|-----------|-----:|----------|
 | [`weakcollatz/`](https://github.com/calr3/tinycryptids/tree/main/weakcollatz) | [Weak Collatz conjecture](https://en.wikipedia.org/wiki/Collatz_conjecture) | Π₁ | Halts iff the Collatz sequence has a cycle other than 1 → 4 → 2 → 1 | BB(14) | `TM.WeakCollatz.halts_iff` |
 | [`weakcollatz/sym3/`](https://github.com/calr3/tinycryptids/tree/main/weakcollatz/sym3) | [Weak Collatz conjecture](https://en.wikipedia.org/wiki/Collatz_conjecture) | Π₁ | Halts iff the Collatz sequence has a cycle other than 1 → 4 → 2 → 1 | BB(10,3) | `TM3.WeakCollatz.halts_iff` |
+| [`twinprimes/`](https://github.com/calr3/tinycryptids/tree/main/twinprimes) | [Twin prime conjecture](https://en.wikipedia.org/wiki/Twin_prime) | Π₂ | Quasihalts iff there are only finitely many twin primes (the beep: state N reading 0) | BBB(18) ‡ | `TM.TwinPrimes.M18.quasihalts_iff` |
 | [`oddperfect/`](https://github.com/calr3/tinycryptids/tree/main/oddperfect) | [No odd perfect numbers](https://en.wikipedia.org/wiki/Perfect_number#Odd_perfect_numbers) | Π₁ | Halts iff an odd perfect number exists | BB(37) | `TM.OddPerfect.M37.halts_iff` |
 | [`sierpinski/`](https://github.com/calr3/tinycryptids/tree/main/sierpinski) | [Sierpiński problem](https://en.wikipedia.org/wiki/Sierpiński_number#Smallest_Sierpiński_number) | Σ₁ | Halts iff 78557 is the smallest Sierpiński number | BB(60) | `TM.Sierpinski.M60.halts_iff` |
 | [`riesel/`](https://github.com/calr3/tinycryptids/tree/main/riesel) | [Riesel problem](https://en.wikipedia.org/wiki/Riesel_number) | Σ₁ | Halts iff 509203 is the smallest Riesel number | BB(76) | `TM.Riesel.M76.halts_iff` |
@@ -21,6 +22,8 @@ Each folder's `RECORDS.md` lists every machine, `README.md` explains the algorit
 
 † Fermat's Last Theorem is of course a theorem since Wiles, so any non-halting machine would do. This more direct machine is included as a historical curiosity, because James Randels' dissertation *Studies in Turing Machines* (1965) estimated
 that fewer than 400 states would suffice for a Fermat counterexample searcher, but didn't provide the full description. This machine (and its proof) do not use Wiles's result.
+
+‡ A beeping machine never halts. It has one designated beep transition (here state N reading 0), and it *quasihalts* if it takes that transition only finitely often; this one takes it once for every twin prime pair (p, p + 2), p ≥ 3. A Π₂ statement such as the twin prime conjecture has no finite counterexample for a halting machine to find, but a beeping machine has a last beep iff it is false. The Lean definitions are in `lean/TinyCryptids/Core/Beep.lean`. BBB(18) here counts 18-state machines with a beep transition; with a beep *state* (Aaronson's definition) the same machine needs at most one more state.
 
 ## Layout
 

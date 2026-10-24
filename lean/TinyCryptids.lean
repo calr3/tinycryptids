@@ -3,6 +3,7 @@ import TinyCryptids.Core.Basic
 import TinyCryptids.Core.Lemmas
 import TinyCryptids.Core.Routines
 import TinyCryptids.Core.Basic3
+import TinyCryptids.Core.Beep
 import TinyCryptids.WeakCollatz.Main
 import TinyCryptids.WeakCollatz16.Main
 import TinyCryptids.WeakCollatzV1.M23
@@ -11,3 +12,4 @@ import TinyCryptids.Fermat.M90
 import TinyCryptids.Sierpinski.M60
 import TinyCryptids.Riesel.M76
 import TinyCryptids.OddPerfect.M37
+import TinyCryptids.TwinPrimes.M18

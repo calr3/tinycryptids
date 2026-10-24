@@ -1,0 +1,61 @@
+; Minimised from twinprimes.txt by minimize_clique.py
+; 18 states, 2 symbols
+; Beeping machine: the BEEP is the transition of G2 reading 0 (standard text: state N reading 0).
+; It quasihalts (beeps finitely often) iff the twin prime conjecture is false.
+
+blank_symbol: 0
+
+Z2
+    0 1 L B2
+    1 1 R Z2
+B2
+    0 0 L X1
+    1 0 L Y1
+Y1
+    0 0 L Y2
+    1 1 L Y1
+Y2
+    0 1 R A2
+    1 1 L Y2
+A2
+    0 0 L W1
+    1 0 R Z1
+W1
+    0 0 R A2
+    1 1 L W1
+Z1
+    0 0 R Z2
+    1 1 R Z1
+X1
+    0 1 R C1
+    1 1 L X2
+X2
+    0 1 R H1
+    1 1 L X3
+X3
+    0 1 R C1
+    1 1 L H0
+H0
+    0 1 R H1
+    1 1 L H0
+H1
+    0 0 R G1
+    1 1 R H1
+G1
+    -
+    1 0 R G2
+G2
+    0 0 L B2   ; BEEP
+    1 1 R SC
+SC
+    0 0 L B2
+    1 1 R SC
+C1
+    0 1 L C4
+    1 1 R C1
+C4
+    0 1 R C5
+    1 1 L C4
+C5
+    -
+    1 0 R G1

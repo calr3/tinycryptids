@@ -12,6 +12,9 @@ def Prime (p : Nat) : Prop := 2 ≤ p ∧ ∀ d, d < p → 2 ≤ d → p % d ≠
 
 instance : DecidablePred Prime := fun p => by unfold Prime; exact inferInstance
 
+/-- The twin prime conjecture: there are infinitely many primes `p` with `p + 2` prime. -/
+def TwinPrimeConjecture : Prop := ∀ n, ∃ p, n ≤ p ∧ Prime p ∧ Prime (p + 2)
+
 /-- `f` applied `k` times. -/
 def iterate (f : Nat → Nat) : Nat → Nat → Nat
   | 0, x => x
