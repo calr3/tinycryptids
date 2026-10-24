@@ -41,6 +41,7 @@ Each hand-designed machine folder has the same shape:
 | `TM.Fermat.halts_iff`, `M90` | `∃ E x y z, 3 ≤ E ∧ 1 ≤ x ∧ 1 ≤ y ∧ 1 ≤ z ∧ x ^ E + y ^ E = z ^ E` |
 | `TM.OddPerfect.halts_iff`, `M37` | `∃ n, n % 2 = 1 ∧ properDivSum n = n` |
 | `TM.Sierpinski.halts_iff`, `M60` | `∀ k, k % 2 = 1 → k < 78557 → ∃ n, 1 ≤ n ∧ Prime (k * 2 ^ n + 1)` (Σ₁: the machine halts iff it is true) |
+| `TM.Riesel.halts_iff`, `M68` | `∀ k, k % 2 = 1 → k < 509203 → ∃ n, 1 ≤ n ∧ Prime (k * 2 ^ n - 1)` |
 
 ## Proof outlines
 
@@ -90,6 +91,12 @@ candidate is `2P − 1`) and the `wipe` after a prime. `Counter`: four groups of
 `k = 1`. `Main`: checkpoints `CK k n v` (testing `k·2^n + 1`) and `KT k v` (the step to `k`),
 `cand`, `kt_next`, `kt_pseudo`, `kt_halt`, the `search` over `n`, `reach_i` over `k`; (→) by
 `bad_loops` (a `k` without a prime never leaves `CK k n v`), (←) by `reach_i` up to the counter's 0.
+
+**Riesel** (`TinyCryptids/Riesel`). The same design with the candidate `k·2^n − 1`: the parity of
+the candidate now depends on `k`, so `cand` takes `k % 2 = 1` (and `3 ≤ k`); the composite path
+rebuilds to `2Q + 1` (`comp_end`, `dfin`), and the seed's pseudo-round tests `5 = 3·2 − 1` before
+`k = 3`. The counter has five groups (`C0 = 254599`; `reach_i` runs to `C0 + 1`), and the merged
+machine is `M68`.
 
 **Odd perfect numbers** (`TinyCryptids/OddPerfect`). `RN n` is the end of the round for
 `n` (T holding `min (properDivSum n) (n + 1)`). `walk` (`../Sierpinski`'s mod walk, D's home
