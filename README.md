@@ -7,14 +7,14 @@ Each machine comes with a formalized proof in Lean 4 (core library only, no Math
 
 ## Machines
 
-| Folder | Conjecture | [Class](https://en.wikipedia.org/wiki/Arithmetical_hierarchy) | Halts iff | Symbols | States |  Theorem |
-|--------|------------|:-----:|-----------|-----:|-----:|----------|
-| [`weakcollatz/`](https://github.com/calr3/tinycryptids/tree/main/weakcollatz) | [Weak Collatz conjecture](https://en.wikipedia.org/wiki/Collatz_conjecture) | Π₁ | the Collatz sequence has a cycle other than 1 → 4 → 2 → 1 | 2 | 14 | `TM.WeakCollatz.halts_iff` |
-| [`weakcollatz/sym3/`](https://github.com/calr3/tinycryptids/tree/main/weakcollatz/sym3) | [Weak Collatz conjecture](https://en.wikipedia.org/wiki/Collatz_conjecture) | Π₁ | the Collatz sequence has a cycle other than 1 → 4 → 2 → 1 | 2 | 10 | `TM3.WeakCollatz.halts_iff` |
-| [`oddperfect/`](https://github.com/calr3/tinycryptids/tree/main/oddperfect) | [No odd perfect numbers](https://en.wikipedia.org/wiki/Perfect_number#Odd_perfect_numbers) | Π₁ | an odd perfect number exists (`n` odd with `n` = the sum of its proper divisors) | 3 | 37 | `TM.OddPerfect.M37.halts_iff` |
-| [`sierpinski/`](https://github.com/calr3/tinycryptids/tree/main/sierpinski) | [Sierpiński problem](https://en.wikipedia.org/wiki/Sierpiński_number#Smallest_Sierpiński_number) | Σ₁ | every odd `k < 78557` has a prime `k·2^n + 1` | 2 | 60 | `TM.Sierpinski.M60.halts_iff` |
-| [`riesel/`](https://github.com/calr3/tinycryptids/tree/main/riesel) | [Riesel problem](https://en.wikipedia.org/wiki/Riesel_number) | Σ₁ | every odd `k < 509203` has a prime `k·2^n − 1` | 2 | 76 | `TM.Riesel.M76.halts_iff` |
-| [`fermat/`](https://github.com/calr3/tinycryptids/tree/main/fermat) | [Fermat's Last Theorem](https://en.wikipedia.org/wiki/Fermat's_Last_Theorem) † | Π₁ | `x^E + y^E = z^E` for some `E ≥ 3` and `x, y, z ≥ 1` | 2 | 90 | `TM.Fermat.M90.halts_iff` |
+| Folder | Conjecture | [Class](https://en.wikipedia.org/wiki/Arithmetical_hierarchy) | Halts iff | [Result](https://wiki.bbchallenge.org/wiki/Busy_Beaver_Functions) |  Theorem |
+|--------|------------|:-----:|-----------|-----:|----------|
+| [`weakcollatz/`](https://github.com/calr3/tinycryptids/tree/main/weakcollatz) | [Weak Collatz conjecture](https://en.wikipedia.org/wiki/Collatz_conjecture) | Π₁ | the Collatz sequence has a cycle other than 1 → 4 → 2 → 1 | BB(14) | `TM.WeakCollatz.halts_iff` |
+| [`weakcollatz/sym3/`](https://github.com/calr3/tinycryptids/tree/main/weakcollatz/sym3) | [Weak Collatz conjecture](https://en.wikipedia.org/wiki/Collatz_conjecture) | Π₁ | the Collatz sequence has a cycle other than 1 → 4 → 2 → 1 | BB(10,3) | `TM3.WeakCollatz.halts_iff` |
+| [`oddperfect/`](https://github.com/calr3/tinycryptids/tree/main/oddperfect) | [No odd perfect numbers](https://en.wikipedia.org/wiki/Perfect_number#Odd_perfect_numbers) | Π₁ | an odd perfect number exists (`n` odd with `n` = the sum of its proper divisors) | BBB(37) | `TM.OddPerfect.M37.halts_iff` |
+| [`sierpinski/`](https://github.com/calr3/tinycryptids/tree/main/sierpinski) | [Sierpiński problem](https://en.wikipedia.org/wiki/Sierpiński_number#Smallest_Sierpiński_number) | Σ₁ | every odd `k < 78557` has a prime `k·2^n + 1` | BB(60) | `TM.Sierpinski.M60.halts_iff` |
+| [`riesel/`](https://github.com/calr3/tinycryptids/tree/main/riesel) | [Riesel problem](https://en.wikipedia.org/wiki/Riesel_number) | Σ₁ | every odd `k < 509203` has a prime `k·2^n − 1` | BB(76) | `TM.Riesel.M76.halts_iff` |
+| [`fermat/`](https://github.com/calr3/tinycryptids/tree/main/fermat) | [Fermat's Last Theorem](https://en.wikipedia.org/wiki/Fermat's_Last_Theorem) † | Π₁ | `x^E + y^E = z^E` for some `E ≥ 3` and `x, y, z ≥ 1` | BB(90) | `TM.Fermat.M90.halts_iff` |
 
 The symbol count is the number of unique symbols that the machine can print. The state count is the number of states required by the smallest known machine, as given by the output of the fully minimized machine (`minimize.py` or `minimize_clique.py`) from the design given in the folder's `build.py`.
 Each folder's `RECORDS.md` lists every machine, `README.md` explains the algorithm and gives the machine in bbchallenge standard text, `PROOF.md` walks through the proof in plain words, and `machines/*_annotated.txt` describes every state.
