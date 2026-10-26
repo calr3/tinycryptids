@@ -1,10 +1,10 @@
 # Small Turing machines for open problems, proven in Lean
 
-Each folder holds a Turing machine that refers to a notable mathematical conjecture. Each machine is designed so that its halting behaviour implies something about a notable mathematical conjecture. Exactly what depends on its place in the [arithmetic hierarchy](https://en.wikipedia.org/wiki/Arithmetical_hierarchy). For example:
+Each folder holds a Turing machine that refers to a notable mathematical conjecture. Each machine is designed so that its halting behaviour implies something about the conjecture; exactly what depends on its place in the [arithmetic hierarchy](https://en.wikipedia.org/wiki/Arithmetical_hierarchy). For example:
 
 * For class Π₁, the machine halts iff the conjecture is false
-* For class Σ₁, it halts iff the conjecture is true
-* For class Π₂, it [quasihalts](https://wiki.bbchallenge.org/wiki/Quasihalt) iff the conjecture is false
+* For class Σ₁, the machine halts iff the conjecture is true
+* For class Π₂, the machine [quasihalts](https://wiki.bbchallenge.org/wiki/Quasihalt) iff the conjecture is false
 
 This is interesting because it shows that determining the value of `BB(n)` also implies solving all conjectures of size `n` or less in Π₁ and Σ₁ (and likewise BBB(n) for Π₂ and Σ₂). For example, we now know that evaluating `BB(21)` requires us to [solve Goldbach's Conjecture](https://github.com/google-deepmind/cryptids/tree/main/artifacts/goldbach_21), alongside many other difficult problems! See the [BusyBeaverWiki](https://wiki.bbchallenge.org/wiki/Cryptids#Larger_Cryptids) for many other interesting examples.
 
