@@ -17,7 +17,7 @@ Every main theorem depends only on `propext`, `Classical.choice` and `Quot.sound
 | `TinyCryptids/Core/Routines.lean` | Generic routines: cyclic advance of a hole (`Dadv`, `DadvL`, `DW`), parsers in `ones` form |
 | `TinyCryptids/Core/Beep.lean` | **Beeping machines**: `BeepsAt δ qb bb c n` (step `n + 1` is the beep transition, state `qb` reading `bb`), `QuasiHalts` (finitely many beeps), runs of a sub-machine (`run_sub`), `quasihalts_of_sub` (the machine without its beep never halts ⟹ no more beeps), `quasihalts_iff_of_sim` (a merged machine beeps at the same steps) |
 | `TinyCryptids/Core/Basic3.lean` | The same model with 3 symbols (`TM3`: `Sym` = `s0 s1 s2`, `s0` blank) and its single steps and scans, for `weakcollatz/sym3/` |
-| `TinyCryptids/Defs.lean` | **The definitions used in the theorem statements**, namespace `TinyCryptids`: `iterate`, `collatz`, `Prime`, `properDivSum`, `TwinPrimeConjecture` |
+| `TinyCryptids/Defs.lean` | **The definitions used in the theorem statements**, namespace `TinyCryptids`: `iterate`, `collatz`, `Prime`, `properDivSum`, `fact`, `leftFact`, `TwinPrimeConjecture` |
 | `TinyCryptids/<Machine>/` | One hand-designed machine per folder, namespace `TM.<Machine>` |
 | `Check.lean` | Every main theorem with `#check` and `#print axioms` |
 
@@ -41,6 +41,7 @@ Each hand-designed machine folder has the same shape:
 | `TM3.WeakCollatz.halts_iff` (3 symbols, `Core/Basic3.lean`) | the same statement as `TM.WeakCollatz` |
 | `TM.Fermat.halts_iff`, `M90` | `∃ E x y z, 3 ≤ E ∧ 1 ≤ x ∧ 1 ≤ y ∧ 1 ≤ z ∧ x ^ E + y ^ E = z ^ E` |
 | `TM.OddPerfect.halts_iff`, `M37` | `∃ n, n % 2 = 1 ∧ properDivSum n = n` |
+| `TM.Kurepa.halts_iff`, `M38` | `∃ p, Prime p ∧ 2 < p ∧ p ∣ leftFact p` |
 | `TM.Sierpinski.halts_iff`, `M60` | `∀ k, k % 2 = 1 → k < 78557 → ∃ n, 1 ≤ n ∧ Prime (k * 2 ^ n + 1)` (Σ₁: the machine halts iff it is true) |
 | `TM.Riesel.halts_iff`, `M76` | `∀ k, k % 2 = 1 → k < 509203 → ∃ n, 1 ≤ n ∧ Prime (k * 2 ^ n - 1)` (Σ₁ likewise) |
 
@@ -118,6 +119,14 @@ advancing the T counter by `d` (saturating at `n + 1`: `add_unit`); `shift` move
 separator. `dloop`: over `d = 1 .. n−1` the counter becomes `min (properDivSum n) (n + 1)`.
 `round_end` (`re_fill`, `check`, `reset`): halt iff the counter is `n`; otherwise the round for
 `n + 2` starts. `seed_reach`: a pseudo-round `n = −1` reaches `RN 1`.
+
+**Kurepa** (`TinyCryptids/Kurepa`). `Spec`: `dvd_fact`, `leftFact_mod` (`!(q + k) ≡ !q mod q`),
+`exists_prime_dvd`, and `kurepa_iff`: some `n ≥ 3` divides `!n` iff some odd prime `p` divides `!p`
+(`!n ≡ 2 mod 4` for `n ≥ 4`). `Round`: `NL m c` (N with its hole at `c`), the test `TP m c lam K j`,
+one unit (`unit_step`, `unit_wrap`, `nx`), its end `TE` (`te_halt`, `te_grow`), the copy loop `X`
+(`pg_to_x`, `copy_one`, `copy_last`, `c_next`, `c_fall`) and `merge`. `Main`: `test_run`, `nxs_m_eq`
+(the N hole is back at cell `m` after `u` steps iff `m ∣ u`), `copies`, `multiply`, `round` for
+`RS n`, `seed_reach`; (→) by `not_halts_of_progress`, (←) by `haltAt_of`.
 
 **Riesel** (`TinyCryptids/Riesel`). The proof of an earlier 110-state Sierpiński design (a copy loop
 with two-cell separators, trial division from `d = 3`) with `k·2^n − 1`: the rebuild keeps all

@@ -33,6 +33,10 @@ Run `lake env lean Check.lean` after `lake build`. -/
 #print axioms TM.OddPerfect.halts_iff
 #check @TM.OddPerfect.M37.halts_iff
 #print axioms TM.OddPerfect.M37.halts_iff
+#check @TM.Kurepa.halts_iff
+#print axioms TM.Kurepa.halts_iff
+#check @TM.Kurepa.M38.halts_iff
+#print axioms TM.Kurepa.M38.halts_iff
 
 -- beeping machines: quasihalt (take the beep transition finitely often) iff the statement
 #check @TM.TwinPrimes.quasihalts_iff

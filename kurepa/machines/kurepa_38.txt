@@ -1,0 +1,119 @@
+; Greedy merge of ../kurepa/kurepa.txt by greedy_merge.py
+; 38 states, 2 symbols
+
+blank_symbol: 0
+
+seed0
+    0 1 L seed1
+    -
+seed1
+    0 1 L seed2
+    1 0 R PT1
+seed2
+    0 0 L seed3
+    1 0 R PG1
+seed3
+    0 1 L seed4
+    1 0 R PM1
+seed4
+    0 1 L seed5
+    -
+seed5
+    0 1 L seed6
+    -
+seed6
+    0 1 L seed7
+    -
+seed7
+    0 1 L seed8
+    -
+seed8
+    0 0 L seed9
+    1 1 R seed8
+seed9
+    0 0 L seed10
+    1 1 L p2
+seed10
+    0 1 L seed11
+    -
+seed11
+    0 1 L seed12
+    -
+seed12
+    0 1 L gg
+    1 1 L seed12
+PT1
+    0 0 R PT2
+    1 1 R PT1
+PT2
+    0 0 R PT1
+    1 1 L p1
+p1
+    0 1 L p2
+    -
+p2
+    0 0 L k1
+    1 0 L PN1
+PN1
+    0 0 L PN2
+    1 1 L PN1
+PN2
+    0 0 L PN1
+    1 1 R s1
+s1
+    0 1 R s2
+    1 1 R seed1
+s2
+    0 0 L s3
+    1 0 R PT1
+s3
+    0 0 R s1
+    1 1 L s3
+k1
+    0 0 L k2
+    -
+k2
+    0 0 L halt
+    1 1 L seed12
+gg
+    0 1 R seed2
+    1 1 L gg
+PG1
+    0 0 R PG2
+    1 1 R PG1
+PG2
+    0 0 R PG1
+    1 0 R x1
+x1
+    0 0 R x2
+    1 1 R x1
+x2
+    0 1 L y0
+    1 1 R x2
+y0
+    0 0 L y1
+    1 1 L y0
+y1
+    0 1 R y2
+    1 1 L y1
+y2
+    0 0 L z1
+    1 0 R x1
+z1
+    0 0 L PC1
+    1 1 L z1
+PC1
+    0 0 L PC2
+    1 1 L PC1
+PC2
+    0 0 L PC1
+    1 1 R gg
+PM1
+    0 0 R PM2
+    1 1 R PM1
+PM2
+    0 0 R PM1
+    1 1 L m1
+m1
+    0 1 R seed8
+    -

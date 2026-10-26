@@ -1,0 +1,221 @@
+; ============================================================================
+; A 38-state, 2-symbol Turing machine that HALTS IFF KUREPA'S CONJECTURE FAILS:
+; iff some odd prime p divides the left factorial !p = 0! + 1! + ... + (p-1)!.
+; It tests every n >= 3 for n | !n (equivalent: Lean's kurepa_iff).
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/Kurepa/M38.lean, theorem TM.Kurepa.M38.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 47-state design of build.py / kurepa.txt with states
+;   merged. States are merged only when their defined transitions agree, so
+;   each state below plays one or more ROLES of the design (its name joins
+;   them). Each transition line is tagged [role] with the role(s) that use it.
+;   A '-' line is never used. The seed roles run once at the start and only
+;   ever read 0, so each of them doubles as a step of some other routine.
+;
+; TAPE LAYOUT
+;
+;      N 00 L m1 F m2 Q        (m1, m2: markers, single 0s)
+;
+;   N  cells 0..m, m = n in the test of round n, n+1 in its multiplication.
+;      Its HOLE (a single 0, cells 1..m) steps cyclically in the test and
+;      counts the copies in the multiplication.
+;   L  !n + n + 1 cells: the left factorial. In the test a hole walks from
+;      its right end to its left end.
+;   F  n! cells. In the multiplication a copy cursor walks it left to right.
+;   Q  the copies of F made so far (only during the multiplication).
+;
+; ALGORITHM (round n = 3, 4, 5, ...)
+;   test      for each cell of L but one: one step of the N hole, which starts
+;             at cell n and wraps from cell n to cell 1. That is !n + n steps,
+;             so the hole is back at cell n iff n | !n: HALT.
+;   grow      fill the N hole, add a cell to N on the left, hole at cell 1.
+;   multiply  n+1 times copy the n! cells of F onto Q; the N hole steps after
+;             each copy and falls off N after the last one (put back at n+1).
+;   merge     fill m1: L := L + 1 + F; Q is the new F, m2 the new m1.
+;   seed      write round 2 right to left (F = 11, m1, L = 11111, 00, N =
+;             111), as after its test; then grow (the test of n = 2 is skipped).
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0  seed: write 1 and step left
+start_seed0
+    0 1 L s5                   ; [seed0]
+    -
+
+; ---------- TEST: n | !n ? ----------------------------------------------
+
+; PT1    scan right to the next hole, then move the L hole (p1)
+PT1
+    0 0 R PT2                  ; [PT1]
+    1 1 R PT1                  ; [PT1]
+; PT2    scan right to the next hole, then move the L hole (p1)
+PT2
+    0 0 R PT1                  ; [PT2]
+    1 1 L p1                   ; [PT2]
+; p1     test: fill the L hole
+p1
+    0 1 L p2                   ; [p1]
+    -
+; p2     test: 1: the new L hole, then to the N hole (PN); 0: L is used up, check N (k1)
+p2
+    0 0 L k1                   ; [p2]
+    1 0 L PN1                  ; [p2]
+; PN1    scan left to the next hole, then step the N hole (s1)
+PN1
+    0 0 L PN2                  ; [PN1]
+    1 1 L PN1                  ; [PN1]
+; PN2    scan left to the next hole, then step the N hole (s1)
+PN2
+    0 0 L PN1                  ; [PN2]
+    1 1 R s1_s4                ; [PN2]
+; s1     step the N hole: fill it
+; s4     wrap: step over cell 0 of N
+s1_s4
+    0 1 R s2                   ; [s1]
+    1 1 R s5                   ; [s4]
+; s2     step the N hole: 1: the new hole, back to the L hole (PT); 0: last cell, wrap
+s2
+    0 0 L s3                   ; [s2]
+    1 0 R PT1                  ; [s2]
+; s3     wrap: run left over N
+s3
+    0 0 R s1_s4                ; [s3]
+    1 1 L s3                   ; [s3]
+; seed1  seed: write 1 and step left
+; s5     wrap: N hole at cell 1, back to the L hole (PT)
+s5
+    0 1 L gh_c2                ; [seed1]
+    1 0 R PT1                  ; [s5]
+; k1     check: step over the separator
+k1
+    0 0 L k2                   ; [k1]
+    -
+; k2     check: 0: the N hole is at its last cell, n | !n: HALT; 1: not divisible
+k2
+    0 0 L halt                 ; [k2]
+    1 1 L kk                   ; [k2]
+
+; ---------- GROW N ------------------------------------------------------
+
+; seed12 seed: write 1 and step left
+; kk     not divisible: run left to the N hole and fill it
+kk
+    0 1 L gg_c1                ; [seed12, kk]
+    1 1 L kk                   ; [kk]
+; gg     grow N: run left over N, one more cell on its left
+; c1     copy counter: fill the N hole
+gg_c1
+    0 1 R gh_c2                ; [gg, c1]
+    1 1 L gg_c1                ; [gg]
+; seed2  seed: write 0 and step left
+; gh     grow N: hole at cell 1, then multiply (PG)
+; c2     copy counter: 1: the new hole, next copy (PG); 0: all copies made
+gh_c2
+    0 0 L c3                   ; [seed2, c2]
+    1 0 R PG1                  ; [gh, c2]
+
+; ---------- MULTIPLY: F := (n+1) F --------------------------------------
+
+; PG1    scan right to the next hole, then copy cursor at the cell after the marker m1
+PG1
+    0 0 R PG2                  ; [PG1]
+    1 1 R PG1                  ; [PG1]
+; PG2    scan right to the next hole, then copy cursor at the cell after the marker m1
+PG2
+    0 0 R PG1                  ; [PG2]
+    1 0 R x1                   ; [PG2]
+; x1     copy: run right over the rest of F to the marker m2
+x1
+    0 0 R x2                   ; [x1]
+    1 1 R x1                   ; [x1]
+; x2     copy: run right over Q and append a 1
+x2
+    0 1 L y0                   ; [x2]
+    1 1 R x2                   ; [x2]
+; y0     copy: run left over Q to the marker m2
+y0
+    0 0 L y1                   ; [y0]
+    1 1 L y0                   ; [y0]
+; y1     copy: run left over F to the cursor, fill it
+y1
+    0 1 R y2                   ; [y1]
+    1 1 L y1                   ; [y1]
+; y2     copy: 1: the new cursor, copy the next cell (x1); 0: the marker m2, one copy done
+y2
+    0 0 L z1                   ; [y2]
+    1 0 R x1                   ; [y2]
+; z1     one copy done: run left over F to the marker m1, then to the N hole (PC)
+z1
+    0 0 L PC1                  ; [z1]
+    1 1 L z1                   ; [z1]
+; PC1    scan left to the next hole, then step the copy counter (c1)
+PC1
+    0 0 L PC2                  ; [PC1]
+    1 1 L PC1                  ; [PC1]
+; PC2    scan left to the next hole, then step the copy counter (c1)
+PC2
+    0 0 L PC1                  ; [PC2]
+    1 1 R gg_c1                ; [PC2]
+; seed3  seed: write 1 and step left
+; c3     all copies made: N hole at the last cell again, then merge (PM)
+c3
+    0 1 L seed4                ; [seed3]
+    1 0 R PM1                  ; [c3]
+
+; ---------- MERGE: L := L + 1 + F ---------------------------------------
+
+; PM1    scan right to the next hole, then fill the marker m1 (m1)
+PM1
+    0 0 R PM2                  ; [PM1]
+    1 1 R PM1                  ; [PM1]
+; PM2    scan right to the next hole, then fill the marker m1 (m1)
+PM2
+    0 0 R PM1                  ; [PM2]
+    1 1 L m1                   ; [PM2]
+; m1     merge: fill the marker m1 (L := L + 1 + F)
+m1
+    0 1 R m2                   ; [m1]
+    -
+; seed8  seed: write 0 and step left
+; m2     merge: run right over F to the marker m2 (the new m1)
+m2
+    0 0 L m3                   ; [seed8, m2]
+    1 1 R m2                   ; [m2]
+; seed9  seed: write 0 and step left
+; m3     merge: step left; the next cell becomes the L hole (p2): the test starts
+m3
+    0 0 L seed10               ; [seed9]
+    1 1 L p2                   ; [m3]
+
+; ---------- SEED only ---------------------------------------------------
+
+; seed4  seed: write 1 and step left
+seed4
+    0 1 L seed5                ; [seed4]
+    -
+; seed5  seed: write 1 and step left
+seed5
+    0 1 L seed6                ; [seed5]
+    -
+; seed6  seed: write 1 and step left
+seed6
+    0 1 L seed7                ; [seed6]
+    -
+; seed7  seed: write 1 and step left
+seed7
+    0 1 L m2                   ; [seed7]
+    -
+; seed10 seed: write 1 and step left
+seed10
+    0 1 L seed11               ; [seed10]
+    -
+; seed11 seed: write 1 and step left
+seed11
+    0 1 L kk                   ; [seed11]
+    -
