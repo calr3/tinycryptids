@@ -1,8 +1,13 @@
 # A Turing machine for Kurepa's conjecture
 
-**Current best: `machines/kurepa_38.txt`, a 38-state, 2-symbol Turing machine**
-(named-state format, as in `../fermat`). Started on a blank tape, it **halts iff
-Kurepa's conjecture is false**: iff some odd prime `p` divides the left factorial
+**Kurepa's conjecture** is that `gcd(!n, n!) = 2` for `n > 1`, where `!n` is the left factorial: `!n = sum_{k=0}^{n-1} k!`.
+
+This is problem B44 in Guy's *[Unsolved problems in number theory](https://link.springer.com/book/10.1007/978-0-387-26677-0)* and has been validated numerically up to 2^34 ([Andrejic (2016)](https://pubs.ams.org/MCOM/2016-85-302/S0025-5718-2016-03098-7)).
+See also https://oeis.org/A000166. 
+
+**Current smallest machine: `machines/kurepa_38.txt`, a 38-state, 2-symbol Turing machine**
+(named-state format, as in `../fermat`). Started on a blank tape, it halts iff
+Kurepa's conjecture is false: iff some odd prime `p` divides the left factorial
 `!p = 0! + 1! + … + (p − 1)!`. Lean proves this (`TM.Kurepa.M38.halts_iff`):
 
     Halts M38.delta2 M38.start2 ↔ ∃ p, Prime p ∧ 2 < p ∧ p ∣ leftFact p
@@ -19,6 +24,10 @@ The 38-state machine is obtained in two stages:
    `gen_reduced_lean.py` carries the theorem over. `machines/kurepa_38_annotated.txt`
    is the same machine with each state named after its roles in the design, every
    transition commented.
+
+## Standard text (bbchallenge format, 38 states)
+
+1L1,---_1L2,0R13_0L3,0R25_1L4,0R35_1L5,---_1L6,---_1L7,---_1L8,---_0L9,1R8_0L10,1L16_1L11,---_1L12,---_1L24,1L12_0R14,1R13_0R13,1L15_1L16,---_0L22,0L17_0L18,1L17_0L17,1R19_1R20,1R1_0L21,0R13_0R19,1L21_0L23,---_0LZ,1L12_1R2,1L24_0R26,1R25_0R25,0R27_0R28,1R27_1L29,1R28_0L30,1L29_1R31,1L30_0L32,0R27_0L33,1L32_0L34,1L33_0L33,1R24_0R36,1R35_0R35,1L37_1R8,---
 
 ## The search
 
@@ -81,10 +90,6 @@ the 37-state search is unsatisfiable.
   `gen_reduced_lean.py machines/kurepa_38.txt M38` writes `M38.lean`;
   `annotate.py machines/kurepa_38.txt machines/kurepa_38_annotated.txt M38`: the readable listing.
 * The proof: `../lean/TinyCryptids/Kurepa/` (see `../lean/README.md`).
-
-## Standard text (bbchallenge format, 38 states)
-
-    1L1,---_1L2,0R13_0L3,0R25_1L4,0R35_1L5,---_1L6,---_1L7,---_1L8,---_0L9,1R8_0L10,1L16_1L11,---_1L12,---_1L24,1L12_0R14,1R13_0R13,1L15_1L16,---_0L22,0L17_0L18,1L17_0L17,1R19_1R20,1R1_0L21,0R13_0R19,1L21_0L23,---_0LZ,1L12_1R2,1L24_0R26,1R25_0R25,0R27_0R28,1R27_1L29,1R28_0L30,1L29_1R31,1L30_0L32,0R27_0L33,1L32_0L34,1L33_0L33,1R24_0R36,1R35_0R35,1L37_1R8,---
 
 (States are numbered from 0 in file order. `Z` is the halting state, reached only by `0LZ`.
 `---` marks a transition the machine never uses.)
