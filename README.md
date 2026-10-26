@@ -1,8 +1,14 @@
 # Small Turing machines for open problems, proven in Lean
 
-Each folder holds a Turing machine that refers to a notable mathematical conjecture. Each machine is designed so that whether it halts implies something about a notable mathematical conjecture. For example, for problems in [class Π₁](https://en.wikipedia.org/wiki/Arithmetical_hierarchy), the machine halts iff the conjecture is false; for Σ₁, it halts iff the conjecture is true, and so on. See the [BusyBeaverWiki](https://wiki.bbchallenge.org/wiki/Cryptids#Larger_Cryptids) for many other interesting examples!
+Each folder holds a Turing machine that refers to a notable mathematical conjecture. Each machine is designed so that its halting behaviour implies something about a notable mathematical conjecture. Exactly what depends on its place in the [arithmetic hierarchy](https://en.wikipedia.org/wiki/Arithmetical_hierarchy). For example:
 
-Each machine comes with a formalized proof in Lean 4 (core library only, no Mathlib); run
+* For class Π₁, the machine halts iff the conjecture is false
+* For class Σ₁, it halts iff the conjecture is true
+* For class Π₂, it [quasihalts](https://wiki.bbchallenge.org/wiki/Quasihalt) iff the conjecture is false
+
+This is interesting because it shows that determining the value of `BB(n)` also implies solving all conjectures of size `n` or less in Π₁ and Σ₁ (and likewise BBB(n) for Π₂ and Σ₂). For example, we now know that evaluating `BB(21)` requires us to [solve Goldbach's Conjecture](https://github.com/google-deepmind/cryptids/tree/main/artifacts/goldbach_21), alongside many other difficult problems! See the [BusyBeaverWiki](https://wiki.bbchallenge.org/wiki/Cryptids#Larger_Cryptids) for many other interesting examples.
+
+Each machine comes with the specific Turing Machine code, a human-readable summary, and a formalized proof in Lean 4 (core library only, no Mathlib) showing that the machine has the required behaviour; run
 `cd lean && lake build && lake env lean Check.lean` to check them all.
 
 ## Machines
@@ -18,7 +24,7 @@ Each machine comes with a formalized proof in Lean 4 (core library only, no Math
 | [`riesel/`](https://github.com/calr3/tinycryptids/tree/main/riesel) | [Riesel problem](https://en.wikipedia.org/wiki/Riesel_number) | Σ₁ | Halts iff 509203 is the smallest Riesel number | BB(76) | `TM.Riesel.M76.halts_iff` |
 | [`fermat/`](https://github.com/calr3/tinycryptids/tree/main/fermat) | [Fermat's Last Theorem](https://en.wikipedia.org/wiki/Fermat's_Last_Theorem) † | Π₁ | Halts iff there's a non-trivial solution to `x^n + y^n = z^n` for some `n ≥ 3` | BB(90) | `TM.Fermat.M90.halts_iff` |
 
-The symbol count is the number of unique symbols that the machine can print. The state count is the number of states required by the smallest known machine, as given by the output of the fully minimized machine (`minimize.py` or `minimize_clique.py`) from the design given in the folder's `build.py`.
+The state count is the number of states required by the smallest known machine, as given by the output of the fully minimized machine (`minimize.py` or `minimize_clique.py`) from the design given in the folder's `build.py`.
 Each folder's `RECORDS.md` lists every machine, `README.md` explains the algorithm and gives the machine in bbchallenge standard text, `PROOF.md` walks through the proof in plain words, and `machines/*_annotated.txt` describes every state.
 
 † Fermat's Last Theorem is of course a theorem since Wiles, so any non-halting machine would do. This more direct machine is included as a historical curiosity, because James Randels' dissertation *Studies in Turing Machines* (1965) estimated
