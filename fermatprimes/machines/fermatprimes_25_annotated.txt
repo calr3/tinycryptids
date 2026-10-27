@@ -1,0 +1,171 @@
+; ============================================================================
+; A 25-state, 2-symbol Turing machine that HALTS IFF SOME FERMAT NUMBER
+; F_n = 2^(2^n) + 1 WITH n >= 5 IS PRIME (iff F_4 = 65537 is not the last
+; Fermat prime).
+; Started on a blank tape in the first state. Lean proof:
+; lean/TinyCryptids/FermatPrimes/M25.lean, theorem TM.FermatPrimes.M25.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 27-state design of build.py / fermatprimes.txt with states
+;   merged. States are merged only when their defined transitions agree. Each
+;   state below plays one or more ROLES of the design (its name joins them);
+;   each transition line is tagged [role] with the role(s) that use it. A '-'
+;   line is never used. The only halting transition is P2 reading 0 ('halt').
+;
+; THE IDEA
+;   A prime 2^k + 1 has k a power of 2, so the Fermat primes are the primes m
+;   with m - 1 a power of 2. For odd m >= 5 these are the m that no odd d with
+;   3 <= d <= m - 2 divides, and for which no such d divides m - 1. The machine
+;   tests m = 3, 5, 7, ... in turn with d = 3, 5, 7, ...; one mod walk per d
+;   tests both numbers. Such an m is a PASS. The passes up to 65537 are 3, 5,
+;   17, 257, 65537; a counter of 6 cells loses one cell at each pass, and the
+;   pass that erases its last cell halts.
+;
+; TAPE LAYOUT (blank left of D)
+;
+;      D 0 R 0 ... 0 K
+;
+;   D: d cells, all 1 except a HOLE (a single 0) at cell c: a counter mod d.
+;      Before a walk the hole is on cell 0, the blank left of D's d - 1 ones.
+;   one 0: the separator.
+;   R: r cells, d + r = m - 1; during the mod walk a hole moves right in it.
+;   K: the counter, right of some blanks (R shrinks at its right end).
+;
+; ALGORITHM (candidate m, divisor d)
+;   walk     D's hole starts on cell 0. r times: make the next cell of R the
+;            R hole, scan left to D's hole and move it one cell right (from the
+;            last cell back to cell 0), scan right to R's hole and fill it. D's
+;            hole ends on cell c = (m - 1) mod d: d | m iff c = d - 1,
+;            d | m - 1 iff c = 0.
+;   check    erase R's last cell, fill the separator; X1 reads cell d - 1
+;            (0: FAIL); X erases D's cells to the hole, Q reads the cell left of
+;            it (0, the blank: c = 0, FAIL).
+;   shift    d passed: refill; the old separator joins D and R's cell 0 is the
+;            new separator; the blank left of D is the next hole: d := d + 2,
+;            r := r - 2. R empty: every d passed: PASS.
+;   pass     run right to K, erase a cell; the last one: HALT. Else back.
+;   rebuild  after a FAIL or a pass: one block of m - 1 ones. Write 1 1 at its
+;            left end and the separator after them: candidate m + 2, d = 3.
+;   start    write K (6 ones), a blank, then 1 1: the pass for m = 3.
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START: the counter and the pass for m = 3 -------------------
+
+; S1     start: write the counter K leftwards (6 cells)
+start_S1
+    0 1 L S2                   ; [S1]
+    -
+; S2     start: the counter
+S2
+    0 1 L S3                   ; [S2]
+    -
+; S3     start: the counter
+S3
+    0 1 L S4                   ; [S3]
+    -
+; S4     start: the counter
+S4
+    0 1 L S5                   ; [S4]
+    -
+; S5     start: the counter
+S5
+    0 1 L S6_E                 ; [S5]
+    -
+; S6     start: the counter's last cell
+; E      erase R's last cell, then to the separator (V)
+S6_E
+    0 1 L S7_W2                ; [S6]
+    1 0 L V                    ; [E]
+; S7     start: a blank between the counter and the block, then C4
+; W2     wrap: the new hole on D's cell 0, then to R's hole (Z1)
+S7_W2
+    0 0 L C4                   ; [S7]
+    1 0 R Z1                   ; [W2]
+
+; ---------- WALK: trial division of m = d + r + 1 by d ------------------
+
+; B2     make R's hole here and scan left to D's hole (Y1); 0: past R's end, the walk is over (E)
+B2
+    0 0 L S6_E                 ; [B2]
+    1 0 L Y1                   ; [B2]
+; Y1     scan left to the separator, then to D's hole (Y2)
+Y1
+    0 0 L Y2                   ; [Y1]
+    1 1 L Y1                   ; [Y1]
+; Y2     scan left to D's hole, fill it, step right (A2)
+Y2
+    0 1 R A2                   ; [Y2]
+    1 1 L Y2                   ; [Y2]
+; A2     advance D's hole: the new hole here, then to R's hole (Z1); 0: the separator, wrap (W1)
+A2
+    0 0 L W1                   ; [A2]
+    1 0 R Z1                   ; [A2]
+; W1     wrap: run left to the blank before D
+W1
+    0 0 R S7_W2                ; [W1]
+    1 1 L W1                   ; [W1]
+; Z1     scan right to the separator, then to R's hole (Z2)
+Z1
+    0 0 R Z2                   ; [Z1]
+    1 1 R Z1                   ; [Z1]
+; Z2     scan right to R's hole (the 0 after the separator), fill it, step right (B2)
+Z2
+    0 1 R B2                   ; [Z2]
+    1 1 R Z2                   ; [Z2]
+
+; ---------- END OF THE WALK and the CHECK: does d divide m or m - 1? ----
+
+; V      scan left to the separator, fill it, check (X1)
+V
+    0 1 L X1                   ; [V]
+    1 1 L V                    ; [V]
+; X1     D's cell d - 1; 0: d | m, FAIL: fill it, rebuild (C4); 1: erase it (X)
+X1
+    0 1 R C4                   ; [X1]
+    1 0 L X                    ; [X1]
+; X      erase D's cells leftwards to the hole, step past it (Q)
+X
+    0 0 L Q                    ; [X]
+    1 0 L X                    ; [X]
+; Q      the cell left of the hole; 0 (the blank: c = 0, d | m - 1): FAIL (HF); 1: d passed (H1)
+Q
+    0 0 R HF                   ; [Q]
+    1 1 R H1                   ; [Q]
+; HF     FAIL: refill the hole and the erased cells; the separator: rebuild (C4)
+HF
+    0 1 R HF                   ; [HF]
+    1 1 L C4                   ; [HF]
+
+; ---------- SHIFT: d := d + 2, r := r - 2, and the PASS -----------------
+
+; H1     refill erased cells going right; 1: the old separator, or the rebuild's 1 1 (G0)
+H1
+    0 1 R H1                   ; [H1]
+    1 1 R G0                   ; [H1]
+; G0     1: write the separator, start the walk (B2); 0: R is empty, every d passed: PASS (P1)
+G0
+    0 0 R P1                   ; [G0]
+    1 0 R B2                   ; [G0]
+; P1     pass: run right to the counter, erase its first cell (P2)
+P1
+    0 0 R P1                   ; [P1]
+    1 0 R P2                   ; [P1]
+; P2     pass: 0: that was the counter's last cell: HALT; 1: back (P3)
+P2
+    0 0 L halt                 ; [P2]   HALT
+    1 1 L P3                   ; [P2]
+; P3     pass: run left to the block, then the rebuild (C4)
+P3
+    0 0 L P3                   ; [P3]
+    1 1 L C4                   ; [P3]
+
+; ---------- REBUILD for m + 2 -------------------------------------------
+
+; C4     rebuild: run left to the blank before the block, write a 1 (H1 writes another)
+C4
+    0 1 L H1                   ; [C4]
+    1 1 L C4                   ; [C4]

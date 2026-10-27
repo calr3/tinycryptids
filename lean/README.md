@@ -17,7 +17,7 @@ Every main theorem depends only on `propext`, `Classical.choice` and `Quot.sound
 | `TinyCryptids/Core/Routines.lean` | Generic routines: cyclic advance of a hole (`Dadv`, `DadvL`, `DW`), parsers in `ones` form |
 | `TinyCryptids/Core/Beep.lean` | **Beeping machines**: `BeepsAt δ qb bb c n` (step `n + 1` is the beep transition, state `qb` reading `bb`), `QuasiHalts` (finitely many beeps), runs of a sub-machine (`run_sub`), `quasihalts_of_sub` (the machine without its beep never halts ⟹ no more beeps), `quasihalts_iff_of_sim` (a merged machine beeps at the same steps) |
 | `TinyCryptids/Core/Basic3.lean` | The same model with 3 symbols (`TM3`: `Sym` = `s0 s1 s2`, `s0` blank) and its single steps and scans, for `weakcollatz/sym3/` |
-| `TinyCryptids/Defs.lean` | **The definitions used in the theorem statements**, namespace `TinyCryptids`: `iterate`, `collatz`, `Prime`, `properDivSum`, `fact`, `leftFact`, `TwinPrimeConjecture` |
+| `TinyCryptids/Defs.lean` | **The definitions used in the theorem statements**, namespace `TinyCryptids`: `iterate`, `collatz`, `Prime`, `properDivSum`, `fact`, `leftFact`, `TwinPrimeConjecture`, `InfinitelyManyFermatPrimes`; also `prime_iff_dvd` |
 | `TinyCryptids/<Machine>/` | One hand-designed machine per folder, namespace `TM.<Machine>` |
 | `Check.lean` | Every main theorem with `#check` and `#print axioms` |
 
@@ -40,6 +40,7 @@ Each hand-designed machine folder has the same shape:
 | `TM.WeakCollatz.halts_iff_counter` | `Counter` (a cycle of the shortcut map through some `n ≥ 3`) |
 | `TM3.WeakCollatz.halts_iff` (3 symbols, `Core/Basic3.lean`) | the same statement as `TM.WeakCollatz` |
 | `TM.Fermat.halts_iff`, `M90` | `∃ E x y z, 3 ≤ E ∧ 1 ≤ x ∧ 1 ≤ y ∧ 1 ≤ z ∧ x ^ E + y ^ E = z ^ E` |
+| `TM.FermatPrimes.halts_iff`, `M25` | `∃ n, 5 ≤ n ∧ Prime (2 ^ 2 ^ n + 1)` |
 | `TM.OddPerfect.halts_iff`, `M37` | `∃ n, n % 2 = 1 ∧ properDivSum n = n` |
 | `TM.Kurepa.halts_iff`, `M38` | `∃ p, Prime p ∧ 2 < p ∧ p ∣ leftFact p` |
 | `TM.Sierpinski.halts_iff`, `M60` | `∀ k, k % 2 = 1 → k < 78557 → ∃ n, 1 ≤ n ∧ Prime (k * 2 ^ n + 1)` (Σ₁: the machine halts iff it is true) |
@@ -49,6 +50,7 @@ Beeping machines (`Core/Beep.lean`): the beep transition is `qb` reading `bb`.
 
 | Theorem | Statement |
 |---------|-----------|
+| `TM.FermatPrimesInf.quasihalts_iff`, `M16` | `QuasiHalts delta G0 false start ↔ ¬ InfinitelyManyFermatPrimes`, with `InfinitelyManyFermatPrimes := ∀ n, ∃ k, n ≤ k ∧ Prime (2 ^ 2 ^ k + 1)`; also `never_halts : ¬ Halts delta start` (and for `M16`: `delta2`, `St2.G0`, `start2`) |
 | `TM.TwinPrimes.quasihalts_iff`, `M18` | `QuasiHalts delta G2 false start ↔ ¬ TwinPrimeConjecture`, with `TwinPrimeConjecture := ∀ n, ∃ p, n ≤ p ∧ Prime p ∧ Prime (p + 2)`; also `never_halts : ¬ Halts delta start` (and for `M18`: `delta2`, `St2.G2`, `start2`) |
 
 ## Proof outlines
@@ -93,6 +95,24 @@ d − 3`), `shift_more` / `shift_beep` (`d + 1`, `r − 1`; R empty: `BeepCfg`),
 `reach_cs`; (→) a twin prime `p ≥ N + 3` beeps after step `N`; (←) `deltaNB` never halts from
 `CS (N + 3)` (`not_halts_of_progress`), so `quasihalts_of_sub`. `M18` by
 `quasihalts_iff_of_sim` with `excl`.
+
+**Fermat primes** (`TinyCryptids/FermatPrimes`). `../twinprimes`'s walk with odd `d` and odd
+`m`, testing `m` and `m − 1`, halting. `Spec`: `odd_not_dvd_pow2`, `pow2_of_no_odd`,
+`dvd_pow_odd_add_one`, `prime_pow_two_add_one` (`2^k + 1` prime ⟹ `k` a power of
+2), `fp_iff'`, `prime_of_lt` and `prime_17`, `prime_257`, `prime_65537` (by `decide`), `fp_small`
+(the passes in `[7, 65537]`), `fp_big_iff`. `Round`: the walk for any tail `F ::: Y`,
+`check_last`, `check_first`, `check_ok`, `shift`, `rebuild`, `PassCfg`, `pass_more`, `pass_halt`,
+`seed`. `Main`: `CS m g j` (the counter `j` cells away), `fail_iff`, `test`, `cand_pass`,
+`cand_not`, `fails`, `reach_big` (5, 17, 257, 65537 leave one cell), `haltAt_of`; (→) by
+`not_halts_of_progress` from `CS 65539`, (←) by `haltAt_of`.
+
+**Fermat primes, infinitely many** (`TinyCryptids/FermatPrimesInf`, beeping). `../fermatprimes`'s
+machine without the counter: every pass beeps. `Spec`: `fpi_iff` (the passes are unbounded iff
+`InfinitelyManyFermatPrimes`); `Good`, `FP`, `fp_iff'` and `fail_iff` are imported from `FermatPrimes`.
+`Round`: `W`, `walk_all`, `walk_end`, `shift`, `rebuild`, `beep_step`, `seed`, with
+`../fermatprimes`'s `check_last`, `check_first` (joined in `check_fail`) and `check_ok`. `Main`:
+`test`, `cand_fp`, `cand_not`, `after_beep`, `cand_step`, `reach_cs`, `never_halts`, `quasihalts_iff`,
+`beeps_forever_iff`, as for Twin primes. `M16` by `quasihalts_iff_of_sim` with `excl`.
 
 (→) by `not_halts_of_progress` over the round starts (each round strictly reaches the
 next when there is no counterexample); (←) by iterating the round up to the

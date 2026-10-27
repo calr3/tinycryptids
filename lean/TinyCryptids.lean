@@ -14,3 +14,5 @@ import TinyCryptids.Riesel.M76
 import TinyCryptids.OddPerfect.M37
 import TinyCryptids.Kurepa.M38
 import TinyCryptids.TwinPrimes.M18
+import TinyCryptids.FermatPrimes.M25
+import TinyCryptids.FermatPrimesInf.M16

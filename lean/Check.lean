@@ -37,6 +37,10 @@ Run `lake env lean Check.lean` after `lake build`. -/
 #print axioms TM.Kurepa.halts_iff
 #check @TM.Kurepa.M38.halts_iff
 #print axioms TM.Kurepa.M38.halts_iff
+#check @TM.FermatPrimes.halts_iff
+#print axioms TM.FermatPrimes.halts_iff
+#check @TM.FermatPrimes.M25.halts_iff
+#print axioms TM.FermatPrimes.M25.halts_iff
 
 -- beeping machines: quasihalt (take the beep transition finitely often) iff the statement
 #check @TM.TwinPrimes.quasihalts_iff
@@ -48,3 +52,12 @@ Run `lake env lean Check.lean` after `lake build`. -/
 #check @TM.TwinPrimes.M18.never_halts
 #print axioms TM.TwinPrimes.M18.never_halts
 #check @TM.TwinPrimes.M18.beep_transition
+#check @TM.FermatPrimesInf.quasihalts_iff
+#print axioms TM.FermatPrimesInf.quasihalts_iff
+#check @TM.FermatPrimesInf.never_halts
+#print axioms TM.FermatPrimesInf.never_halts
+#check @TM.FermatPrimesInf.M16.quasihalts_iff
+#print axioms TM.FermatPrimesInf.M16.quasihalts_iff
+#check @TM.FermatPrimesInf.M16.never_halts
+#print axioms TM.FermatPrimesInf.M16.never_halts
+#check @TM.FermatPrimesInf.M16.beep_transition
