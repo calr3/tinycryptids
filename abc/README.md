@@ -1,22 +1,14 @@
 # A Beeping Booping Turing machine for the abc conjecture
 
-**Current best: `machines/abc_235.txt`, a 235-state, 2-symbol Beeping Booping Turing machine.**
-Started on a blank tape, it never halts. Its output is the sequence of beep counts between
-consecutive boops. **Some value occurs infinitely often in that output iff the abc conjecture
-is false.**
+The [abc conjecture](https://en.wikipedia.org/wiki/Abc_conjecture) is a major conjecture in number theory. Informally, it states that for given any coprime `a`, `b`, and `c` with `a + b = c` it should rarely occur that `rad(abc)` is much smaller than `c` (where `rad(n)` is the product of `n`'s prime factors). To state this formally, we need three alternating quantifiers:
 
-This uses Bram Cohen's definition of a
-[Beeping Booping Busy Beaver](https://bramcohen.com/p/beeping-booping-busy-beavers):
+`∀ε∈ℚ ∃K∈ℚ ∀a,b,c∈ℕ. c < K · rad(abc)^(1+ϵ)`.
 
-* the machine never halts, and it has two special transitions, the **beep** and the **boop**;
-* its output is the sequence of beep counts between consecutive boops;
-* it "has a number" when some output value is repeated infinitely often.
+This puts the abc conjecture in the Σ₃ class of the [arithmetic hierarchy](https://en.wikipedia.org/wiki/Arithmetical_hierarchy), which is beyond even the ability of a [Beeping Busy Beaver machine](https://wiki.bbchallenge.org/wiki/Beeping_Busy_Beaver) to address. However, it can be tackled with a [Beeping _Booping_ Busy Beaver](https://wiki.bbchallenge.org/wiki/Beeping_Busy_Beaver#Beeping_Booping_Busy_Beavers) and the machine given here follows Bram Cohen's convention for these: the machine "pseudoquasihalts" iff the abc conjecture is false.
 
-That is a Σ₃ property, one level above quasihalting (Π₂, the beeping machines of
-`../twinprimes` and `../fermatprimesinf`) and two above halting (Σ₁). "abc fails" is Σ₃ too: there is an `n` such that
-for every `N` there is a counterexample above `N`.
+**Current best machine: `machines/abc_235.txt`, a 235-state, 2-symbol Beeping Booping Turing machine.**
 
-**The beep is the transition of state `117` reading 0; the boop is `121` reading 0**
+The beep is the transition of state `117` reading 0; the boop is `121` reading 0
 (`xe3` and `xq6` in the design and the Lean files).
 
 ## What is proved
@@ -68,13 +60,14 @@ A skipped pair beeps and boops nothing. So the output is the sequence of values 
 passing pairs (coprime, `c > rad(abc)`), in order. If abc fails for some `n`, infinitely
 many triples have `v ≤ n`, and by pigeonhole some value repeats forever. Conversely, a value
 `v` that repeats forever gives infinitely many triples with `c^v > rad^(v+1)`, so abc fails
-at `n = v`.
+at `n = v`. There is no other way for a given value to be repeatedly infinitely often. Therefore
+the machine pseudoquasihalts iff the abc conjecture is false.
 
 The first passing pairs are `1 + 8 = 9` and `8 + 1 = 9` (`rad = 6`, `v = 5`: `9^5 > 6^6`,
 `9^4 ≤ 6^5`). Next come `5 + 27 = 32` and `27 + 5 = 32` (`rad = 30`, `v = 53`). The powers
 are in unary, so the first boop is at step 9.45·10⁹.
 
-### Tape
+### Tape encoding
 
 Numbers are in unary. A block of `v + 2` cells holds `v`. Cells `1 … v` are the positions of
 a **hole** (a single 0, a cursor), and cells `0` and `v + 1` are guards. Blocks are separated
