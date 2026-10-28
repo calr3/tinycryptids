@@ -77,24 +77,29 @@ if __name__ == '__main__':
 import subprocess, os
 SIM = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sim')
 
-def run(order, states, start=None, tape='', head=0, maxsteps=10**7, trace=None, maxtrace=0, beep=None):
+def run(order, states, start=None, tape='', head=0, maxsteps=10**7, trace=None, maxtrace=0, beep=None, boop=None, notape=False):
     """Run from given tape (string of 0/1) with head index into it.
     Returns (status, steps, state_name, head_index, tape_string).
     trace=state: also returns the tapes on each entry into that state (up to maxtrace).
     beep=(state, symbol): also returns (steps, tape) each time that transition is taken
-    (up to maxtrace); the run stops at the maxtrace-th beep."""
+    (up to maxtrace); the run stops at the maxtrace-th beep.
+    boop=(state, symbol) (with beep): also these events; then the last value returned is the
+    list of events ('B' or 'O', steps, tape or None) in order (notape: no tapes)."""
     idx, table = compile_table(order, states)
     nsym = len(states[order[0]])
     s = idx[start or order[0]]
     lines = [f'{len(order)} {nsym} {s} {maxsteps} {head} {len(tape)} {tape or "-"}' if tape
              else f'{len(order)} {nsym} {s} {maxsteps} {head} 0']
     lines += [f'{w} {d} {n}' for w, d, n in table]
-    lines.append(f'{idx[trace] if trace else -1} {maxtrace}' + (f' {idx[beep[0]]} {beep[1]}' if beep else ''))
+    lines.append(f'{idx[trace] if trace else -1} {maxtrace}' + (f' {idx[beep[0]]} {beep[1]}' if beep else '')
+                 + (f' {idx[boop[0]]} {boop[1]} {1 if notape else 0}' if boop else ''))
     res = subprocess.run([SIM], input='\n'.join(lines) + '\n', capture_output=True, text=True).stdout.splitlines()
     traces = [l[2:] for l in res if l.startswith('T ')]
-    beeps = [(int(l.split()[1]), l.split()[2]) for l in res if l.startswith('B ')]
-    out = [l for l in res if not l.startswith(('T ', 'B '))][0].split()
+    beeps = [(int(l.split()[1]), l.split()[2] if len(l.split()) > 2 else None) for l in res if l.startswith('B ')]
+    events = [(l[0], int(l.split()[1]), l.split()[2] if len(l.split()) > 2 else None) for l in res if l.startswith(('B ', 'O '))]
+    out = [l for l in res if not l.startswith(('T ', 'B ', 'O '))][0].split()
     status, steps, st, h, t = out[0], int(out[1]), int(out[2]), int(out[3]), out[4]
+    if boop: return status, steps, order[st], h, t, events
     if beep: return status, steps, order[st], h, t, beeps
     if trace: return status, steps, order[st], h, t, traces
     return status, steps, order[st], h, t

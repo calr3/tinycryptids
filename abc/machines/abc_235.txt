@@ -1,0 +1,710 @@
+; Greedy merge of abc.txt by greedy_merge_par.py (23 workers, seeds 5000-5022; seed 5014, restart 22813)
+; 235 states, 2 symbols
+
+blank_symbol: 0
+
+seed0
+    0 1 R seed1
+    1 1 R qw3
+seed1
+    0 0 R seed2
+    1 1 R MF1
+seed2
+    0 0 R seed3
+    1 1 R Rba3
+seed3
+    0 1 R seed4
+    1 0 R YP1
+seed4
+    0 1 R seed5
+    1 1 L qcC
+seed5
+    0 1 R seed6
+    1 0 R RMC1
+seed6
+    0 1 R seed7
+    1 0 L EQ1
+seed7
+    0 0 R seed8
+    1 0 R PC1
+seed8
+    0 0 R seed9
+    1 1 L zd5
+seed9
+    0 1 R seed10
+    1 0 R Rc1
+seed10
+    0 1 R seed11
+    1 1 L XQ1
+seed11
+    0 1 R seed12
+    1 0 L xe2
+seed12
+    0 0 R seed13
+    1 1 L eb8
+seed13
+    0 0 R seed14
+    1 1 L pt6
+seed14
+    0 1 R seed15
+    1 1 R hR2
+seed15
+    0 1 R seed16
+    1 1 R cy3
+seed16
+    0 1 R seed17
+    1 1 R bo7
+seed17
+    0 0 R seed18
+    1 1 L seed17
+seed18
+    0 0 R seed19
+    1 1 R seed6
+seed19
+    0 1 R seed20
+    1 0 R E3
+seed20
+    0 1 R seed21
+    1 1 L hF3
+seed21
+    0 1 R seed22
+    1 1 R g1
+seed22
+    0 1 R seed23
+    1 1 L caf
+seed23
+    0 0 R seed24
+    1 0 R dpA
+seed24
+    0 0 R seed25
+    1 1 R Ra3
+seed25
+    0 1 R MF1
+    1 1 R seed16
+ca1
+    0 1 R ca2
+    1 1 R ca1
+ca2
+    0 1 L cac
+    1 1 R ca3
+ca3
+    0 0 L ca5
+    1 1 L seed7
+ca5
+    0 0 R ca6
+    1 1 L ca5
+ca6
+    0 0 R bo3
+    1 1 R seed7
+PC1
+    0 0 R PC2
+    1 1 R PC1
+PC2
+    0 0 R PC1
+    1 1 L seed14
+cy3
+    0 0 L cy5
+    1 1 L cy4
+cy4
+    0 1 L DH1
+    1 0 L PN1
+cy5
+    0 0 R cy6
+    1 1 L cy5
+cy6
+    0 1 R La4
+    1 1 R cy7
+cy7
+    0 0 R qw3
+    1 0 L PK1
+PN1
+    0 0 L PN2
+    1 1 L PN1
+PN2
+    0 0 L PN1
+    1 1 R ca1
+PK1
+    0 0 L PK2
+    1 1 L PK1
+PK2
+    0 0 L PK1
+    1 1 R g1
+g1
+    0 0 L g2
+    1 0 R RMM1
+g2
+    0 0 L qc9
+    1 1 L g3
+g3
+    0 0 R H1
+    1 1 L g4
+g4
+    0 0 R E1
+    1 1 R ca1
+E1
+    0 0 L dp1
+    1 1 R seed19
+E3
+    0 1 R EX1
+    -
+EX1
+    0 0 R EX2
+    1 1 R EX1
+EX2
+    0 0 R EX1
+    1 1 R en1
+en1
+    0 0 R en2
+    1 1 R en1
+en2
+    0 0 R en3
+    1 1 L La3
+en3
+    0 0 L enR1
+    1 1 R en4
+en4
+    0 0 L enC1
+    1 0 L enF1
+enF1
+    0 0 L enF2
+    1 1 L enF1
+enF2
+    0 0 L enF1
+    1 1 R enF3
+enF3
+    0 1 L PN1
+    1 0 L LMC1
+enC1
+    0 0 L enC2
+    1 1 L enC1
+enC2
+    0 0 L enC1
+    1 1 R cy4
+DH1
+    0 0 L DH2
+    1 1 L DH1
+DH2
+    0 0 L DH1
+    1 1 R dp1
+enR1
+    0 0 L enR2
+    1 1 R seed2
+enR2
+    0 0 L ER1
+    1 1 R seed2
+ER1
+    0 0 L ER2
+    1 1 L ER1
+ER2
+    0 0 L ER1
+    1 1 L EQ1
+EQ1
+    0 0 L EQ2
+    1 1 L EQ1
+EQ2
+    0 0 L EQ1
+    1 1 R Rba1
+H1
+    0 1 L xq4
+    1 1 R H2
+H2
+    0 0 R HX1
+    1 1 L seed22
+HX1
+    0 0 R HX2
+    1 1 R HX1
+HX2
+    0 0 R HX1
+    1 1 R hn1
+hn1
+    0 0 R hn2
+    1 1 R hn1
+hn2
+    0 0 R hn3
+    1 1 R kc5
+hn3
+    0 0 L hR1
+    1 1 R hn4
+hn4
+    0 0 L enF1
+    1 1 L hF1
+hF1
+    0 0 L hF2
+    1 1 L hF1
+hF2
+    0 0 L hF1
+    1 1 R hF3
+hF3
+    0 1 L KC1
+    1 0 R dpA
+KC1
+    0 0 L KC2
+    1 1 L KC1
+KC2
+    0 0 L KC1
+    1 1 L kc2
+kc2
+    0 0 L kc3
+    1 1 R pe1
+kc3
+    0 0 L kc4
+    1 1 L dp6
+kc4
+    0 1 L E1
+    1 1 L kc5
+kc5
+    0 0 R ly7
+    1 1 R KR1
+KR1
+    0 0 R KR2
+    1 1 R KR1
+KR2
+    0 0 R KR1
+    1 1 L ca1
+hR1
+    0 0 L hR2
+    1 1 L x3
+hR2
+    0 0 L HR1
+    1 0 L PN1
+HR1
+    0 0 L HR2
+    1 1 L HR1
+HR2
+    0 0 L HR1
+    1 1 L DH1
+dp1
+    0 1 L dp2
+    1 0 L ca2
+dp2
+    0 0 R bo7
+    1 1 L dp3
+dp3
+    0 0 L kc2
+    1 1 R MF1
+dp6
+    0 0 R PT1
+    1 1 R dp7
+dp7
+    0 0 L xq6
+    1 0 R dp8
+dp8
+    0 0 R seed22
+    -
+dpA
+    0 0 R seed13
+    1 1 R dpA
+PT1
+    0 0 R PT2
+    1 1 R PT1
+PT2
+    0 0 R PT1
+    1 1 L pt1
+pt1
+    0 0 L pt2
+    1 0 L XP1
+pt2
+    0 0 R ca6
+    1 1 L pt3
+pt3
+    0 0 L pt4
+    -
+pt4
+    0 0 L seed13
+    1 0 R QC1
+pt6
+    0 0 L pt7
+    1 1 L drL
+pt7
+    0 0 L pt8
+    1 1 L seed20
+pt8
+    0 1 L sk3
+    1 1 L pt9
+pt9
+    0 1 L Lm3
+    1 1 L hR1
+x1
+    0 1 L hR1
+    -
+x3
+    0 0 L xe2
+    1 1 R seed3
+YP1
+    0 0 R YP2
+    1 1 R YP1
+YP2
+    0 0 R YP1
+    1 1 L y1
+y1
+    0 1 R y2
+    1 1 R y1
+y2
+    0 1 R Rm3
+    1 1 R y3
+y3
+    0 0 L seed10
+    1 1 L pt1
+XP1
+    0 0 L XP2
+    1 1 L XP1
+XP2
+    0 0 L XP1
+    1 1 R x1
+xe2
+    0 0 L xe3
+    1 1 L g1
+xe3
+    0 0 R bp1
+    1 1 R SK1
+XQ1
+    0 0 L XQ2
+    1 1 L XQ1
+XQ2
+    0 0 L XQ1
+    1 1 R H1
+xq4
+    0 0 L dp7
+    1 1 L xq4
+xq6
+    0 0 R pt2
+    1 1 L fl1
+SK1
+    0 0 R SK2
+    1 1 R SK1
+SK2
+    0 0 R SK1
+    1 1 L pt8
+sk3
+    0 0 L sk4
+    1 1 L sk3
+sk4
+    0 0 L kc2
+    1 1 R seed11
+fl1
+    0 0 L fl2
+    1 1 L fl1
+fl2
+    0 0 L fl3
+    1 1 L fl1
+fl3
+    0 1 L pw2
+    1 1 L fl1
+pw2
+    0 0 L pw3
+    1 1 R pw2
+pw3
+    0 1 R pw4
+    1 1 L zd6
+pw4
+    0 0 R fr1
+    1 1 L Ld3
+fr1
+    0 0 R fr2
+    1 1 R fr1
+fr2
+    0 0 R fr3
+    1 1 R fr1
+fr3
+    0 1 R cy7
+    1 1 R fr1
+qw3
+    0 1 L qw4
+    1 0 R Lm5
+qw4
+    0 0 L qw5
+    1 1 R MW4
+qw5
+    0 0 L cac
+    1 1 L qw6
+qw6
+    0 0 L qw7
+    -
+qw7
+    0 0 L qw8
+    1 1 R dp2
+qw8
+    0 0 R qw9
+    1 1 L qw8
+qw9
+    0 1 L XP1
+    1 1 R enR2
+Rba1
+    0 1 R seed2
+    1 0 L Rc5
+Rba3
+    0 0 L Rba5
+    1 1 L seed5
+Rba5
+    0 0 R seed21
+    1 1 L Rba5
+RMC1
+    0 0 R RMC2
+    1 1 R RMC1
+RMC2
+    0 0 R RMC1
+    1 1 R Rc1
+Rc1
+    0 0 R Rc2
+    1 1 R Rc1
+Rc2
+    0 0 R Rc3
+    -
+Rc3
+    0 1 L Rc4
+    1 1 R Rc3
+Rc4
+    0 0 L Rc5
+    1 1 L Rc4
+Rc5
+    0 0 L Rc6
+    1 0 L ZD1
+Rc6
+    0 1 R seed24
+    1 1 L Rc6
+Ra3
+    0 0 L seed17
+    1 1 L seed9
+RMM1
+    0 0 R RMM2
+    1 1 R RMM1
+RMM2
+    0 0 R RMM1
+    1 1 R y1
+Rm3
+    0 0 L Rba1
+    1 1 R Rm3
+ZD1
+    0 0 L ZD2
+    1 1 L ZD1
+ZD2
+    0 0 L ZD1
+    1 1 L zd2
+zd2
+    0 0 L zd3
+    1 1 L Lba3
+zd3
+    0 0 L seed8
+    -
+zd5
+    0 0 L zd6
+    1 1 L RB1
+zd6
+    0 0 L DH1
+    1 0 L LMM1
+RB1
+    0 0 L RB2
+    1 1 L RB1
+RB2
+    0 0 L RB1
+    1 1 R qw9
+bp1
+    0 0 R bp2
+    1 1 R ly3
+bp2
+    0 0 R bp3
+    1 1 R seed25
+bp3
+    0 0 L bp4
+    1 1 R bp3
+bp4
+    0 0 L seed4
+    1 1 L pt4
+QC1
+    0 0 R QC2
+    1 1 R QC1
+QC2
+    0 0 R QC1
+    1 1 L qc2
+qc2
+    0 1 L qc3
+    -
+qc3
+    0 0 R sk4
+    1 1 L qc3
+qc9
+    0 0 L bp4
+    1 1 L qc9
+qcC
+    0 0 L qcD
+    1 1 L seed12
+qcD
+    0 0 L qcE
+    1 1 L qcD
+qcE
+    0 0 L Lc3
+    1 1 L ZD2
+Lba1
+    0 1 L zd2
+    -
+Lba3
+    0 0 R pw2
+    1 1 R enF3
+LMC1
+    0 0 L LMC2
+    1 1 L LMC1
+LMC2
+    0 0 L LMC1
+    1 1 L qcD
+Lc3
+    0 1 R Lc4
+    1 1 L Lc3
+Lc4
+    0 0 R Lc5
+    1 1 R Lc4
+Lc5
+    0 0 R Lc6
+    1 1 R seed0
+Lc6
+    0 1 L en2
+    1 1 R Lc6
+La3
+    0 0 R Ld1
+    1 1 R La4
+La4
+    0 0 R ea4
+    1 0 L qcD
+Ld1
+    0 0 L pw4
+    1 1 R Ld1
+Ld3
+    0 0 R qw7
+    1 0 R LNB1
+LNB1
+    0 0 R LNB2
+    1 1 R LNB1
+LNB2
+    0 0 R LNB1
+    1 1 L Lba1
+LMM1
+    0 0 L LMM2
+    1 1 L LMM1
+LMM2
+    0 0 L LMM1
+    1 1 L LmR
+LmR
+    0 1 L pt9
+    1 1 L LmR
+Lm3
+    0 0 R qw3
+    1 1 L Lm3
+Lm5
+    0 0 R qw3
+    1 0 R LZ1
+LZ1
+    0 0 R LZ2
+    1 1 R LZ1
+LZ2
+    0 0 R LZ1
+    1 1 R LY1
+LY1
+    0 0 R LY2
+    1 1 R LY1
+LY2
+    0 0 R LY1
+    1 1 L ly1
+ly1
+    0 1 R bp1
+    -
+ly3
+    0 0 R hn1
+    -
+ly7
+    0 0 R ly8
+    1 1 R ly7
+ly8
+    0 0 R bp2
+    1 1 R enR1
+MF1
+    0 0 R MF2
+    1 1 R MF1
+MF2
+    0 0 R MF3
+    1 1 R MF1
+MF3
+    0 1 R MK3
+    1 1 R dp3
+bo3
+    0 0 R Ld3
+    1 0 R bo3
+bo7
+    0 0 R seed1
+    1 1 R pt6
+pe1
+    0 0 R pe2
+    1 0 R pe1
+pe2
+    0 0 R pe3
+    1 0 R pe1
+pe3
+    0 0 L pe4
+    1 0 R pe1
+pe4
+    0 0 L pe4
+    1 1 L g1
+eb8
+    0 0 L qw5
+    1 1 L ea1
+ea1
+    0 0 L cy6
+    1 1 L ea1
+ea4
+    0 0 R kc5
+    1 0 R MW1
+MW1
+    0 0 R MW2
+    1 1 R MW1
+MW2
+    0 0 R qw4
+    1 1 R MW1
+MW4
+    0 0 R MF2
+    1 1 R MW1
+cac
+    0 1 L ea1
+    1 1 L H2
+caf
+    0 0 L fk2
+    1 1 R Lc5
+fk1
+    0 0 L fk2
+    1 1 L fk1
+fk2
+    0 0 L fk3
+    1 1 L fk1
+fk3
+    0 0 R fk4
+    1 1 L fk1
+fk4
+    0 0 R fk5
+    -
+fk5
+    0 1 R MK1
+    -
+MK1
+    0 0 R MK2
+    1 1 R MK1
+MK2
+    0 0 R MK3
+    1 1 R MK1
+MK3
+    0 0 R wr4
+    1 1 R MK4
+MK4
+    0 0 R kc4
+    1 1 R MK1
+wr4
+    0 1 L fla
+    1 0 R bp2
+fla
+    0 0 L flb
+    1 1 L fla
+flb
+    0 0 L flc
+    1 1 L fla
+flc
+    0 0 R ea4
+    1 1 L fla
+drL
+    0 0 L MF3
+    1 1 L drL

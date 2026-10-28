@@ -14,12 +14,13 @@ common class (halting targets must match exactly).  Differences:
 
 On the odd perfect designs this proves optimality in seconds where minimize.py (which
 descends from K) ran for hours without an answer.
-Usage: python3 minimize_clique.py in.txt out.txt [timeout_per_K_seconds] [solver] [beep]
+Usage: python3 minimize_clique.py in.txt out.txt [timeout_per_K_seconds] [solver] [beep[,beep...]]
 Needs python-sat and networkx (pip install python-sat networkx).
 
 `beep` (e.g. `G3:0`) names a beep transition (state, read symbol) of a beeping machine: no
 state with a defined transition on that symbol may share the beep state's class, so in the
-merged machine that transition is taken only where the design takes it.
+merged machine that transition is taken only where the design takes it.  Several, comma
+separated (`xe3:0,xq6:0`), for a beeping booping machine (its beep and its boop).
 """
 import sys, itertools, threading
 import tm
@@ -28,7 +29,7 @@ from pysat.solvers import Solver
 from pysat.card import CardEnc, EncType
 import networkx as nx
 
-BEEP = None   # (state, symbol): see the docstring
+BEEPS = []   # [(state, symbol)]: see the docstring
 
 def analyse(order, ST):
     n = len(order); idx = {s: i for i, s in enumerate(order)}
@@ -49,9 +50,10 @@ def analyse(order, ST):
             if ha or hc:
                 if a[2] != c[2]: bad = True; break
             elif a[2] != c[2]: imp.append(tuple(sorted((a[2], c[2]))))
-        if BEEP and BEEP[0] in (order[i], order[j]):
-            other = order[j] if order[i] == BEEP[0] else order[i]
-            if ST[other][BEEP[1]] is not None: bad = True
+        for BEEP in BEEPS:
+            if BEEP[0] in (order[i], order[j]):
+                other = order[j] if order[i] == BEEP[0] else order[i]
+                if ST[other][BEEP[1]] is not None: bad = True
         if bad: incompat.add((i, j))
         else: implies[(i, j)] = imp
     changed = True
@@ -109,7 +111,8 @@ if __name__ == '__main__':
     timeout = int(sys.argv[3]) if len(sys.argv) > 3 else 3600
     solver = sys.argv[4] if len(sys.argv) > 4 else 'cadical195'
     if len(sys.argv) > 5:
-        bs, bb = sys.argv[5].split(':'); BEEP = (bs, int(bb))
+        for item in sys.argv[5].split(','):
+            bs, bb = item.split(':'); BEEPS.append((bs, int(bb)))
     clique = lower_bound(order, ST)
     print('design', len(order), 'states; clique lower bound', len(clique), flush=True)
     K = len(clique)

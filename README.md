@@ -5,6 +5,7 @@ Each folder holds a Turing machine that refers to a notable mathematical conject
 * For class Π₁, the machine halts iff the conjecture is false
 * For class Σ₁, the machine halts iff the conjecture is true
 * For class Π₂, the machine [quasihalts](https://wiki.bbchallenge.org/wiki/Quasihalt) iff the conjecture is false
+* For class Π₃, a [beeping booping](https://bramcohen.com/p/beeping-booping-busy-beavers) machine has a beep count between consecutive boops that repeats forever iff the conjecture is false
 
 This is interesting because it shows that determining the value of `BB(n)` also implies solving all conjectures of size `n` or less in Π₁ and Σ₁ (and likewise BBB(n) for Π₂ and Σ₂). For example, we now know that evaluating `BB(21)` requires us to [solve Goldbach's Conjecture](https://github.com/google-deepmind/cryptids/tree/main/artifacts/goldbach_21), alongside many other difficult problems! See the [BusyBeaverWiki](https://wiki.bbchallenge.org/wiki/Cryptids#Larger_Cryptids) for many other interesting examples.
 
@@ -25,6 +26,7 @@ Each machine comes with the specific Turing Machine code, a human-readable summa
 | [`sierpinski/`](https://github.com/calr3/tinycryptids/tree/main/sierpinski) | [Sierpiński problem](https://en.wikipedia.org/wiki/Sierpiński_number#Smallest_Sierpiński_number) | Σ₁ | Halts iff 78557 is the smallest Sierpiński number | BB(60) | `TM.Sierpinski.M60.halts_iff` |
 | [`riesel/`](https://github.com/calr3/tinycryptids/tree/main/riesel) | [Riesel problem](https://en.wikipedia.org/wiki/Riesel_number) | Σ₁ | Halts iff 509203 is the smallest Riesel number | BB(76) | `TM.Riesel.M76.halts_iff` |
 | [`fermat/`](https://github.com/calr3/tinycryptids/tree/main/fermat) | [Fermat's Last Theorem](https://en.wikipedia.org/wiki/Fermat's_Last_Theorem) † | Π₁ | Halts iff there's a non-trivial solution to `x^n + y^n = z^n` for some `n ≥ 3` | BB(90) | `TM.Fermat.M90.halts_iff` |
+| [`abc/`](https://github.com/calr3/tinycryptids/tree/main/abc) | [abc conjecture](https://en.wikipedia.org/wiki/Abc_conjecture) | Π₃ | Some beep count between consecutive boops repeats forever iff, for some `n`, infinitely many coprime `a + b = c` have `c^n > rad(abc)^(n+1)` (the beep: state 117 reading 0; the boop: state 121 reading 0) | BBBB(235) § | `TM.ABC.M235.repeats_iff` |
 
 The state count is the number of states required by the smallest known machine, as given by the output of the fully minimized machine (`minimize.py` or `minimize_clique.py`) from the design given in the folder's `build.py`.
 Each folder's `RECORDS.md` lists every machine, `README.md` explains the algorithm and gives the machine in bbchallenge standard text, `PROOF.md` walks through the proof in plain words, and `machines/*_annotated.txt` describes every state.
@@ -34,10 +36,12 @@ that fewer than 400 states would suffice for a Fermat counterexample searcher, b
 
 ‡ A beeping machine never halts. It has one designated beep transition (here state N reading 0), and it *quasihalts* if it takes that transition only finitely often; this one takes it once for every twin prime pair (p, p + 2), p ≥ 3. `fermatprimesinf/` takes its beep (state P reading 0) once for every Fermat prime. A Π₂ statement such as the twin prime conjecture has no finite counterexample for a halting machine to find, but a beeping machine has a last beep iff it is false. The Lean definitions are in `lean/TinyCryptids/Core/Beep.lean`. BBB(18) here counts 18-state machines with a beep transition; with a beep *state* (Aaronson's definition) the same machine needs at most one more state.
 
+§ A beeping booping machine ([Bram Cohen's definition](https://bramcohen.com/p/beeping-booping-busy-beavers)) never halts and has two special transitions, the beep and the boop. Its output is the sequence of beep counts between consecutive boops, and it "has a number" when some value of that sequence repeats forever, a Σ₃ property. `abc/` beeps once for each `n` with `c^n ≤ rad(abc)^(n+1)` and then boops, for every coprime triple with `c > rad(abc)`, so its output is the sequence of the least `n` with `c^n > rad(abc)^(n+1)`. The Lean definitions are in `lean/TinyCryptids/Core/BeepBoop.lean`. Its 235 states come from randomised greedy merging of the 368-state design and are not known to be optimal (the exact search showed only that the optimum is at least 184; see `abc/RECORDS.md`).
+
 ## Layout
 
 | Path | Contents |
 |------|----------|
 | `<conjecture>/` | One hand-designed machine: `build.py`, tests, `machines/`, `README.md`, `RECORDS.md`, and `gen_lean.py`/`gen_reduced_lean.py`/`annotate.py` |
 | `lean/` | **All proofs**, one Lake project: `TinyCryptids/Core/` (the shared machine model), `TinyCryptids/Defs.lean` (every definition used in a statement), `TinyCryptids/<Machine>/` (namespace `TM.<Machine>`), `Check.lean`. See `lean/README.md` |
-| `tools/` | Shared Python tools: `tm.py` (format, standard text), `sim.c` (`gcc -O2 -o tools/sim tools/sim.c`), `same_run.py`, `minimize.py`, `minimize_clique.py`, `minimize_dimacs.py`, `greedy_merge.py`, `synth_round.py`, `leangen.py` |
+| `tools/` | Shared Python tools: `tm.py` (format, standard text), `sim.c` (`gcc -O2 -o tools/sim tools/sim.c`), `same_run.py`, `minimize.py`, `minimize_clique.py`, `minimize_dimacs.py`, `greedy_merge.py`, `greedy_merge_par.py` (parallel, with exclusive beep/boop transitions), `synth_round.py`, `leangen.py` |

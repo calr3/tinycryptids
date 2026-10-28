@@ -70,4 +70,23 @@ def properDivSum (n : Nat) : Nat := divSumBelow n n
 example : properDivSum 6 = 6 := by decide
 example : properDivSum 28 = 28 := by decide
 
+/-- The product of the primes `p < k` that divide `n`. -/
+def radBelow (n : Nat) : Nat → Nat
+  | 0 => 1
+  | k + 1 => radBelow n k * (if Prime k ∧ n % k = 0 then k else 1)
+
+/-- The radical of `n ≥ 1`: the product of its distinct prime factors (`rad 1 = 1`). -/
+def rad (n : Nat) : Nat := radBelow n (n + 1)
+
+example : rad 72 = 6 := by decide
+example : rad 30 = 30 := by decide
+
+/-- The abc conjecture: for every `ε > 0` only finitely many coprime `a + b = c` have
+`c > rad(abc)^(1+ε)`.  Equivalently (take `ε = 1/n`, and "finitely many" as a bound on `c`):
+for every `n ≥ 1` there is an `N` such that every coprime `a, b ≥ 1` with `a + b ≥ N` has
+`(a + b)^n ≤ rad(ab(a + b))^(n+1)`. -/
+def ABCConjecture : Prop :=
+  ∀ n, 1 ≤ n → ∃ N, ∀ a b, 1 ≤ a → 1 ≤ b → Nat.gcd a b = 1 → N ≤ a + b →
+    (a + b) ^ n ≤ rad (a * b * (a + b)) ^ (n + 1)
+
 end TinyCryptids

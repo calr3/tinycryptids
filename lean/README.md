@@ -16,8 +16,10 @@ Every main theorem depends only on `propext`, `Classical.choice` and `Quot.sound
 | `TinyCryptids/Core/Lemmas.lean` | Single steps, scans, `Clean` words and the 2-state hole parsers |
 | `TinyCryptids/Core/Routines.lean` | Generic routines: cyclic advance of a hole (`Dadv`, `DadvL`, `DW`), parsers in `ones` form |
 | `TinyCryptids/Core/Beep.lean` | **Beeping machines**: `BeepsAt δ qb bb c n` (step `n + 1` is the beep transition, state `qb` reading `bb`), `QuasiHalts` (finitely many beeps), runs of a sub-machine (`run_sub`), `quasihalts_of_sub` (the machine without its beep never halts ⟹ no more beeps), `quasihalts_iff_of_sim` (a merged machine beeps at the same steps) |
+| `TinyCryptids/Core/BeepBoop.lean` | **Beeping booping machines** (Bram Cohen): `beepsBetween`, `RepeatsForever δ qb bb qo bo c` (some number of beeps between consecutive boops occurs infinitely often), `repeatsForever_of_segments` (a run cut into segments with no event or `v` beeps and a boop), `Trace` and `Trace.evs` (the events of event-free runs joined by single beep and boop steps), `repeatsForever_iff_of_sim` |
+| `TinyCryptids/Core/Mirror.lean` | The mirror image of a machine (`mirror`, `Cfg.mir`): `Reach.mir`, `Reach.of_mir`, `Reach.embed` (a routine proved once runs mirrored in a bigger machine) |
 | `TinyCryptids/Core/Basic3.lean` | The same model with 3 symbols (`TM3`: `Sym` = `s0 s1 s2`, `s0` blank) and its single steps and scans, for `weakcollatz/sym3/` |
-| `TinyCryptids/Defs.lean` | **The definitions used in the theorem statements**, namespace `TinyCryptids`: `iterate`, `collatz`, `Prime`, `properDivSum`, `fact`, `leftFact`, `TwinPrimeConjecture`, `InfinitelyManyFermatPrimes`; also `prime_iff_dvd` |
+| `TinyCryptids/Defs.lean` | **The definitions used in the theorem statements**, namespace `TinyCryptids`: `iterate`, `collatz`, `Prime`, `properDivSum`, `fact`, `leftFact`, `TwinPrimeConjecture`, `InfinitelyManyFermatPrimes`, `radBelow`, `rad`, `ABCConjecture`; also `prime_iff_dvd` |
 | `TinyCryptids/<Machine>/` | One hand-designed machine per folder, namespace `TM.<Machine>` |
 | `Check.lean` | Every main theorem with `#check` and `#print axioms` |
 
@@ -52,6 +54,12 @@ Beeping machines (`Core/Beep.lean`): the beep transition is `qb` reading `bb`.
 |---------|-----------|
 | `TM.FermatPrimesInf.quasihalts_iff`, `M16` | `QuasiHalts delta G0 false start ↔ ¬ InfinitelyManyFermatPrimes`, with `InfinitelyManyFermatPrimes := ∀ n, ∃ k, n ≤ k ∧ Prime (2 ^ 2 ^ k + 1)`; also `never_halts : ¬ Halts delta start` (and for `M16`: `delta2`, `St2.G0`, `start2`) |
 | `TM.TwinPrimes.quasihalts_iff`, `M18` | `QuasiHalts delta G2 false start ↔ ¬ TwinPrimeConjecture`, with `TwinPrimeConjecture := ∀ n, ∃ p, n ≤ p ∧ Prime p ∧ Prime (p + 2)`; also `never_halts : ¬ Halts delta start` (and for `M18`: `delta2`, `St2.G2`, `start2`) |
+
+Beeping booping machines (`Core/BeepBoop.lean`): the beep is `qb` reading `bb`, the boop `qo` reading `bo`.
+
+| Theorem | Statement |
+|---------|-----------|
+| `TM.ABC.repeats_iff`, `M235` | `RepeatsForever delta xe3 false xq6 false start ↔ ¬ ABCConjecture`, with `ABCConjecture := ∀ n, 1 ≤ n → ∃ N, ∀ a b, 1 ≤ a → 1 ≤ b → Nat.gcd a b = 1 → N ≤ a + b → (a + b) ^ n ≤ rad (a * b * (a + b)) ^ (n + 1)`; also `never_halts : ¬ Halts delta start` (and for `M235`: `delta2`, `St2.xe3`, `St2.xq6`, `start2`) |
 
 ## Proof outlines
 
@@ -153,3 +161,14 @@ with two-cell separators, trial division from `d = 3`) with `k·2^n − 1`: the 
 cells (`comp_end`), so the next candidate is `2P + 1` (`cand_succ`); the counter has five groups,
 with its lemmas proven for any number of groups (`Cg`, `cg_dec`, `cg_zero`); the search starts
 at `k = 5` (`good_one`, `good_three` for `k = 1, 3`).
+
+**abc conjecture** (`TinyCryptids/ABC`, beeping booping). `Mult`: the multiplication `Z := Z · base`
+proved once on a template machine (`mult`), embedded as `multR` and, mirrored, as `multL`
+(`Core/Mirror.lean`). `Gcd`: `gcd_run`, by the coprimality walk (`Walk`: `first_hit`). `Factor`, `Round`: the
+tests `pass_A/B/C`, `hit_A/B/C`, `new_R`, `notnew_R`, `next_d`, `last_d`. `PairEnd`: `pe_erase`,
+`next_ab`, `next_c`, `wr_go`, `hitA_nc`, `hitB_nc`. `Compare`: `compare`. `Power`: `pre_entry`,
+`pre_skip`, `pre_pass`, `q_mult`, `loop_beep`, `loop_boop`, `beep_step`, `boop_end`. `Spec`:
+`rstep_rad`, `rfrom_rad` (`R = rad(abc)`), `gcd_ac`, `val_spec`, `pairAt_spec`, `pairAt_onto`,
+`good_iff`. `Main`: `factor_loop`, `power` (a `Trace`), `pair_trace`, `seed`, `Tm`, `never_halts`,
+`repeats_iff` by `repeatsForever_of_segments`. `M235` by `repeatsForever_iff_of_sim` with
+`excl_beep` and `excl_boop`.

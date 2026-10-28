@@ -1,0 +1,1154 @@
+; ============================================================================
+; A 235-state, 2-symbol BEEPING BOOPING Turing machine whose output repeats a
+; value forever IFF THE ABC CONJECTURE IS FALSE.
+;
+; THE BEEP is the transition of state xe3 reading 0 (marked BEEP below),
+; THE BOOP the transition of state xq6 reading 0 (marked BOOP below).
+; Started on a blank tape in the first state, the machine never halts. Its
+; output is the sequence of beep counts between consecutive boops (Bram
+; Cohen's Beeping Booping Busy Beavers). Some value occurs in it infinitely
+; often iff, for some n >= 1, infinitely many coprime a + b = c have
+; c^n > rad(abc)^(n+1), i.e. iff the abc conjecture fails.
+; Lean proof: lean/TinyCryptids/ABC/M235.lean,
+; theorem TM.ABC.M235.repeats_iff (and never_halts).
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 368-state design of build.py / abc.txt with states
+;   merged. States are merged only when their defined transitions agree, and
+;   no state that reads 0 joins the beep state or the boop state, so the two
+;   special transitions are taken exactly where the design takes them. Each
+;   state below plays one or more ROLES of the design (its name joins them);
+;   each transition line is tagged [role] with the role(s) that use it. A '-'
+;   line is never used.
+;
+; THE IDEA
+;   For c = 2, 3, ... and a = 1 .. c - 1, b = c - a:
+;   factor   trial divisors d = 2 .. c: d HITS if gcd(d, x) > 1 for x = a, b
+;            or c (lockstep holes, GCD(D, X)); a hit with gcd(d, R) = 1 does
+;            R := R * d. Then R = rad(abc). At d = c a hit on a or b means
+;            gcd(a, b) > 1: skip the pair.
+;   pretest  c <= R: skip the pair.
+;   powers   P := 1, Q := R; repeat: compare P with Q; P <= Q: BEEP,
+;            P := P * c, Q := Q * R; P > Q: BOOP, next pair. So a pair that
+;            passes beeps v times, v = the least n with c^n > R^(n+1), then
+;            boops; a skipped pair is silent.
+;
+; TAPE LAYOUT (numbers in unary; a block of v + 2 cells holds v, a single 0
+; inside it is a HOLE (a cursor); blocks are separated by 00)
+;
+;      [P 00] K 00 D 00 A 00 B 00 C 00 M 00 R [00 Q]
+;
+;   K: c - d + 1 cells, no hole: the countdown for d.  D: the divisor d.
+;   A, B, C: a, b, c.  M: one cell (a marker).  R: rad so far.
+;   P = c^n (grown leftwards), Q = R^(n+1) (grown rightwards) in the powers.
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0  [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; cah    [pair_end] step
+start_seed0_cah
+    0 1 R seed1_bo8            ; [seed0]
+    1 1 R qw3_Lm4_cai_cak      ; [cah]
+
+; ---------- SEED: K = 1, D = 2, A = B = 1, C = 2, M; then R := 1 and the pair (1, 1) 
+
+; seed1  [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; bo8    [pair_end] step
+seed1_bo8
+    0 0 R seed2_Rba2           ; [seed1]
+    1 1 R MF1_wr0              ; [bo8]
+; seed2  [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; Rba2   [right_mult] advance a cyclic hole one position
+seed2_Rba2
+    0 0 R seed3_x4             ; [seed2]
+    1 1 R Rba3                 ; [Rba2]
+; seed3  [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; x4     [compare] step
+seed3_x4
+    0 1 R seed4_qcB_eb5        ; [seed3]
+    1 0 R YP1                  ; [x4]
+; seed4  [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; qcB    [beep_step] M
+; eb5    [pair_end] step
+seed4_qcB_eb5
+    0 1 R seed5_Rba4           ; [seed4]
+    1 1 L qcC_eb6              ; [qcB, eb5]
+; seed5  [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; Rba4   [right_mult] advance a cyclic hole one position
+seed5_Rba4
+    0 1 R seed6_Rd3            ; [seed5]
+    1 0 R RMC1                 ; [Rba4]
+; seed6  [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; Rd3    [right_mult] multiplication round; Z's cursor back to cell 1
+seed6_Rd3
+    0 1 R seed7_ca4_ca7        ; [seed6]
+    1 0 L EQ1_RNB1             ; [Rd3]
+; seed7  [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; ca4    [gcd_routine] advance a cyclic hole one position; counter (D) advance
+; ca7    [gcd_routine] advance a cyclic hole one position; counter (D) advance
+seed7_ca4_ca7
+    0 0 R seed8_zd4            ; [seed7]
+    1 0 R PC1                  ; [ca4, ca7]
+; seed8  [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; zd4    [right_mult] step
+seed8_zd4
+    0 0 R seed9_Ra4            ; [seed8]
+    1 1 L zd5                  ; [zd4]
+; seed9  [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; Ra4    [right_mult] copy loop: copy Z onto the scratch block
+seed9_Ra4
+    0 1 R seed10_ye1           ; [seed9]
+    1 0 R Rc1                  ; [Ra4]
+; seed10 [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; ye1    [compare] step
+seed10_ye1
+    0 1 R seed11_qc5           ; [seed10]
+    1 1 L XQ1                  ; [ye1]
+; seed11 [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; qc5    [beep_step] Q's cursor on cell 1
+seed11_qc5
+    0 1 R seed12_eb7           ; [seed11]
+    1 0 L xe2_qc6              ; [qc5]
+; seed12 [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; eb7    [pair_end] step
+seed12_eb7
+    0 0 R seed13_dpB_pt5       ; [seed12]
+    1 1 L eb8                  ; [eb7]
+; seed13 [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; dpB    [next_d] step
+; pt5    [pretest] M
+seed13_dpB_pt5
+    0 0 R seed14_cy1_dpC       ; [seed13, dpB]
+    1 1 L pt6_dr7              ; [pt5]
+; seed14 [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; cy1    [gcd_routine] advance a cyclic hole one position; cycled (X) advance
+; dpC    [next_d] step
+seed14_cy1_dpC
+    0 1 R seed15_cy2           ; [seed14, cy1]
+    1 1 R hR2_dpD              ; [dpC]
+; seed15 [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; cy2    [gcd_routine] advance a cyclic hole one position; cycled (X) advance
+seed15_cy2
+    0 1 R seed16_dr5           ; [seed15]
+    1 1 R cy3                  ; [cy2]
+; seed16 [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; dr5    [pair_end] step
+seed16_dr5
+    0 1 R seed17_Rd1           ; [seed16]
+    1 1 R bo7_dr6              ; [dr5]
+; seed17 [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; Rd1    [right_mult] copy loop: copy Z onto the scratch block
+seed17_Rd1
+    0 0 R seed18_Rd2           ; [seed17, Rd1]
+    1 1 L seed17_Rd1           ; [Rd1]
+; seed18 [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; Rd2    [right_mult] copy loop: copy Z onto the scratch block
+seed18_Rd2
+    0 0 R seed19_E2            ; [seed18]
+    1 1 R seed6_Rd3            ; [Rd2]
+; seed19 [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; E2     [gcd_routine] step
+seed19_E2
+    0 1 R seed20_dq2           ; [seed19]
+    1 0 R E3                   ; [E2]
+; seed20 [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; dq2    [pair_end] step
+seed20_dq2
+    0 1 R seed21_Rba6          ; [seed20]
+    1 1 L hF3_dq3              ; [dq2]
+; seed21 [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; Rba6   [right_mult] advance a cyclic hole one position
+seed21_Rba6
+    0 1 R seed22_dp9_cae       ; [seed21]
+    1 1 R g1_Rba7_qc7_eb1      ; [Rba6]
+; seed22 [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; dp9    [next_d] the new guard
+; cae    [pair_end] step
+seed22_dp9_cae
+    0 1 R seed23_dp10          ; [seed22, dp9]
+    1 1 L caf                  ; [cae]
+; seed23 [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; dp10   [next_d] the old guard: D's hole, position 1
+seed23_dp10
+    0 0 R seed24_Ra2           ; [seed23]
+    1 0 R dpA                  ; [dp10]
+; seed24 [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; Ra2    [right_mult] copy loop: copy Z onto the scratch block
+seed24_Ra2
+    0 0 R seed25_nc5_dr4       ; [seed24]
+    1 1 R Ra3                  ; [Ra2]
+; seed25 [seed] write the next cell of the seed 1 00 1111 00 111 00 111 00 1111 00 1
+; nc5    [pair_end] step
+; dr4    [pair_end] step
+seed25_nc5_dr4
+    0 1 R MF1_wr0              ; [seed25, nc5]
+    1 1 R seed16_dr5           ; [dr4]
+
+; ---------- FACTOR PHASE: the tests GCD(D, X) for X = A, B, C, R --------
+
+; ca1    [gcd_routine] advance a cyclic hole one position; counter (D) advance
+; gS     [gcd_routine] otherwise: next round (as ca1)
+ca1_gS
+    0 1 R ca2_cm4              ; [ca1, gS]
+    1 1 R ca1_gS               ; [gS]
+; ca2    [gcd_routine] advance a cyclic hole one position; counter (D) advance
+; cm4    [pair_end] step
+ca2_cm4
+    0 1 L cac_cm5              ; [cm4]
+    1 1 R ca3                  ; [ca2]
+; ca3    [gcd_routine] advance a cyclic hole one position; 0: the hole was on the last position; counter (D) advance
+ca3
+    0 0 L ca5                  ; [ca3]
+    1 1 L seed7_ca4_ca7        ; [ca3]
+; ca5    [gcd_routine] advance a cyclic hole one position; counter (D) advance
+ca5
+    0 0 R ca6_bo2              ; [ca5]
+    1 1 L ca5                  ; [ca5]
+; ca6    [gcd_routine] advance a cyclic hole one position; counter (D) advance
+; bo2    [pair_end] step
+ca6_bo2
+    0 0 R bo3                  ; [bo2]
+    1 1 R seed7_ca4_ca7        ; [ca6]
+; PC1    [gcd_routine] parser: move to the next hole (00 pairs crossed); to X's hole
+PC1
+    0 0 R PC2                  ; [PC1]
+    1 1 R PC1                  ; [PC1]
+; PC2    [gcd_routine] parser: move to the next hole (00 pairs crossed); to X's hole
+PC2
+    0 0 R PC1                  ; [PC2]
+    1 1 L seed14_cy1_dpC       ; [PC2]
+; cy3    [gcd_routine] advance a cyclic hole one position; 0: the hole was on the last position; cycled (X) advance
+cy3
+    0 0 L cy5                  ; [cy3]
+    1 1 L cy4_enC3             ; [cy3]
+; cy4    [gcd_routine] advance a cyclic hole one position; cycled (X) advance
+; enC3   [gcd_routine] step
+cy4_enC3
+    0 1 L DH1                  ; [enC3]
+    1 0 L PN1_GD1              ; [cy4]
+; cy5    [gcd_routine] advance a cyclic hole one position; cycled (X) advance
+cy5
+    0 0 R cy6_ea2_cm7          ; [cy5]
+    1 1 L cy5                  ; [cy5]
+; cy6    [gcd_routine] advance a cyclic hole one position; cycled (X) advance
+; ea2    [pair_end] step
+; cm7    [pair_end] step
+cy6_ea2_cm7
+    0 1 R La4_ea3_cm8          ; [ea2, cm7]
+    1 1 R cy7_qw2              ; [cy6]
+; cy7    [gcd_routine] advance a cyclic hole one position; cycled (X) advance
+; qw2    [power_init] step
+cy7_qw2
+    0 0 R qw3_Lm4_cai_cak      ; [qw2]
+    1 0 L PK1                  ; [cy7]
+; PN1    [gcd_routine] parser: move to the next hole (00 pairs crossed); next tick
+; GD1    [gcd_routine] parser: move to the next hole (00 pairs crossed); to D's hole: next GCD
+PN1_GD1
+    0 0 L PN2_GD2              ; [PN1, GD1]
+    1 1 L PN1_GD1              ; [PN1, GD1]
+; PN2    [gcd_routine] parser: move to the next hole (00 pairs crossed); next tick
+; GD2    [gcd_routine] parser: move to the next hole (00 pairs crossed); to D's hole: next GCD
+PN2_GD2
+    0 0 L PN1_GD1              ; [PN2, GD2]
+    1 1 R ca1_gS               ; [PN2, GD2]
+; PK1    [gcd_routine] parser: move to the next hole (00 pairs crossed); round done: check D
+PK1
+    0 0 L PK2                  ; [PK1]
+    1 1 L PK1                  ; [PK1]
+; PK2    [gcd_routine] parser: move to the next hole (00 pairs crossed); round done: check D
+PK2
+    0 0 L PK1                  ; [PK2]
+    1 1 R g1_Rba7_qc7_eb1      ; [PK2]
+; g1     [gcd_routine] step
+; Rba7   [right_mult] advance a cyclic hole one position
+; qc7    [beep_step] step
+; eb1    [pair_end] step
+g1_Rba7_qc7_eb1
+    0 0 L g2_qc8_eb2           ; [g1, qc7, eb1]
+    1 0 R RMM1                 ; [Rba7]
+; g2     [gcd_routine] step
+; qc8    [beep_step] step
+; eb2    [pair_end] step
+g2_qc8_eb2
+    0 0 L qc9_eb3              ; [qc8, eb2]
+    1 1 L g3                   ; [g2]
+; g3     [gcd_routine] 0: D on position 1: gcd > 1
+g3
+    0 0 R H1_xq3               ; [g3]
+    1 1 L g4                   ; [g3]
+; g4     [gcd_routine] 0: D on position 2: gcd = 1
+g4
+    0 0 R E1_cm2               ; [g4]
+    1 1 R ca1_gS               ; [g4]
+; E1     [gcd_routine] step
+; cm2    [pair_end] step
+E1_cm2
+    0 0 L dp1_cm3              ; [cm2]
+    1 1 R seed19_E2            ; [E1]
+; E3     [gcd_routine] step
+E3
+    0 1 R EX1                  ; [E3]
+    -
+; EX1    [gcd_routine] parser: move to the next hole (00 pairs crossed)
+EX1
+    0 0 R EX2                  ; [EX1]
+    1 1 R EX1                  ; [EX1]
+; EX2    [gcd_routine] parser: move to the next hole (00 pairs crossed)
+EX2
+    0 0 R EX1                  ; [EX2]
+    1 1 R en1                  ; [EX2]
+; en1    [gcd_routine] to X's end
+en1
+    0 0 R en2_La2              ; [en1]
+    1 1 R en1                  ; [en1]
+; en2    [gcd_routine] step
+; La2    [left_mult] copy loop: copy Z onto the scratch block
+en2_La2
+    0 0 R en3                  ; [en2]
+    1 1 L La3                  ; [La2]
+; en3    [gcd_routine] 0: X is R (the last block)
+en3
+    0 0 L enR1_ly9             ; [en3]
+    1 1 R en4                  ; [en3]
+; en4    [gcd_routine] 0: the next block is M: X is C
+en4
+    0 0 L enC1                 ; [en4]
+    1 0 L enF1_hC1             ; [en4]
+; enF1   [gcd_routine] parser: move to the next hole (00 pairs crossed); X = A, B: marker moved on; fill X's
+; hC1    [gcd_routine] parser: move to the next hole (00 pairs crossed); X = C: fill the marker: GCD(D, R)
+enF1_hC1
+    0 0 L enF2_hC2             ; [enF1, hC1]
+    1 1 L enF1_hC1             ; [enF1, hC1]
+; enF2   [gcd_routine] parser: move to the next hole (00 pairs crossed); X = A, B: marker moved on; fill X's
+; hC2    [gcd_routine] parser: move to the next hole (00 pairs crossed); X = C: fill the marker: GCD(D, R)
+enF2_hC2
+    0 0 L enF1_hC1             ; [enF2, hC2]
+    1 1 R enF3_hC3_Lba4        ; [enF2, hC2]
+; enF3   [gcd_routine] step
+; hC3    [gcd_routine] step
+; Lba4   [left_mult] advance a cyclic hole one position
+enF3_hC3_Lba4
+    0 1 L PN1_GD1              ; [enF3, hC3]
+    1 0 L LMC1                 ; [Lba4]
+; enC1   [gcd_routine] parser: move to the next hole (00 pairs crossed); X = C: no hit; fill C's marker
+enC1
+    0 0 L enC2                 ; [enC1]
+    1 1 L enC1                 ; [enC1]
+; enC2   [gcd_routine] parser: move to the next hole (00 pairs crossed); X = C: no hit; fill C's marker
+enC2
+    0 0 L enC1                 ; [enC2]
+    1 1 R cy4_enC3             ; [enC2]
+; DH1    [gcd_routine] parser: move to the next hole (00 pairs crossed); to D's hole: d += 1
+DH1
+    0 0 L DH2                  ; [DH1]
+    1 1 L DH1                  ; [DH1]
+; DH2    [gcd_routine] parser: move to the next hole (00 pairs crossed); to D's hole: d += 1
+DH2
+    0 0 L DH1                  ; [DH2]
+    1 1 R dp1_cm3              ; [DH2]
+; enR1   [gcd_routine] X = R: gcd(d, R) = 1: R := R * d
+; ly9    [left_mult] R's base hole on cell 1, advanced
+enR1_ly9
+    0 0 L enR2_qwA             ; [enR1]
+    1 1 R seed2_Rba2           ; [ly9]
+; enR2   [gcd_routine] step
+; qwA    [power_init] R's base hole on cell 1, advanced
+enR2_qwA
+    0 0 L ER1                  ; [enR2]
+    1 1 R seed2_Rba2           ; [qwA]
+; ER1    [gcd_routine] parser: move to the next hole (00 pairs crossed); past R's hole
+ER1
+    0 0 L ER2                  ; [ER1]
+    1 1 L ER1                  ; [ER1]
+; ER2    [gcd_routine] parser: move to the next hole (00 pairs crossed); past R's hole
+ER2
+    0 0 L ER1                  ; [ER2]
+    1 1 L EQ1_RNB1             ; [ER2]
+; EQ1    [gcd_routine] parser: move to the next hole (00 pairs crossed); D's hole is the base
+; RNB1   [right_mult] parser: move to the next hole (00 pairs crossed)
+EQ1_RNB1
+    0 0 L EQ2_RNB2             ; [EQ1, RNB1]
+    1 1 L EQ1_RNB1             ; [EQ1, RNB1]
+; EQ2    [gcd_routine] parser: move to the next hole (00 pairs crossed); D's hole is the base
+; RNB2   [right_mult] parser: move to the next hole (00 pairs crossed)
+EQ2_RNB2
+    0 0 L EQ1_RNB1             ; [EQ2, RNB2]
+    1 1 R Rba1_Rm4             ; [EQ2, RNB2]
+; H1     [gcd_routine] step
+; xq3    [compare] step
+H1_xq3
+    0 1 L xq4                  ; [xq3]
+    1 1 R H2_cad               ; [H1]
+; H2     [gcd_routine] step
+; cad    [pair_end] step
+H2_cad
+    0 0 R HX1                  ; [H2]
+    1 1 L seed22_dp9_cae       ; [cad]
+; HX1    [gcd_routine] parser: move to the next hole (00 pairs crossed)
+HX1
+    0 0 R HX2                  ; [HX1]
+    1 1 R HX1                  ; [HX1]
+; HX2    [gcd_routine] parser: move to the next hole (00 pairs crossed)
+HX2
+    0 0 R HX1                  ; [HX2]
+    1 1 R hn1_ly4              ; [HX2]
+; hn1    [gcd_routine] step
+; ly4    [left_mult] step
+hn1_ly4
+    0 0 R hn2_ly5              ; [hn1, ly4]
+    1 1 R hn1_ly4              ; [hn1]
+; hn2    [gcd_routine] step
+; ly5    [left_mult] M
+hn2_ly5
+    0 0 R hn3                  ; [hn2]
+    1 1 R kc5_ly6_fle          ; [ly5]
+; hn3    [gcd_routine] 0: X is R: d is not new: d += 1
+hn3
+    0 0 L hR1_x2               ; [hn3]
+    1 1 R hn4                  ; [hn3]
+; hn4    [gcd_routine] 0: X is C: a hit
+hn4
+    0 0 L enF1_hC1             ; [hn4]
+    1 1 L hF1                  ; [hn4]
+; hF1    [gcd_routine] parser: move to the next hole (00 pairs crossed); X = A, B: fill the marker, check K
+hF1
+    0 0 L hF2                  ; [hF1]
+    1 1 L hF1                  ; [hF1]
+; hF2    [gcd_routine] parser: move to the next hole (00 pairs crossed); X = A, B: fill the marker, check K
+hF2
+    0 0 L hF1                  ; [hF2]
+    1 1 R hF3_dq3              ; [hF2]
+; hF3    [gcd_routine] step
+; dq3    [pair_end] D's hole; A's marker; GCD(D, A)
+hF3_dq3
+    0 1 L KC1                  ; [hF3]
+    1 0 R dpA                  ; [dq3]
+; KC1    [gcd_routine] parser: move to the next hole (00 pairs crossed)
+KC1
+    0 0 L KC2                  ; [KC1]
+    1 1 L KC1                  ; [KC1]
+; KC2    [gcd_routine] parser: move to the next hole (00 pairs crossed)
+KC2
+    0 0 L KC1                  ; [KC2]
+    1 1 L kc2_dp4_pe0          ; [KC2]
+; kc2    [gcd_routine] step
+; dp4    [next_d] step
+; pe0    [pair_end] step
+kc2_dp4_pe0
+    0 0 L kc3_dp5              ; [kc2, dp4]
+    1 1 R pe1                  ; [pe0]
+; kc3    [gcd_routine] step
+; dp5    [next_d] step
+kc3_dp5
+    0 0 L kc4_cm1              ; [kc3]
+    1 1 L dp6                  ; [dp5]
+; kc4    [gcd_routine] step
+; cm1    [pair_end] the new M
+kc4_cm1
+    0 1 L E1_cm2               ; [cm1]
+    1 1 L kc5_ly6_fle          ; [kc4]
+; kc5    [gcd_routine] 0: K has 1 cell (d = c): not coprime
+; ly6    [left_mult] step
+; fle    [pair_end] step
+kc5_ly6_fle
+    0 0 R ly7_nc1_nc2_dr1      ; [kc5, ly6, fle]
+    1 1 R KR1                  ; [kc5]
+; KR1    [gcd_routine] parser: move to the next hole (00 pairs crossed); a hit: GCD(D, R)
+KR1
+    0 0 R KR2                  ; [KR1]
+    1 1 R KR1                  ; [KR1]
+; KR2    [gcd_routine] parser: move to the next hole (00 pairs crossed); a hit: GCD(D, R)
+KR2
+    0 0 R KR1                  ; [KR2]
+    1 1 L ca1_gS               ; [KR2]
+; hR1    [gcd_routine] step
+; x2     [compare] step
+hR1_x2
+    0 0 L hR2_dpD              ; [hR1]
+    1 1 L x3                   ; [x2]
+; hR2    [gcd_routine] step
+; dpD    [next_d] A's marker; to D's hole: GCD(D, A)
+hR2_dpD
+    0 0 L HR1                  ; [hR2]
+    1 0 L PN1_GD1              ; [dpD]
+; HR1    [gcd_routine] parser: move to the next hole (00 pairs crossed); past R's hole, to D's
+HR1
+    0 0 L HR2                  ; [HR1]
+    1 1 L HR1                  ; [HR1]
+; HR2    [gcd_routine] parser: move to the next hole (00 pairs crossed); past R's hole, to D's
+HR2
+    0 0 L HR1                  ; [HR2]
+    1 1 L DH1                  ; [HR2]
+
+; ---------- d += 1 (K gives a cell to D), or d = c: to the pre-test -----
+
+; dp1    [next_d] step
+; cm3    [pair_end] step
+dp1_cm3
+    0 1 L dp2_bo6              ; [dp1]
+    1 0 L ca2_cm4              ; [cm3]
+; dp2    [next_d] step
+; bo6    [pair_end] step
+dp2_bo6
+    0 0 R bo7_dr6              ; [bo6]
+    1 1 L dp3_MF4              ; [dp2]
+; dp3    [next_d] step
+; MF4    [pair_end] finder: move right to the one-cell block M
+dp3_MF4
+    0 0 L kc2_dp4_pe0          ; [dp3, MF4]
+    1 1 R MF1_wr0              ; [MF4]
+; dp6    [next_d] 0: K has one cell: done
+dp6
+    0 0 R PT1                  ; [dp6]
+    1 1 R dp7_xq5              ; [dp6]
+; dp7    [next_d] K's last cell joins the separator
+; xq5    [compare] step
+dp7_xq5
+    0 0 L xq6                  ; [xq5]
+    1 0 R dp8                  ; [dp7]
+; dp8    [next_d] step
+dp8
+    0 0 R seed22_dp9_cae       ; [dp8]
+    -
+; dpA    [next_d] step
+dpA
+    0 0 R seed13_dpB_pt5       ; [dpA]
+    1 1 R dpA                  ; [dpA]
+
+; ---------- PRE-TEST: compare C with R ----------------------------------
+
+; PT1    [pretest] parser: move to the next hole (00 pairs crossed); to R's hole
+PT1
+    0 0 R PT2                  ; [PT1]
+    1 1 R PT1                  ; [PT1]
+; PT2    [pretest] parser: move to the next hole (00 pairs crossed); to R's hole
+PT2
+    0 0 R PT1                  ; [PT2]
+    1 1 L pt1_y4               ; [PT2]
+; pt1    [pretest] step
+; y4     [compare] step
+pt1_y4
+    0 0 L pt2_bo1              ; [pt1]
+    1 0 L XP1_PX1              ; [y4]
+; pt2    [pretest] step
+; bo1    [pair_end] step
+pt2_bo1
+    0 0 R ca6_bo2              ; [bo1]
+    1 1 L pt3                  ; [pt2]
+; pt3    [pretest] step
+pt3
+    0 0 L pt4_bp5              ; [pt3]
+    -
+; pt4    [pretest] step
+; bp5    [beep_step] P's cursor
+pt4_bp5
+    0 0 L seed13_dpB_pt5       ; [pt4]
+    1 0 R QC1                  ; [bp5]
+; pt6    [pretest] step
+; dr7    [pair_end] 0: d = 2
+pt6_dr7
+    0 0 L pt7_dq1              ; [pt6, dr7]
+    1 1 L drL                  ; [dr7]
+; pt7    [pretest] step
+; dq1    [pair_end] step
+pt7_dq1
+    0 0 L pt8_sk2              ; [pt7]
+    1 1 L seed20_dq2           ; [dq1]
+; pt8    [pretest] C's guard
+; sk2    [compare] step
+pt8_sk2
+    0 1 L sk3                  ; [sk2]
+    1 1 L pt9_Lm2              ; [pt8]
+; pt9    [pretest] C's last position: as if its cursor
+; Lm2    [left_mult] multiplication round
+pt9_Lm2
+    0 1 L Lm3                  ; [Lm2]
+    1 1 L hR1_x2               ; [pt9]
+
+; ---------- COMPARE X with Y (the pre-test C, R; the loop P, Q): BEEP, BOOP 
+
+; x1     [compare] step
+x1
+    0 1 L hR1_x2               ; [x1]
+    -
+; x3     [compare] 0: X has run out: x <= y
+x3
+    0 0 L xe2_qc6              ; [x3]
+    1 1 R seed3_x4             ; [x3]
+; YP1    [compare] parser: move to the next hole (00 pairs crossed)
+YP1
+    0 0 R YP2                  ; [YP1]
+    1 1 R YP1                  ; [YP1]
+; YP2    [compare] parser: move to the next hole (00 pairs crossed)
+YP2
+    0 0 R YP1                  ; [YP2]
+    1 1 L y1_RmR               ; [YP2]
+; y1     [compare] step
+; RmR    [right_mult] multiplication round
+y1_RmR
+    0 1 R y2_Rm2               ; [y1, RmR]
+    1 1 R y1_RmR               ; [RmR]
+; y2     [compare] step
+; Rm2    [right_mult] multiplication round
+y2_Rm2
+    0 1 R Rm3                  ; [Rm2]
+    1 1 R y3                   ; [y2]
+; y3     [compare] 0: Y has run out: x > y
+y3
+    0 0 L seed10_ye1           ; [y3]
+    1 1 L pt1_y4               ; [y3]
+; XP1    [compare] parser: move to the next hole (00 pairs crossed)
+; PX1    [right_mult] parser: move to the next hole (00 pairs crossed); to P's cursor: compare P with Q
+XP1_PX1
+    0 0 L XP2_PX2              ; [XP1, PX1]
+    1 1 L XP1_PX1              ; [XP1, PX1]
+; XP2    [compare] parser: move to the next hole (00 pairs crossed)
+; PX2    [right_mult] parser: move to the next hole (00 pairs crossed); to P's cursor: compare P with Q
+XP2_PX2
+    0 0 L XP1_PX1              ; [XP2, PX2]
+    1 1 R x1                   ; [XP2, PX2]
+; xe2    [compare] step
+; qc6    [beep_step] step
+xe2_qc6
+    0 0 L xe3                  ; [xe2]
+    1 1 L g1_Rba7_qc7_eb1      ; [qc6]
+; xe3    [compare] 0: BEEP (P <= Q); 1: c <= R: skip
+xe3
+    0 0 R bp1_ly2              ; [xe3]   BEEP
+    1 1 R SK1                  ; [xe3]
+; XQ1    [compare] parser: move to the next hole (00 pairs crossed)
+XQ1
+    0 0 L XQ2                  ; [XQ1]
+    1 1 L XQ1                  ; [XQ1]
+; XQ2    [compare] parser: move to the next hole (00 pairs crossed)
+XQ2
+    0 0 L XQ1                  ; [XQ2]
+    1 1 R H1_xq3               ; [XQ2]
+; xq4    [compare] step
+xq4
+    0 0 L dp7_xq5              ; [xq4]
+    1 1 L xq4                  ; [xq4]
+; xq6    [compare] 0: BOOP (P > Q); 1: c > R: powers
+xq6
+    0 0 R pt2_bo1              ; [xq6]   BOOP
+    1 1 L fl1                  ; [xq6]
+; SK1    [compare] parser: move to the next hole (00 pairs crossed)
+SK1
+    0 0 R SK2                  ; [SK1]
+    1 1 R SK1                  ; [SK1]
+; SK2    [compare] parser: move to the next hole (00 pairs crossed)
+SK2
+    0 0 R SK1                  ; [SK2]
+    1 1 L pt8_sk2              ; [SK2]
+; sk3    [compare] step
+sk3
+    0 0 L sk4_qc4              ; [sk3]
+    1 1 L sk3                  ; [sk3]
+; sk4    [compare] step
+; qc4    [beep_step] step
+sk4_qc4
+    0 0 L kc2_dp4_pe0          ; [sk4]
+    1 1 R seed11_qc5           ; [qc4]
+
+; ---------- POWERS: P := 1, Q := 1, then Q := Q * R ---------------------
+
+; fl1    [power_init] step
+fl1
+    0 0 L fl2                  ; [fl1]
+    1 1 L fl1                  ; [fl1]
+; fl2    [power_init] step
+fl2
+    0 0 L fl3                  ; [fl2]
+    1 1 L fl1                  ; [fl2]
+; fl3    [power_init] the third 0: P = 101
+fl3
+    0 1 L pw2_Lba5             ; [fl3]
+    1 1 L fl1                  ; [fl3]
+; pw2    [power_init] step
+; Lba5   [left_mult] advance a cyclic hole one position
+pw2_Lba5
+    0 0 L pw3_Lba6             ; [pw2, Lba5]
+    1 1 R pw2_Lba5             ; [Lba5]
+; pw3    [power_init] step
+; Lba6   [left_mult] advance a cyclic hole one position
+pw3_Lba6
+    0 1 R pw4_Ld2              ; [pw3]
+    1 1 L zd6_Lba7             ; [Lba6]
+; pw4    [power_init] step
+; Ld2    [left_mult] copy loop: copy Z onto the scratch block
+pw4_Ld2
+    0 0 R fr1                  ; [pw4]
+    1 1 L Ld3_bo4              ; [Ld2]
+; fr1    [power_init] step
+fr1
+    0 0 R fr2                  ; [fr1]
+    1 1 R fr1                  ; [fr1]
+; fr2    [power_init] step
+fr2
+    0 0 R fr3                  ; [fr2]
+    1 1 R fr1                  ; [fr2]
+; fr3    [power_init] the third 0: Q = 101
+fr3
+    0 1 R cy7_qw2              ; [fr3]
+    1 1 R fr1                  ; [fr3]
+; qw3    [power_init] step
+; Lm4    [left_mult] multiplication round
+; cai    [pair_end] step
+; cak    [pair_end] step
+qw3_Lm4_cai_cak
+    0 1 L qw4_MW3_cab2         ; [qw3, cak]
+    1 0 R Lm5_caj              ; [Lm4, cai]
+; qw4    [power_init] step
+; MW3    [pair_end] finder: move right to the one-cell block M
+; cab2   [pair_end] step
+qw4_MW3_cab2
+    0 0 L qw5_cab              ; [qw4, cab2]
+    1 1 R MW4                  ; [MW3]
+; qw5    [power_init] step
+; cab    [pair_end] step
+qw5_cab
+    0 0 L cac_cm5              ; [cab]
+    1 1 L qw6                  ; [qw5]
+; qw6    [power_init] step
+qw6
+    0 0 L qw7_bo5              ; [qw6]
+    -
+; qw7    [power_init] step
+; bo5    [pair_end] K (one cell)
+qw7_bo5
+    0 0 L qw8                  ; [qw7]
+    1 1 R dp2_bo6              ; [bo5]
+; qw8    [power_init] across R
+qw8
+    0 0 R qw9_rb3              ; [qw8]
+    1 1 L qw8                  ; [qw8]
+; qw9    [power_init] step
+; rb3    [right_mult] step
+qw9_rb3
+    0 1 L XP1_PX1              ; [rb3]
+    1 1 R enR2_qwA             ; [qw9]
+
+; ---------- R := R * d (factor phase) and Q := Q * R (powers) -----------
+
+; Rba1   [right_mult] advance a cyclic hole one position
+; Rm4    [right_mult] multiplication round
+Rba1_Rm4
+    0 1 R seed2_Rba2           ; [Rba1]
+    1 0 L Rc5_Rm5              ; [Rm4]
+; Rba3   [right_mult] advance a cyclic hole one position; 0: the hole was on the last position
+Rba3
+    0 0 L Rba5                 ; [Rba3]
+    1 1 L seed5_Rba4           ; [Rba3]
+; Rba5   [right_mult] advance a cyclic hole one position
+Rba5
+    0 0 R seed21_Rba6          ; [Rba5]
+    1 1 L Rba5                 ; [Rba5]
+; RMC1   [right_mult] parser: move to the next hole (00 pairs crossed)
+RMC1
+    0 0 R RMC2                 ; [RMC1]
+    1 1 R RMC1                 ; [RMC1]
+; RMC2   [right_mult] parser: move to the next hole (00 pairs crossed)
+RMC2
+    0 0 R RMC1                 ; [RMC2]
+    1 1 R Rc1                  ; [RMC2]
+; Rc1    [right_mult] copy loop: copy Z onto the scratch block
+Rc1
+    0 0 R Rc2                  ; [Rc1]
+    1 1 R Rc1                  ; [Rc1]
+; Rc2    [right_mult] copy loop: copy Z onto the scratch block
+Rc2
+    0 0 R Rc3                  ; [Rc2]
+    -
+; Rc3    [right_mult] copy loop: copy Z onto the scratch block
+Rc3
+    0 1 L Rc4                  ; [Rc3]
+    1 1 R Rc3                  ; [Rc3]
+; Rc4    [right_mult] copy loop: copy Z onto the scratch block
+Rc4
+    0 0 L Rc5_Rm5              ; [Rc4]
+    1 1 L Rc4                  ; [Rc4]
+; Rc5    [right_mult] copy loop: copy Z onto the scratch block
+; Rm5    [right_mult] multiplication round
+Rc5_Rm5
+    0 0 L Rc6                  ; [Rc5]
+    1 0 L ZD1                  ; [Rm5]
+; Rc6    [right_mult] copy loop: copy Z onto the scratch block
+Rc6
+    0 1 R seed24_Ra2           ; [Rc6]
+    1 1 L Rc6                  ; [Rc6]
+; Ra3    [right_mult] copy loop: copy Z onto the scratch block
+Ra3
+    0 0 L seed17_Rd1           ; [Ra3]
+    1 1 L seed9_Ra4            ; [Ra3]
+; RMM1   [right_mult] parser: move to the next hole (00 pairs crossed)
+RMM1
+    0 0 R RMM2                 ; [RMM1]
+    1 1 R RMM1                 ; [RMM1]
+; RMM2   [right_mult] parser: move to the next hole (00 pairs crossed)
+RMM2
+    0 0 R RMM1                 ; [RMM2]
+    1 1 R y1_RmR               ; [RMM2]
+; Rm3    [right_mult] multiplication round
+Rm3
+    0 0 L Rba1_Rm4             ; [Rm3]
+    1 1 R Rm3                  ; [Rm3]
+; ZD1    [right_mult] parser: move to the next hole (00 pairs crossed); to Z's cursor: Z's cell 0
+ZD1
+    0 0 L ZD2_qcF              ; [ZD1]
+    1 1 L ZD1                  ; [ZD1]
+; ZD2    [right_mult] parser: move to the next hole (00 pairs crossed); to Z's cursor: Z's cell 0
+; qcF    [beep_step] C's base hole, advanced
+ZD2_qcF
+    0 0 L ZD1                  ; [ZD2]
+    1 1 L zd2_Lba2             ; [ZD2, qcF]
+; zd2    [right_mult] step
+; Lba2   [left_mult] advance a cyclic hole one position
+zd2_Lba2
+    0 0 L zd3                  ; [zd2]
+    1 1 L Lba3                 ; [Lba2]
+; zd3    [right_mult] step
+zd3
+    0 0 L seed8_zd4            ; [zd3]
+    -
+; zd5    [right_mult] 0: Z's left neighbour is M: Z = R
+zd5
+    0 0 L zd6_Lba7             ; [zd5]
+    1 1 L RB1                  ; [zd5]
+; zd6    [right_mult] to D's hole: d += 1
+; Lba7   [left_mult] advance a cyclic hole one position
+zd6_Lba7
+    0 0 L DH1                  ; [zd6]
+    1 0 L LMM1                 ; [Lba7]
+; RB1    [right_mult] parser: move to the next hole (00 pairs crossed); Z = Q: R's base hole
+RB1
+    0 0 L RB2                  ; [RB1]
+    1 1 L RB1                  ; [RB1]
+; RB2    [right_mult] parser: move to the next hole (00 pairs crossed); Z = Q: R's base hole
+RB2
+    0 0 L RB1                  ; [RB2]
+    1 1 R qw9_rb3              ; [RB2]
+
+; ---------- AFTER THE BEEP: cursors back, then P := P * c ---------------
+
+; bp1    [beep_step] step
+; ly2    [left_mult] step
+bp1_ly2
+    0 0 R bp2_nc4_dr3          ; [bp1]
+    1 1 R ly3                  ; [ly2]
+; bp2    [beep_step] step
+; nc4    [pair_end] step
+; dr3    [pair_end] step
+bp2_nc4_dr3
+    0 0 R bp3                  ; [bp2]
+    1 1 R seed25_nc5_dr4       ; [nc4, dr3]
+; bp3    [beep_step] step
+bp3
+    0 0 L bp4_qcA_eb4          ; [bp3]
+    1 1 R bp3                  ; [bp3]
+; bp4    [beep_step] step
+; qcA    [beep_step] step
+; eb4    [pair_end] step
+bp4_qcA_eb4
+    0 0 L seed4_qcB_eb5        ; [qcA, eb4]
+    1 1 L pt4_bp5              ; [bp4]
+; QC1    [beep_step] parser: move to the next hole (00 pairs crossed); Q's cursor
+QC1
+    0 0 R QC2                  ; [QC1]
+    1 1 R QC1                  ; [QC1]
+; QC2    [beep_step] parser: move to the next hole (00 pairs crossed); Q's cursor
+QC2
+    0 0 R QC1                  ; [QC2]
+    1 1 L qc2                  ; [QC2]
+; qc2    [beep_step] step
+qc2
+    0 1 L qc3                  ; [qc2]
+    -
+; qc3    [beep_step] step
+qc3
+    0 0 R sk4_qc4              ; [qc3]
+    1 1 L qc3                  ; [qc3]
+; qc9    [beep_step] across R
+; eb3    [pair_end] across C
+qc9_eb3
+    0 0 L bp4_qcA_eb4          ; [qc9, eb3]
+    1 1 L qc9_eb3              ; [qc9, eb3]
+; qcC    [beep_step] step
+; eb6    [pair_end] step
+qcC_eb6
+    0 0 L qcD_Lc1              ; [qcC]
+    1 1 L seed12_eb7           ; [eb6]
+; qcD    [beep_step] step
+; Lc1    [left_mult] copy loop: copy Z onto the scratch block
+qcD_Lc1
+    0 0 L qcE_Lc2              ; [qcD, Lc1]
+    1 1 L qcD_Lc1              ; [Lc1]
+; qcE    [beep_step] C's guard
+; Lc2    [left_mult] copy loop: copy Z onto the scratch block
+qcE_Lc2
+    0 0 L Lc3                  ; [Lc2]
+    1 1 L ZD2_qcF              ; [qcE]
+
+; ---------- P := P * c (mirrored multiplication), then Q := Q * R -------
+
+; Lba1   [left_mult] advance a cyclic hole one position
+Lba1
+    0 1 L zd2_Lba2             ; [Lba1]
+    -
+; Lba3   [left_mult] advance a cyclic hole one position; 0: the hole was on the last position
+Lba3
+    0 0 R pw2_Lba5             ; [Lba3]
+    1 1 R enF3_hC3_Lba4        ; [Lba3]
+; LMC1   [left_mult] parser: move to the next hole (00 pairs crossed)
+LMC1
+    0 0 L LMC2                 ; [LMC1]
+    1 1 L LMC1                 ; [LMC1]
+; LMC2   [left_mult] parser: move to the next hole (00 pairs crossed)
+LMC2
+    0 0 L LMC1                 ; [LMC2]
+    1 1 L qcD_Lc1              ; [LMC2]
+; Lc3    [left_mult] copy loop: copy Z onto the scratch block
+Lc3
+    0 1 R Lc4                  ; [Lc3]
+    1 1 L Lc3                  ; [Lc3]
+; Lc4    [left_mult] copy loop: copy Z onto the scratch block
+Lc4
+    0 0 R Lc5_cag              ; [Lc4]
+    1 1 R Lc4                  ; [Lc4]
+; Lc5    [left_mult] copy loop: copy Z onto the scratch block
+; cag    [pair_end] step
+Lc5_cag
+    0 0 R Lc6                  ; [Lc5]
+    1 1 R start_seed0_cah      ; [cag]
+; Lc6    [left_mult] copy loop: copy Z onto the scratch block
+Lc6
+    0 1 L en2_La2              ; [Lc6]
+    1 1 R Lc6                  ; [Lc6]
+; La3    [left_mult] copy loop: copy Z onto the scratch block
+La3
+    0 0 R Ld1                  ; [La3]
+    1 1 R La4_ea3_cm8          ; [La3]
+; La4    [left_mult] copy loop: copy Z onto the scratch block
+; ea3    [pair_end] step
+; cm8    [pair_end] step
+La4_ea3_cm8
+    0 0 R ea4_cm9_fld          ; [ea3, cm8]
+    1 0 L qcD_Lc1              ; [La4]
+; Ld1    [left_mult] copy loop: copy Z onto the scratch block
+Ld1
+    0 0 L pw4_Ld2              ; [Ld1]
+    1 1 R Ld1                  ; [Ld1]
+; Ld3    [left_mult] multiplication round; Z's cursor back to cell 1
+; bo4    [pair_end] step
+Ld3_bo4
+    0 0 R qw7_bo5              ; [bo4]
+    1 0 R LNB1                 ; [Ld3]
+; LNB1   [left_mult] parser: move to the next hole (00 pairs crossed)
+LNB1
+    0 0 R LNB2                 ; [LNB1]
+    1 1 R LNB1                 ; [LNB1]
+; LNB2   [left_mult] parser: move to the next hole (00 pairs crossed)
+LNB2
+    0 0 R LNB1                 ; [LNB2]
+    1 1 L Lba1                 ; [LNB2]
+; LMM1   [left_mult] parser: move to the next hole (00 pairs crossed)
+LMM1
+    0 0 L LMM2                 ; [LMM1]
+    1 1 L LMM1                 ; [LMM1]
+; LMM2   [left_mult] parser: move to the next hole (00 pairs crossed)
+LMM2
+    0 0 L LMM1                 ; [LMM2]
+    1 1 L LmR                  ; [LMM2]
+; LmR    [left_mult] multiplication round
+LmR
+    0 1 L pt9_Lm2              ; [LmR]
+    1 1 L LmR                  ; [LmR]
+; Lm3    [left_mult] multiplication round
+Lm3
+    0 0 R qw3_Lm4_cai_cak      ; [Lm3]
+    1 1 L Lm3                  ; [Lm3]
+; Lm5    [left_mult] multiplication round
+; caj    [pair_end] step
+Lm5_caj
+    0 0 R qw3_Lm4_cai_cak      ; [caj]
+    1 0 R LZ1                  ; [Lm5]
+; LZ1    [left_mult] parser: move to the next hole (00 pairs crossed); past P's cursor
+LZ1
+    0 0 R LZ2                  ; [LZ1]
+    1 1 R LZ1                  ; [LZ1]
+; LZ2    [left_mult] parser: move to the next hole (00 pairs crossed); past P's cursor
+LZ2
+    0 0 R LZ1                  ; [LZ2]
+    1 1 R LY1                  ; [LZ2]
+; LY1    [left_mult] parser: move to the next hole (00 pairs crossed); C's base hole
+LY1
+    0 0 R LY2                  ; [LY1]
+    1 1 R LY1                  ; [LY1]
+; LY2    [left_mult] parser: move to the next hole (00 pairs crossed); C's base hole
+LY2
+    0 0 R LY1                  ; [LY2]
+    1 1 L ly1                  ; [LY2]
+; ly1    [left_mult] step
+ly1
+    0 1 R bp1_ly2              ; [ly1]
+    -
+; ly3    [left_mult] step
+ly3
+    0 0 R hn1_ly4              ; [ly3]
+    -
+; ly7    [left_mult] step
+; nc1    [pair_end] step
+; nc2    [pair_end] step
+; dr1    [pair_end] step
+ly7_nc1_nc2_dr1
+    0 0 R ly8_nc3_dr2          ; [ly7, nc2, dr1]
+    1 1 R ly7_nc1_nc2_dr1      ; [nc1, dr1]
+; ly8    [left_mult] step
+; nc3    [pair_end] step
+; dr2    [pair_end] step
+ly8_nc3_dr2
+    0 0 R bp2_nc4_dr3          ; [nc3, dr2]
+    1 1 R enR1_ly9             ; [ly8]
+
+; ---------- END OF THE PAIR: erase R and Q, the next pair, R := 1, d := 2 
+
+; MF1    [pair_end] finder: move right to the one-cell block M
+; wr0    [pair_end] step
+MF1_wr0
+    0 0 R MF2_wr1              ; [MF1, wr0]
+    1 1 R MF1_wr0              ; [MF1]
+; MF2    [pair_end] finder: move right to the one-cell block M
+; wr1    [pair_end] step
+MF2_wr1
+    0 0 R MF3_wr2_drM          ; [MF2, wr1]
+    1 1 R MF1_wr0              ; [MF2]
+; MF3    [pair_end] finder: move right to the one-cell block M
+; wr2    [pair_end] step
+; drM    [pair_end] step
+MF3_wr2_drM
+    0 1 R MK3_wr3_drD          ; [wr2, drM]
+    1 1 R dp3_MF4              ; [MF3]
+; bo3    [pair_end] step
+bo3
+    0 0 R Ld3_bo4              ; [bo3]
+    1 0 R bo3                  ; [bo3]
+; bo7    [pair_end] step
+; dr6    [pair_end] step
+bo7_dr6
+    0 0 R seed1_bo8            ; [bo7]
+    1 1 R pt6_dr7              ; [dr6]
+; pe1    [pair_end] step
+pe1
+    0 0 R pe2                  ; [pe1]
+    1 0 R pe1                  ; [pe1]
+; pe2    [pair_end] step
+pe2
+    0 0 R pe3                  ; [pe2]
+    1 0 R pe1                  ; [pe2]
+; pe3    [pair_end] step
+pe3
+    0 0 L pe4                  ; [pe3]
+    1 0 R pe1                  ; [pe3]
+; pe4    [pair_end] back to M
+pe4
+    0 0 L pe4                  ; [pe4]
+    1 1 L g1_Rba7_qc7_eb1      ; [pe4]
+; eb8    [pair_end] 0: B has 3 cells: b = 1: c += 1
+eb8
+    0 0 L qw5_cab              ; [eb8]
+    1 1 L ea1_cm6              ; [eb8]
+; ea1    [pair_end] step
+; cm6    [pair_end] across C
+ea1_cm6
+    0 0 L cy6_ea2_cm7          ; [ea1, cm6]
+    1 1 L ea1_cm6              ; [ea1, cm6]
+; ea4    [pair_end] step
+; cm9    [pair_end] step
+; fld    [pair_end] step
+ea4_cm9_fld
+    0 0 R kc5_ly6_fle          ; [fld]
+    1 0 R MW1                  ; [ea4, cm9]
+; MW1    [pair_end] finder: move right to the one-cell block M
+MW1
+    0 0 R MW2                  ; [MW1]
+    1 1 R MW1                  ; [MW1]
+; MW2    [pair_end] finder: move right to the one-cell block M
+MW2
+    0 0 R qw4_MW3_cab2         ; [MW2]
+    1 1 R MW1                  ; [MW2]
+; MW4    [pair_end] finder: move right to the one-cell block M
+MW4
+    0 0 R MF2_wr1              ; [MW4]
+    1 1 R MW1                  ; [MW4]
+; cac    [pair_end] step
+; cm5    [pair_end] step
+cac_cm5
+    0 1 L ea1_cm6              ; [cm5]
+    1 1 L H2_cad               ; [cac]
+; caf    [pair_end] 0: A has 3 cells
+caf
+    0 0 L fk2                  ; [caf]
+    1 1 R Lc5_cag              ; [caf]
+; fk1    [pair_end] step
+fk1
+    0 0 L fk2                  ; [fk1]
+    1 1 L fk1                  ; [fk1]
+; fk2    [pair_end] step
+fk2
+    0 0 L fk3                  ; [fk2]
+    1 1 L fk1                  ; [fk2]
+; fk3    [pair_end] step
+fk3
+    0 0 R fk4                  ; [fk3]
+    1 1 L fk1                  ; [fk3]
+; fk4    [pair_end] step
+fk4
+    0 0 R fk5                  ; [fk4]
+    -
+; fk5    [pair_end] step
+fk5
+    0 1 R MK1                  ; [fk5]
+    -
+; MK1    [pair_end] finder: move right to the one-cell block M
+MK1
+    0 0 R MK2                  ; [MK1]
+    1 1 R MK1                  ; [MK1]
+; MK2    [pair_end] finder: move right to the one-cell block M
+MK2
+    0 0 R MK3_wr3_drD          ; [MK2]
+    1 1 R MK1                  ; [MK2]
+; MK3    [pair_end] finder: move right to the one-cell block M
+; wr3    [pair_end] step
+; drD    [pair_end] step
+MK3_wr3_drD
+    0 0 R wr4_drE              ; [wr3, drD]
+    1 1 R MK4                  ; [MK3]
+; MK4    [pair_end] finder: move right to the one-cell block M
+MK4
+    0 0 R kc4_cm1              ; [MK4]
+    1 1 R MK1                  ; [MK4]
+; wr4    [pair_end] step
+; drE    [pair_end] step
+wr4_drE
+    0 1 L fla                  ; [wr4]
+    1 0 R bp2_nc4_dr3          ; [drE]
+; fla    [pair_end] step
+fla
+    0 0 L flb                  ; [fla]
+    1 1 L fla                  ; [fla]
+; flb    [pair_end] step
+flb
+    0 0 L flc                  ; [flb]
+    1 1 L fla                  ; [flb]
+; flc    [pair_end] step
+flc
+    0 0 R ea4_cm9_fld          ; [flc]
+    1 1 L fla                  ; [flc]
+; drL    [pair_end] step
+drL
+    0 0 L MF3_wr2_drM          ; [drL]
+    1 1 L drL                  ; [drL]
