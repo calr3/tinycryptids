@@ -28,16 +28,21 @@ Each machine in this repository comes with the specific Turing Machine code, a h
 | [`riesel/`](https://github.com/calr3/tinycryptids/tree/main/riesel) | [Riesel problem](https://en.wikipedia.org/wiki/Riesel_number) | Σ₁ | Halts iff 509203 is the smallest Riesel number | BB(76) | `TM.Riesel.M76.halts_iff` |
 | [`fermat/`](https://github.com/calr3/tinycryptids/tree/main/fermat) | [Fermat's Last Theorem](https://en.wikipedia.org/wiki/Fermat's_Last_Theorem) † | Π₁ | Halts iff there's a non-trivial solution to `x^n + y^n = z^n` for some `n ≥ 3` | BB(90) | `TM.Fermat.M90.halts_iff` |
 | [`abc/`](https://github.com/calr3/tinycryptids/tree/main/abc) | [abc conjecture](https://en.wikipedia.org/wiki/Abc_conjecture) | Π₃ | Pseudoquasihalts iff, for some `n`, infinitely many coprime `a + b = c` have `c^n > rad(abc)^(n+1)` (beep: state 117 reading 0; boop: state 121 reading 0) | [BBBB](https://wiki.bbchallenge.org/wiki/Beeping_Busy_Beaver#Beeping_Booping_Busy_Beavers)(235) | `TM.ABC.M235.repeats_iff` |
+| [`pa/`](https://github.com/calr3/tinycryptids/tree/main/pa) | [Consistency of Peano arithmetic](https://en.wikipedia.org/wiki/Peano_axioms#Consistency) ‡ | Π₁ | Halts iff the theory T proves `v0 ∈ v0`, i.e. iff PA is inconsistent | BB(309) | `TM.PA.M309.halts_iff` |
+| [`pa_nsymbols/`](https://github.com/calr3/tinycryptids/tree/main/pa_nsymbols) | [Consistency of Peano arithmetic](https://en.wikipedia.org/wiki/Peano_axioms#Consistency) ‡ | Π₁ | The same, with 10 symbols (470 instructions instead of 617) | BB(122,10) | `TMK.PA.M10.halts_iff` |
 
 The state count is the number of states required by the smallest known machine, as given by the output of the fully minimized machine (`minimize.py` or `minimize_clique.py`) from the design given in the folder's `build.py`.
 Each folder's `RECORDS.md` lists every machine, `README.md` explains the algorithm and gives the machine in bbchallenge standard text, `PROOF.md` walks through the proof in plain words, and `machines/*_annotated.txt` describes every state.
 
 † Fermat's Last Theorem is of course a theorem since [Wiles (1994)](https://en.wikipedia.org/wiki/Wiles%27s_proof_of_Fermat%27s_Last_Theorem), so any non-halting machine would do. This more direct machine is included as a historical curiosity, because James Randels' dissertation *Studies in Turing Machines* (1965) suggested a construction it (without a full description) that he estimated at under 400 states. This machine (and its proof) do not use Wiles's result.
 
+‡ The PA machines halt on a proof of `v0 ∈ v0` in a theory T (Tarski's first-order logic with `=` and `∈`, plus a set existence scheme of H. Friedman). T proves `¬ v0 ∈ v0`, so they halt iff T is inconsistent. The Lean theorems are about T (`Wff.Provable` in `lean/TinyCryptids/Defs.lean`); that T is equiconsistent with PA is Friedman's result and is not formalised. These machines are compiled from a register program rather than designed by hand: `pa/` improves on LegionMammal978's 372-state [`pa.py`](https://github.com/LegionMammal978/turing_machine_explorer), built with A. J. Wade's TMBuilder, and `pa_nsymbols/` uses 10 symbols to lower the number of instructions (defined transitions) from 617 to 470. `pa_nsymbols/` also has machines for 5 to 14 symbols, tested by simulation only.
+
 ## Layout
 
 | Path | Contents |
 |------|----------|
 | `<conjecture>/` | One hand-designed machine: `build.py`, tests, `machines/`, `README.md`, `RECORDS.md`, and `gen_lean.py`/`gen_reduced_lean.py`/`annotate.py` |
+| `pa/`, `pa_nsymbols/` | The PA machines, compiled from the register program `pa/program.py` (by `pa/tmbuilder.py` for 2 symbols, `pa_nsymbols/kary.py` for more), with tests and the generators of their Lean proofs |
 | `lean/` | **All proofs**, one Lake project: `TinyCryptids/Core/` (the shared machine model), `TinyCryptids/Defs.lean` (every definition used in a statement), `TinyCryptids/<Machine>/` (namespace `TM.<Machine>`), `Check.lean`. See `lean/README.md` |
 | `tools/` | Shared Python tools: `tm.py` (format, standard text), `sim.c` (`gcc -O2 -o tools/sim tools/sim.c`), `same_run.py`, `minimize.py`, `minimize_clique.py`, `minimize_dimacs.py`, `greedy_merge.py`, `greedy_merge_par.py` (parallel, with exclusive beep/boop transitions), `synth_round.py`, `leangen.py` |

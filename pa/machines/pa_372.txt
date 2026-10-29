@@ -1,0 +1,1120 @@
+; LegionMammal978, pa.py (turing_machine_explorer @ c3d265a, 2026-02-15), 372 states.
+; Halts iff it finds a proof of v0 e. v0 in a PA-equivalent first-order theory
+; (Tarski's system S2 with Friedman's set-theoretic axiom). Built by baseline.py.
+blank_symbol: 0
+S_0a_boot1_A
+  0 1 R S_0a_boot1_B
+  1 1 L S_0a_boot1_C
+S_0a_boot1_B
+  0 0 L S_0a_boot1_A
+  1 0 L S_0a_boot1_D
+S_0a_boot1_C
+  0 1 L S_0a_boot1_A
+  1 1 R S_3_prooflist_inc
+S_0a_boot1_D
+  0 1 L S_0a_boot1_B
+  1 1 R S_0a_boot1_E
+S_0a_boot1_E
+  0 0 R S_0a_boot1_D
+  1 0 R S_0a_boot1_B
+S_0b_boot2_0
+  0 1 L S_6_continue_0
+  1 1 R S_0b_boot2_1
+S_0b_boot2_1
+  0 0 R S_0b_boot2_0
+  1 1 R S_0b_boot2_2
+S_0b_boot2_2
+  0 0 R S_3_prooflist_inc
+  1 1 R S_3_prooflist_decnz
+S_1b_reg_prep_1
+  0 0 R S_1b_reg_prep_2
+  -
+S_1b_reg_prep_2
+  0 1 R S_1b_reg_prep_2
+  1 1 L S_6_continue_0
+S_2b_reg__1_dec
+  0 0 R S_2b_reg__2_dec
+  1 1 R S_2b_reg__1_dec
+S_2b_reg__1_inc
+  0 0 R S_2b_reg__2_inc
+  1 1 R S_2b_reg__1_inc
+S_2b_reg__2_dec
+  0 1 L S_2c_reg_return_1_1
+  1 0 R S_2b_reg_dec_check
+S_2b_reg__2_inc
+  0 1 R S_2b_reg_inc_shift_1
+  1 1 R S_2b_reg__2_inc
+S_2b_reg_0_dec
+  0 0 R S_2b_reg__1_dec
+  1 1 R S_2b_reg_0_dec
+S_2b_reg_0_inc
+  0 0 R S_2b_reg__1_inc
+  1 1 R S_2b_reg_0_inc
+S_2b_reg_1_dec
+  0 0 R S_2b_reg_0_dec
+  1 1 R S_2b_reg_1_dec
+S_2b_reg_1_inc
+  0 0 R S_2b_reg_0_inc
+  1 1 R S_2b_reg_1_inc
+S_2b_reg_10_dec
+  0 0 R S_2b_reg_9_dec
+  1 1 R S_2b_reg_10_dec
+S_2b_reg_10_inc
+  0 0 R S_2b_reg_9_inc
+  1 1 R S_2b_reg_10_inc
+S_2b_reg_2_dec
+  0 0 R S_2b_reg_1_dec
+  1 1 R S_2b_reg_2_dec
+S_2b_reg_2_inc
+  0 0 R S_2b_reg_1_inc
+  1 1 R S_2b_reg_2_inc
+S_2b_reg_3_dec
+  0 0 R S_2b_reg_2_dec
+  1 1 R S_2b_reg_3_dec
+S_2b_reg_3_inc
+  0 0 R S_2b_reg_2_inc
+  1 1 R S_2b_reg_3_inc
+S_2b_reg_4_dec
+  0 0 R S_2b_reg_3_dec
+  1 1 R S_2b_reg_4_dec
+S_2b_reg_4_inc
+  0 0 R S_2b_reg_3_inc
+  1 1 R S_2b_reg_4_inc
+S_2b_reg_5_dec
+  0 0 R S_2b_reg_4_dec
+  1 1 R S_2b_reg_5_dec
+S_2b_reg_5_inc
+  0 0 R S_2b_reg_4_inc
+  1 1 R S_2b_reg_5_inc
+S_2b_reg_6_dec
+  0 0 R S_2b_reg_5_dec
+  1 1 R S_2b_reg_6_dec
+S_2b_reg_6_inc
+  0 0 R S_2b_reg_5_inc
+  1 1 R S_2b_reg_6_inc
+S_2b_reg_7_dec
+  0 0 R S_2b_reg_6_dec
+  1 1 R S_2b_reg_7_dec
+S_2b_reg_7_inc
+  0 0 R S_2b_reg_6_inc
+  1 1 R S_2b_reg_7_inc
+S_2b_reg_8_dec
+  0 0 R S_2b_reg_7_dec
+  1 1 R S_2b_reg_8_dec
+S_2b_reg_8_inc
+  0 0 R S_2b_reg_7_inc
+  1 1 R S_2b_reg_8_inc
+S_2b_reg_9_dec
+  0 0 R S_2b_reg_8_dec
+  1 1 R S_2b_reg_9_dec
+S_2b_reg_9_inc
+  0 0 R S_2b_reg_8_inc
+  1 1 R S_2b_reg_9_inc
+S_2b_reg_dec_check
+  0 0 L S_2b_reg__2_dec
+  1 1 R S_2b_reg_dec_scan_1
+S_2b_reg_dec_scan_1
+  0 0 R S_2b_reg_dec_scan_2
+  1 1 R S_2b_reg_dec_scan_1
+S_2b_reg_dec_scan_2
+  0 0 L S_2b_reg_dec_shift_1
+  1 1 R S_2b_reg_dec_scan_1
+S_2b_reg_dec_shift_1
+  0 1 L S_2b_reg_dec_shift_2
+  1 1 L S_2b_reg_dec_shift_1
+S_2b_reg_dec_shift_2
+  0 0 L S_2c_reg_return_0_1
+  1 0 L S_2b_reg_dec_shift_1
+S_2b_reg_inc_shift_1
+  0 0 L S_2c_reg_return_0_1
+  1 0 R S_2b_reg_inc_shift_2
+S_2b_reg_inc_shift_2
+  0 1 R S_2b_reg_inc_shift_1
+  1 1 R S_2b_reg_inc_shift_2
+S_2c_reg_return_0_1
+  0 0 L S_2c_reg_return_0_2
+  1 1 L S_2c_reg_return_0_1
+S_2c_reg_return_0_2
+  0 0 L S_6_break_0
+  1 1 L S_2c_reg_return_0_1
+S_2c_reg_return_1_1
+  0 0 L S_2c_reg_return_1_2
+  1 1 L S_2c_reg_return_1_1
+S_2c_reg_return_1_2
+  0 0 L S_6_break_1
+  1 1 L S_2c_reg_return_1_1
+S_2e_reg_cleanup_1
+  0 0 R S_2e_reg_cleanup_1
+  1 0 R S_2e_reg_cleanup_2
+S_2e_reg_cleanup_2
+  0 0 L S_0b_boot2_0
+  1 0 R S_2e_reg_cleanup_2
+S_3_axiomcode_decnz
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_4_dec
+S_3_axiomcode_inc
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_4_inc
+S_3_nextproof_decnz
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_1_dec
+S_3_nextproof_inc
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_1_inc
+S_3_param1_decnz
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_5_dec
+S_3_param1_inc
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_5_inc
+S_3_param2_decnz
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_6_dec
+S_3_param2_inc
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_6_inc
+S_3_param3_decnz
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_7_dec
+S_3_param3_inc
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_7_inc
+S_3_prooflist_decnz
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_0_dec
+S_3_prooflist_inc
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_0_inc
+S_3_scratch1_decnz
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_8_dec
+S_3_scratch1_inc
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_8_inc
+S_3_scratch2_decnz
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_9_dec
+S_3_scratch2_inc
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_9_inc
+S_3_scratch3_decnz
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_10_dec
+S_3_scratch3_inc
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_10_inc
+S_3_topwff_decnz
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_2_dec
+S_3_topwff_inc
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_2_inc
+S_3_wffstack_decnz
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_3_dec
+S_3_wffstack_inc
+  0 1 R S_1b_reg_prep_1
+  1 0 R S_2b_reg_3_inc
+S_4_dispatch_0
+  0 0 L S_4_dispatch_scan
+  1 1 L S_4_dispatch_0
+S_4_dispatch_1
+  0 0 L S_4_dispatch_0
+  1 1 L S_4_dispatch_1
+S_4_dispatch_10
+  0 0 L S_4_dispatch_9
+  1 1 L S_4_dispatch_10
+S_4_dispatch_11
+  0 0 L S_4_dispatch_10
+  1 1 L S_4_dispatch_11
+S_4_dispatch_12
+  0 0 L S_4_dispatch_11
+  1 1 L S_4_dispatch_12
+S_4_dispatch_13
+  0 0 L S_4_dispatch_12
+  1 1 L S_4_dispatch_13
+S_4_dispatch_2
+  0 0 L S_4_dispatch_1
+  1 1 L S_4_dispatch_2
+S_4_dispatch_3
+  0 0 L S_4_dispatch_2
+  1 1 L S_4_dispatch_3
+S_4_dispatch_4
+  0 0 L S_4_dispatch_3
+  1 1 L S_4_dispatch_4
+S_4_dispatch_5
+  0 0 L S_4_dispatch_4
+  1 1 L S_4_dispatch_5
+S_4_dispatch_6
+  0 0 L S_4_dispatch_5
+  1 1 L S_4_dispatch_6
+S_4_dispatch_7
+  0 0 L S_4_dispatch_6
+  1 1 L S_4_dispatch_7
+S_4_dispatch_8
+  0 0 L S_4_dispatch_7
+  1 1 L S_4_dispatch_8
+S_4_dispatch_9
+  0 0 L S_4_dispatch_8
+  1 1 L S_4_dispatch_9
+S_4_dispatch_scan
+  0 0 R S_4_dispatch_scan
+  1 1 R S_5_root_1
+S_5_root_1
+  0 0 R S_0b_boot2_0
+  1 1 R S_5_root_2
+S_5_root_2
+  0 0 R main___0
+  1 0 R main___0
+S_6_break_0
+  0 1 R S_2e_reg_cleanup_1
+  1 0 L S_6_break_0
+S_6_break_1
+  0 0 L S_6_break_0
+  1 0 L S_6_break_1
+S_6_break_2
+  0 0 L S_6_break_1
+  1 0 L S_6_break_2
+S_6_continue_0
+  0 0 L S_6_continue_0
+  1 1 L S_4_dispatch_13
+S_6_continue_1
+  0 0 L S_6_continue_1
+  1 0 L S_6_continue_0
+S_6_continue_2
+  0 0 L S_6_continue_2
+  1 0 L S_6_continue_1
+S_6_continue_3
+  0 0 L S_6_continue_3
+  1 0 L S_6_continue_2
+cons___0
+  0 0 R n_150_0
+  1 1 R cons___1
+cons___1
+  0 0 R pair_scratch2_scratch1_topwff__0
+  1 1 R while_decnz_scratch2_3_topwff_inc__0
+cparam___n_91_0
+  0 0 R cparam___n_91_0_0
+  1 0 L S_6_break_1
+cparam___n_91_0_0
+  0 0 R S_3_axiomcode_decnz
+  1 1 R cparam___n_91_0_1
+cparam___n_91_0_1
+  0 0 R cparam___n_91_0_1_0
+  1 1 R cparam___n_91_0_2
+cparam___n_91_0_1_0
+  0 0 R S_3_axiomcode_decnz
+  1 1 R cparam___n_91_0_1_1
+cparam___n_91_0_1_1
+  0 0 R cparam___n_91_0_1_1_0
+  1 0 L S_6_break_1
+cparam___n_91_0_1_1_0
+  0 0 R S_3_axiomcode_inc
+  1 1 R S_3_axiomcode_inc
+cparam___n_91_0_2
+  0 0 R cparam___n_91_0_2_0
+  1 0 L S_6_break_1
+cparam___n_91_0_2_0
+  0 0 R S_3_axiomcode_inc
+  1 1 R n_150_0
+cparam_param2__0
+  0 0 R cparam___n_91_0
+  1 1 R cparam_param2__1
+cparam_param2__1
+  0 0 R while_decnz_param2_____0
+  1 1 R while_decnz_scratch1_3_param2_inc__0
+cparam_param3__0
+  0 0 R cparam___n_91_0
+  1 1 R cparam_param3__1
+cparam_param3__1
+  0 0 R while_decnz_param3_____0
+  1 1 R while_decnz_scratch1_3_param3_inc__0
+if_decnz_axiomcode_63__0
+  0 0 R S_3_axiomcode_decnz
+  1 1 R if_decnz_axiomcode_63__1
+if_decnz_axiomcode_63__1
+  0 0 R while_decnz_topwff_____0
+  1 1 R while_decnz_scratch1_3_topwff_inc__0
+if_eq___n_111_0
+  0 0 R if_eq___n_111_0_0
+  1 1 R if_eq___n_111_1
+if_eq___n_111_0_0
+  0 0 R S_3_scratch2_decnz
+  1 1 R if_eq___n_111_0_1
+if_eq___n_111_0_1
+  0 0 R if_eq___n_111_0_1_0
+  1 1 R if_eq___n_111_0_2
+if_eq___n_111_0_1_0
+  0 0 R S_3_scratch3_decnz
+  1 0 L S_6_continue_1
+if_eq___n_111_0_2
+  0 0 R while_decnz_scratch2_____0
+  1 0 L S_6_break_2
+if_eq___n_111_1
+  0 0 R S_3_scratch3_decnz
+  1 1 R if_eq___n_111_2
+if_eq___n_111_2
+  0 0 R while_decnz_scratch3_____0
+  1 0 L S_6_break_1
+if_eq_scratch2_scratch3_102__0
+  0 0 R if_eq___n_111_0
+  1 1 R if_eq_scratch2_scratch3_102__1
+if_eq_scratch2_scratch3_102__1
+  0 0 R while_decnz_param1_99__0
+  1 1 R while_decnz_scratch1_3_param1_inc__0
+if_eq_scratch2_scratch3_61__0
+  0 0 R if_eq___n_111_0
+  1 1 R while_decnz_topwff_____0
+if_not_decnz_prooflist_72__0
+  0 0 R if_not_decnz_prooflist_72__0_0
+  1 1 R if_not_decnz_prooflist_72__1
+if_not_decnz_prooflist_72__0_0
+  0 0 R S_3_prooflist_decnz
+  1 0 L S_6_break_1
+if_not_decnz_prooflist_72__1
+  0 0 R while_decnz_nextproof_67__0
+  1 1 R if_not_decnz_prooflist_72__2
+if_not_decnz_prooflist_72__2
+  0 0 R while_decnz_scratch1_3_nextproof_inc__0
+  1 1 R S_3_nextproof_inc
+main___0
+  0 0 R if_not_decnz_prooflist_72__0
+  1 1 R main___1
+main___1
+  0 0 R while_decnz_axiomcode_____0
+  1 1 R main___2
+main___10
+  0 0 R while_decnz_scratch1_3_param2_inc__0
+  1 1 R main___11
+main___11
+  0 0 R main___n_139_0
+  1 1 R main___12
+main___12
+  0 0 R while_decnz_scratch1_3_param3_inc__0
+  1 1 R main___13
+main___13
+  0 0 R pushwff___0
+  1 1 R main___14
+main___14
+  0 0 R cparam_param3__0
+  1 1 R main___15
+main___15
+  0 0 R cparam_param2__0
+  1 1 R main___16
+main___16
+  0 0 R par3___0
+  1 1 R main___17
+main___17
+  0 0 R main___n_141_0
+  1 1 R main___18
+main___18
+  0 0 R while_decnz_topwff_3_scratch2_inc__0
+  1 1 R main___19
+main___19
+  0 0 R while_decnz_param2_96__0
+  1 1 R main___20
+main___2
+  0 0 R while_decnz_param1_____0
+  1 1 R main___3
+main___20
+  0 0 R while_decnz_scratch1_3_param2_inc__0
+  1 1 R main___21
+main___21
+  0 0 R if_eq_scratch2_scratch3_102__0
+  1 1 R main___22
+main___22
+  0 0 R select___0
+  1 1 R main___23
+main___23
+  0 0 R cparam_param3__0
+  1 1 R main___24
+main___24
+  0 0 R main___n_132_0
+  1 1 R main___25
+main___25
+  0 0 R main___n_137_0
+  1 1 R main___26
+main___26
+  0 0 R wim___0
+  1 1 R main___27
+main___27
+  0 0 R par2___0
+  1 1 R main___28
+main___28
+  0 0 R main___n_140_0
+  1 1 R main___29
+main___29
+  0 0 R par1___0
+  1 1 R main___30
+main___3
+  0 0 R while_decnz_param2_____0
+  1 1 R main___4
+main___30
+  0 0 R main___n_140_0
+  1 1 R main___31
+main___31
+  0 0 R main___n_131_0
+  1 1 R main___32
+main___32
+  0 0 R wn___0
+  1 1 R main___33
+main___33
+  0 0 R main___n_141_0
+  1 1 R main___34
+main___34
+  0 0 R par1___0
+  1 1 R main___35
+main___35
+  0 0 R main___n_130_0
+  1 1 R main___36
+main___36
+  0 0 R wn___0
+  1 1 R main___37
+main___37
+  0 0 R par2___0
+  1 1 R main___38
+main___38
+  0 0 R main___n_129_0
+  1 1 R main___39
+main___39
+  0 0 R main___n_140_0
+  1 1 R main___40
+main___4
+  0 0 R while_decnz_param3_____0
+  1 1 R main___5
+main___40
+  0 0 R wal___0
+  1 1 R main___41
+main___41
+  0 0 R main___n_146_0
+  1 1 R main___42
+main___42
+  0 0 R wal___0
+  1 1 R main___43
+main___43
+  0 0 R main___n_132_0
+  1 1 R main___44
+main___44
+  0 0 R main___n_147_0
+  1 1 R main___45
+main___45
+  0 0 R main___n_126_0
+  1 1 R main___46
+main___46
+  0 0 R main___n_125_0
+  1 1 R main___47
+main___47
+  0 0 R par2___0
+  1 1 R main___48
+main___48
+  0 0 R weq___0
+  1 1 R main___49
+main___49
+  0 0 R main___n_142_0
+  1 1 R main___50
+main___5
+  0 0 R main___n_139_0
+  1 1 R main___6
+main___50
+  0 0 R main___n_133_0
+  1 1 R main___51
+main___51
+  0 0 R par3___0
+  1 1 R main___52
+main___52
+  0 0 R main___n_133_0
+  1 1 R main___53
+main___53
+  0 0 R main___n_142_0
+  1 1 R main___54
+main___54
+  0 0 R wa___0
+  1 1 R main___55
+main___55
+  0 0 R while_decnz_param1_113__0
+  1 1 R main___56
+main___56
+  0 0 R while_decnz_scratch1_3_param1_inc__0
+  1 1 R main___57
+main___57
+  0 0 R main___n_134_0
+  1 1 R main___58
+main___58
+  0 0 R while_decnz_param2_113__0
+  1 1 R main___59
+main___59
+  0 0 R while_decnz_scratch1_3_param2_inc__0
+  1 1 R main___60
+main___6
+  0 0 R while_decnz_scratch1_3_axiomcode_inc__0
+  1 1 R main___7
+main___60
+  0 0 R main___n_134_0
+  1 1 R main___61
+main___61
+  0 0 R main___n_126_0
+  1 1 R main___62
+main___62
+  0 0 R main___n_128_0
+  1 1 R main___63
+main___63
+  0 0 R main___n_145_0
+  1 1 R main___64
+main___64
+  0 0 R par2___0
+  1 1 R main___65
+main___65
+  0 0 R main___n_128_0
+  1 1 R main___66
+main___66
+  0 0 R weq___0
+  1 1 R main___67
+main___67
+  0 0 R wex___0
+  1 1 R main___68
+main___68
+  0 0 R main___n_127_0
+  1 1 R main___69
+main___69
+  0 0 R weq___0
+  1 1 R main___70
+main___7
+  0 0 R main___n_139_0
+  1 1 R main___8
+main___70
+  0 0 R main___n_148_0
+  1 1 R main___71
+main___71
+  0 0 R main___n_143_0
+  1 1 R main___72
+main___72
+  0 0 R main___n_125_0
+  1 1 R main___73
+main___73
+  0 0 R wel___0
+  1 1 R main___74
+main___74
+  0 0 R par3___0
+  1 1 R main___75
+main___75
+  0 0 R par2___0
+  1 1 R main___76
+main___76
+  0 0 R main___n_135_0
+  1 1 R main___77
+main___77
+  0 0 R select___0
+  1 1 R main___78
+main___78
+  0 0 R v_1___0
+  1 1 R main___79
+main___79
+  0 0 R pushwff___0
+  1 1 R main___80
+main___8
+  0 0 R while_decnz_scratch1_3_param1_inc__0
+  1 1 R main___9
+main___80
+  0 0 R pushwff___0
+  1 1 R main___81
+main___81
+  0 0 R v_2___0
+  1 1 R main___82
+main___82
+  0 0 R wel___0
+  1 1 R main___83
+main___83
+  0 0 R wn___0
+  1 1 R main___84
+main___84
+  0 0 R pushwff___0
+  1 1 R main___85
+main___85
+  0 0 R v_3___0
+  1 1 R main___86
+main___86
+  0 0 R main___n_143_0
+  1 1 R main___87
+main___87
+  0 0 R main___n_136_0
+  1 1 R main___88
+main___88
+  0 0 R main___n_144_0
+  1 1 R main___89
+main___89
+  0 0 R main___n_135_0
+  1 1 R main___90
+main___9
+  0 0 R main___n_139_0
+  1 1 R main___10
+main___90
+  0 0 R main___n_144_0
+  1 1 R main___91
+main___91
+  0 0 R wel___0
+  1 1 R main___92
+main___92
+  0 0 R main___n_136_0
+  1 1 R main___93
+main___93
+  0 0 R wim___0
+  1 1 R main___94
+main___94
+  0 0 R wa___0
+  1 1 R main___95
+main___95
+  0 0 R main___n_145_0
+  1 1 R main___96
+main___96
+  0 0 R select___0
+  1 1 R main___97
+main___97
+  0 0 R S_3_topwff_decnz
+  1 1 R main___98
+main___98
+  0 0 R main___98_0
+  1 1 R halt
+main___98_0
+  0 0 R S_3_topwff_decnz
+  1 1 R main___98_1
+main___98_1
+  0 0 R main___98_1_0
+  1 0 L S_6_break_1
+main___98_1_0
+  0 0 R S_3_topwff_inc
+  1 1 R S_3_topwff_inc
+main___n_125_0
+  0 0 R wim___0
+  1 1 R main___n_125_1
+main___n_125_1
+  0 0 R main___n_127_0
+  1 1 R main___n_125_2
+main___n_125_2
+  0 0 R wel___0
+  1 1 R main___n_125_3
+main___n_125_3
+  0 0 R main___n_148_0
+  1 1 R main___n_125_4
+main___n_125_4
+  0 0 R wel___0
+  1 1 R main___n_125_5
+main___n_125_5
+  0 0 R main___n_129_0
+  1 1 R main___n_125_6
+main___n_125_6
+  0 0 R weq___0
+  1 1 R main___n_125_7
+main___n_125_7
+  0 0 R par3___0
+  1 1 R par1___0
+main___n_126_0
+  0 0 R main___n_137_0
+  1 1 R main___n_126_1
+main___n_126_1
+  0 0 R par3___0
+  1 1 R main___n_126_2
+main___n_126_2
+  0 0 R wal___0
+  1 1 R main___n_126_3
+main___n_126_3
+  0 0 R wal___0
+  1 1 R main___n_126_4
+main___n_126_4
+  0 0 R par2___0
+  1 1 R main___n_126_5
+main___n_126_5
+  0 0 R main___n_132_0
+  1 1 R wal___0
+main___n_127_0
+  0 0 R main___n_137_0
+  1 1 R main___n_127_1
+main___n_127_1
+  0 0 R weq___0
+  1 1 R main___n_149_0
+main___n_128_0
+  0 0 R main___n_130_0
+  1 1 R par2___0
+main___n_129_0
+  0 0 R main___n_131_0
+  1 1 R par2___0
+main___n_130_0
+  0 0 R main___n_138_0
+  1 1 R par1___0
+main___n_131_0
+  0 0 R wim___0
+  1 1 R main___n_138_0
+main___n_132_0
+  0 0 R main___n_149_0
+  1 1 R wal___0
+main___n_133_0
+  0 0 R main___n_146_0
+  1 1 R wel___0
+main___n_134_0
+  0 0 R while_decnz_param3_96__0
+  1 1 R main___n_134_1
+main___n_134_1
+  0 0 R while_decnz_scratch1_3_param3_inc__0
+  1 1 R if_eq_scratch2_scratch3_61__0
+main___n_135_0
+  0 0 R wel___0
+  1 1 R main___n_147_0
+main___n_136_0
+  0 0 R v_1___0
+  1 1 R main___n_136_1
+main___n_136_1
+  0 0 R par1___0
+  1 1 R wal___0
+main___n_137_0
+  0 0 R select___0
+  1 1 R main___n_146_0
+main___n_138_0
+  0 0 R wim___0
+  1 1 R main___n_138_1
+main___n_138_1
+  0 0 R select___0
+  1 1 R par1___0
+main___n_139_0
+  0 0 R unpair_scratch1_scratch2_prooflist__0
+  1 1 R while_decnz_scratch2_3_prooflist_inc__0
+main___n_140_0
+  0 0 R par3___0
+  1 1 R wim___0
+main___n_141_0
+  0 0 R par1___0
+  1 1 R wim___0
+main___n_142_0
+  0 0 R wal___0
+  1 1 R wim___0
+main___n_143_0
+  0 0 R weq___0
+  1 1 R wim___0
+main___n_144_0
+  0 0 R pushwff___0
+  1 1 R v_1___0
+main___n_145_0
+  0 0 R wal___0
+  1 1 R wex___0
+main___n_146_0
+  0 0 R par1___0
+  1 1 R par2___0
+main___n_147_0
+  0 0 R wim___0
+  1 1 R wim___0
+main___n_148_0
+  0 0 R par2___0
+  1 1 R par3___0
+main___n_149_0
+  0 0 R par1___0
+  1 1 R par3___0
+n_150_0
+  0 0 R unpair_scratch1_scratch2_wffstack__0
+  1 1 R while_decnz_scratch2_3_wffstack_inc__0
+pair_scratch1_topwff_wffstack__0
+  0 0 R while_decnz_topwff_21__0
+  1 1 R pair_scratch1_topwff_wffstack__1
+pair_scratch1_topwff_wffstack__1
+  0 0 R S_3_wffstack_decnz
+  1 1 R pair_scratch1_topwff_wffstack__2
+pair_scratch1_topwff_wffstack__2
+  0 0 R pair_scratch1_topwff_wffstack__2_0
+  1 0 L S_6_continue_2
+pair_scratch1_topwff_wffstack__2_0
+  0 0 R S_3_scratch1_inc
+  1 1 R while_decnz_wffstack_3_topwff_inc__0
+pair_scratch2_scratch1_topwff__0
+  0 0 R while_decnz_scratch1_9__0
+  1 1 R pair_scratch2_scratch1_topwff__1
+pair_scratch2_scratch1_topwff__1
+  0 0 R S_3_topwff_decnz
+  1 1 R pair_scratch2_scratch1_topwff__2
+pair_scratch2_scratch1_topwff__2
+  0 0 R pair_scratch2_scratch1_topwff__2_0
+  1 0 L S_6_continue_2
+pair_scratch2_scratch1_topwff__2_0
+  0 0 R S_3_scratch2_inc
+  1 1 R while_decnz_topwff_3_scratch1_inc__0
+par1___0
+  0 0 R pushwff___0
+  1 1 R par1___1
+par1___1
+  0 0 R while_decnz_param1_42__0
+  1 1 R while_decnz_scratch1_3_param1_inc__0
+par2___0
+  0 0 R pushwff___0
+  1 1 R par2___1
+par2___1
+  0 0 R while_decnz_param2_42__0
+  1 1 R while_decnz_scratch1_3_param2_inc__0
+par3___0
+  0 0 R pushwff___0
+  1 1 R par3___1
+par3___1
+  0 0 R while_decnz_param3_42__0
+  1 1 R while_decnz_scratch1_3_param3_inc__0
+pushwff___0
+  0 0 R pair_scratch1_topwff_wffstack__0
+  1 1 R while_decnz_scratch1_3_wffstack_inc__0
+select___0
+  0 0 R while_decnz_topwff_3_scratch1_inc__0
+  1 1 R select___1
+select___1
+  0 0 R unpair_topwff_scratch2_wffstack__0
+  1 1 R select___2
+select___2
+  0 0 R while_decnz_scratch2_3_wffstack_inc__0
+  1 1 R select___3
+select___3
+  0 0 R if_decnz_axiomcode_63__0
+  1 1 R while_decnz_scratch1_____0
+unpair___n_2_0
+  0 0 R S_3_scratch2_decnz
+  1 0 L S_6_continue_2
+unpair___n_5_0
+  0 0 R S_3_scratch1_inc
+  1 1 R unpair___n_5_1
+unpair___n_5_1
+  0 0 R unpair___n_2_0
+  1 1 R unpair___n_5_2
+unpair___n_5_2
+  0 0 R while_decnz_scratch1_3_scratch2_inc__0
+  1 0 L S_6_continue_3
+unpair_scratch1_scratch2_prooflist__0
+  0 0 R S_3_prooflist_decnz
+  1 1 R unpair___n_5_0
+unpair_scratch1_scratch2_wffstack__0
+  0 0 R S_3_wffstack_decnz
+  1 1 R unpair___n_5_0
+unpair_topwff_scratch2_wffstack__0
+  0 0 R S_3_wffstack_decnz
+  1 1 R unpair_topwff_scratch2_wffstack__1
+unpair_topwff_scratch2_wffstack__1
+  0 0 R S_3_topwff_inc
+  1 1 R unpair_topwff_scratch2_wffstack__2
+unpair_topwff_scratch2_wffstack__2
+  0 0 R unpair___n_2_0
+  1 1 R unpair_topwff_scratch2_wffstack__3
+unpair_topwff_scratch2_wffstack__3
+  0 0 R while_decnz_topwff_3_scratch2_inc__0
+  1 0 L S_6_continue_3
+v_1___0
+  0 0 R pushwff___0
+  1 1 R S_3_topwff_inc
+v_2___0
+  0 0 R v_1___0
+  1 1 R S_3_topwff_inc
+v_3___0
+  0 0 R v_2___0
+  1 1 R S_3_topwff_inc
+v_4___0
+  0 0 R v_3___0
+  1 1 R S_3_topwff_inc
+wa___0
+  0 0 R wn___0
+  1 1 R wa___1
+wa___1
+  0 0 R wim___0
+  1 1 R wn___0
+wal___0
+  0 0 R cons___0
+  1 1 R wal___1
+wal___1
+  0 0 R v_4___0
+  1 1 R cons___0
+wel___0
+  0 0 R cons___0
+  1 1 R wel___1
+wel___1
+  0 0 R v_1___0
+  1 1 R cons___0
+weq___0
+  0 0 R cons___0
+  1 1 R weq___1
+weq___1
+  0 0 R pushwff___0
+  1 1 R cons___0
+wex___0
+  0 0 R wn___0
+  1 1 R wex___1
+wex___1
+  0 0 R wal___0
+  1 1 R wn___0
+while_decnz___n_0_0
+  0 0 R S_3_scratch2_inc
+  1 0 L S_6_continue_1
+while_decnz___n_114_0
+  0 0 R while_decnz___n_114_0_0
+  1 0 L S_6_continue_1
+while_decnz___n_114_0_0
+  0 0 R S_3_scratch1_inc
+  1 1 R S_3_scratch2_inc
+while_decnz___n_18_0
+  0 0 R S_3_topwff_inc
+  1 0 L S_6_continue_1
+while_decnz___n_43_0
+  0 0 R while_decnz___n_43_0_0
+  1 0 L S_6_continue_1
+while_decnz___n_43_0_0
+  0 0 R S_3_topwff_inc
+  1 1 R S_3_scratch1_inc
+while_decnz___n_7_0
+  0 0 R S_3_wffstack_inc
+  1 0 L S_6_continue_1
+while_decnz___n_97_0
+  0 0 R while_decnz___n_97_0_0
+  1 0 L S_6_continue_1
+while_decnz___n_97_0_0
+  0 0 R S_3_scratch1_inc
+  1 1 R S_3_scratch3_inc
+while_decnz_axiomcode_____0
+  0 0 R S_3_axiomcode_decnz
+  1 0 L S_6_continue_0
+while_decnz_nextproof_67__0
+  0 0 R S_3_nextproof_decnz
+  1 1 R while_decnz_nextproof_67__1
+while_decnz_nextproof_67__1
+  0 0 R while_decnz_nextproof_67__1_0
+  1 0 L S_6_continue_1
+while_decnz_nextproof_67__1_0
+  0 0 R S_3_scratch1_inc
+  1 1 R S_3_prooflist_inc
+while_decnz_param1_____0
+  0 0 R S_3_param1_decnz
+  1 0 L S_6_continue_0
+while_decnz_param1_113__0
+  0 0 R S_3_param1_decnz
+  1 1 R while_decnz___n_114_0
+while_decnz_param1_42__0
+  0 0 R S_3_param1_decnz
+  1 1 R while_decnz___n_43_0
+while_decnz_param1_99__0
+  0 0 R S_3_param1_decnz
+  1 1 R while_decnz_param1_99__1
+while_decnz_param1_99__1
+  0 0 R while_decnz_param1_99__1_0
+  1 0 L S_6_continue_1
+while_decnz_param1_99__1_0
+  0 0 R S_3_scratch1_inc
+  1 1 R S_3_topwff_inc
+while_decnz_param2_____0
+  0 0 R S_3_param2_decnz
+  1 0 L S_6_continue_0
+while_decnz_param2_113__0
+  0 0 R S_3_param2_decnz
+  1 1 R while_decnz___n_114_0
+while_decnz_param2_42__0
+  0 0 R S_3_param2_decnz
+  1 1 R while_decnz___n_43_0
+while_decnz_param2_96__0
+  0 0 R S_3_param2_decnz
+  1 1 R while_decnz___n_97_0
+while_decnz_param3_____0
+  0 0 R S_3_param3_decnz
+  1 0 L S_6_continue_0
+while_decnz_param3_42__0
+  0 0 R S_3_param3_decnz
+  1 1 R while_decnz___n_43_0
+while_decnz_param3_96__0
+  0 0 R S_3_param3_decnz
+  1 1 R while_decnz___n_97_0
+while_decnz_scratch1_____0
+  0 0 R S_3_scratch1_decnz
+  1 0 L S_6_continue_0
+while_decnz_scratch1_3_axiomcode_inc__0
+  0 0 R S_3_scratch1_decnz
+  1 1 R while_decnz_scratch1_3_axiomcode_inc__1
+while_decnz_scratch1_3_axiomcode_inc__1
+  0 0 R S_3_axiomcode_inc
+  1 0 L S_6_continue_1
+while_decnz_scratch1_3_nextproof_inc__0
+  0 0 R S_3_scratch1_decnz
+  1 1 R while_decnz_scratch1_3_nextproof_inc__1
+while_decnz_scratch1_3_nextproof_inc__1
+  0 0 R S_3_nextproof_inc
+  1 0 L S_6_continue_1
+while_decnz_scratch1_3_param1_inc__0
+  0 0 R S_3_scratch1_decnz
+  1 1 R while_decnz_scratch1_3_param1_inc__1
+while_decnz_scratch1_3_param1_inc__1
+  0 0 R S_3_param1_inc
+  1 0 L S_6_continue_1
+while_decnz_scratch1_3_param2_inc__0
+  0 0 R S_3_scratch1_decnz
+  1 1 R while_decnz_scratch1_3_param2_inc__1
+while_decnz_scratch1_3_param2_inc__1
+  0 0 R S_3_param2_inc
+  1 0 L S_6_continue_1
+while_decnz_scratch1_3_param3_inc__0
+  0 0 R S_3_scratch1_decnz
+  1 1 R while_decnz_scratch1_3_param3_inc__1
+while_decnz_scratch1_3_param3_inc__1
+  0 0 R S_3_param3_inc
+  1 0 L S_6_continue_1
+while_decnz_scratch1_3_scratch2_inc__0
+  0 0 R S_3_scratch1_decnz
+  1 1 R while_decnz___n_0_0
+while_decnz_scratch1_3_topwff_inc__0
+  0 0 R S_3_scratch1_decnz
+  1 1 R while_decnz___n_18_0
+while_decnz_scratch1_3_wffstack_inc__0
+  0 0 R S_3_scratch1_decnz
+  1 1 R while_decnz___n_7_0
+while_decnz_scratch1_9__0
+  0 0 R S_3_scratch1_decnz
+  1 1 R while_decnz_scratch1_9__1
+while_decnz_scratch1_9__1
+  0 0 R while_decnz_scratch1_9__1_0
+  1 0 L S_6_continue_1
+while_decnz_scratch1_9__1_0
+  0 0 R S_3_topwff_inc
+  1 1 R S_3_scratch2_inc
+while_decnz_scratch2_____0
+  0 0 R S_3_scratch2_decnz
+  1 0 L S_6_continue_0
+while_decnz_scratch2_3_prooflist_inc__0
+  0 0 R S_3_scratch2_decnz
+  1 1 R while_decnz_scratch2_3_prooflist_inc__1
+while_decnz_scratch2_3_prooflist_inc__1
+  0 0 R S_3_prooflist_inc
+  1 0 L S_6_continue_1
+while_decnz_scratch2_3_topwff_inc__0
+  0 0 R S_3_scratch2_decnz
+  1 1 R while_decnz___n_18_0
+while_decnz_scratch2_3_wffstack_inc__0
+  0 0 R S_3_scratch2_decnz
+  1 1 R while_decnz___n_7_0
+while_decnz_scratch3_____0
+  0 0 R S_3_scratch3_decnz
+  1 0 L S_6_continue_0
+while_decnz_topwff_____0
+  0 0 R S_3_topwff_decnz
+  1 0 L S_6_continue_0
+while_decnz_topwff_21__0
+  0 0 R S_3_topwff_decnz
+  1 1 R while_decnz_topwff_21__1
+while_decnz_topwff_21__1
+  0 0 R while_decnz_topwff_21__1_0
+  1 0 L S_6_continue_1
+while_decnz_topwff_21__1_0
+  0 0 R S_3_wffstack_inc
+  1 1 R S_3_scratch1_inc
+while_decnz_topwff_3_scratch1_inc__0
+  0 0 R S_3_topwff_decnz
+  1 1 R while_decnz_topwff_3_scratch1_inc__1
+while_decnz_topwff_3_scratch1_inc__1
+  0 0 R S_3_scratch1_inc
+  1 0 L S_6_continue_1
+while_decnz_topwff_3_scratch2_inc__0
+  0 0 R S_3_topwff_decnz
+  1 1 R while_decnz___n_0_0
+while_decnz_wffstack_3_topwff_inc__0
+  0 0 R S_3_wffstack_decnz
+  1 1 R while_decnz___n_18_0
+wim___0
+  0 0 R cons___0
+  1 1 R wim___1
+wim___1
+  0 0 R v_2___0
+  1 1 R cons___0
+wn___0
+  0 0 R v_3___0
+  1 1 R cons___0

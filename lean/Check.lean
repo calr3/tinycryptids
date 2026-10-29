@@ -73,3 +73,14 @@ Run `lake env lean Check.lean` after `lake build`. -/
 #print axioms TM.ABC.M235.never_halts
 #check @TM.ABC.M235.beep_transition
 #check @TM.ABC.M235.boop_transition
+
+-- PA: halts iff the theory T (S2 + Friedman's E, equiconsistent with PA) proves v0 ∈ v0
+#check @TM.PA.halts_iff
+#print axioms TM.PA.halts_iff
+#check @TM.PA.M309.halts_iff
+#print axioms TM.PA.M309.halts_iff
+-- PA with 10 symbols (pa_nsymbols): the same theorem for pa_10sym_470.txt
+#check @TMK.PA.halts_iff
+#print axioms TMK.PA.halts_iff
+#check @TMK.PA.M10.halts_iff
+#print axioms TMK.PA.M10.halts_iff

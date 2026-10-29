@@ -6,6 +6,7 @@ import TinyCryptids.Core.Basic3
 import TinyCryptids.Core.Beep
 import TinyCryptids.Core.BeepBoop
 import TinyCryptids.Core.Mirror
+import TinyCryptids.Core.Multi
 import TinyCryptids.WeakCollatz.Main
 import TinyCryptids.WeakCollatz16.Main
 import TinyCryptids.WeakCollatzV1.M23
@@ -19,3 +20,5 @@ import TinyCryptids.TwinPrimes.M18
 import TinyCryptids.FermatPrimes.M25
 import TinyCryptids.FermatPrimesInf.M16
 import TinyCryptids.ABC.M235
+import TinyCryptids.PA.M309
+import TinyCryptids.PAK.M10

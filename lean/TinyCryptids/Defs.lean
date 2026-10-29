@@ -89,4 +89,55 @@ def ABCConjecture : Prop :=
   ∀ n, 1 ≤ n → ∃ N, ∀ a b, 1 ≤ a → 1 ≤ b → Nat.gcd a b = 1 → N ≤ a + b →
     (a + b) ^ n ≤ rad (a * b * (a + b)) ^ (n + 1)
 
+/-! ## The theory T of the PA machine
+
+First-order logic with `=` and `∈` (Tarski's system S2) plus one set existence scheme of
+H. Friedman, as in LegionMammal978's `pa.py`.  T is equiconsistent with Peano arithmetic, and it
+proves `¬ v0 ∈ v0` (an empty set exists), so it proves `v0 ∈ v0` iff it is inconsistent. -/
+
+/-- Formulas of first-order logic with `=` and `∈`; variables are numbers (`v0, v1, …`). -/
+inductive Wff
+  | eq (x y : Nat)
+  | el (x y : Nat)
+  | imp (φ ψ : Wff)
+  | neg (φ : Wff)
+  | all (x : Nat) (φ : Wff)
+  deriving DecidableEq
+
+namespace Wff
+
+/-- `∃x φ` is `¬∀x ¬φ`. -/
+def ex (x : Nat) (φ : Wff) : Wff := neg (all x (neg φ))
+
+/-- `φ ∧ ψ` is `¬(φ → ¬ψ)`. -/
+def and (φ ψ : Wff) : Wff := neg (imp φ (neg ψ))
+
+/-- The axioms of T: Tarski's S2 (B1–B3 propositional, B4–B8 for quantifiers and equality;
+B6a needs `z` distinct from `x` and `y`) and Friedman's scheme E: for every formula `φ`,
+`∃v1 ∀v0 (((¬ v0 ∈ v2 → v0 = v3) → (∀v1 φ → v0 ∈ v1)) ∧ (v0 ∈ v1 → ∀v1 φ))`. -/
+inductive Axiom : Wff → Prop
+  | b1 (φ ψ χ : Wff) : Axiom (imp (imp φ ψ) (imp (imp ψ χ) (imp φ χ)))
+  | b2 (φ : Wff) : Axiom (imp (imp (neg φ) φ) φ)
+  | b3 (φ ψ : Wff) : Axiom (imp φ (imp (neg φ) ψ))
+  | b4 (x : Nat) (φ ψ : Wff) : Axiom (imp (all x (imp φ ψ)) (imp (all x φ) (all x ψ)))
+  | b6a (x y z : Nat) : z ≠ x → z ≠ y →
+      Axiom (and (imp (eq x y) (all z (eq x y))) (imp (el x y) (all z (el x y))))
+  | b6b (x y : Nat) (φ : Wff) : Axiom (imp (all x (all y φ)) (all y (all x φ)))
+  | b6c (x : Nat) (φ : Wff) : Axiom (imp (ex x (all x φ)) φ)
+  | b7 (x y : Nat) : Axiom (ex x (eq x y))
+  | b8a (x y z : Nat) : Axiom (imp (eq x y) (imp (eq x z) (eq y z)))
+  | b8b (x y z : Nat) : Axiom (imp (eq x y) (imp (el x z) (el y z)))
+  | b8c (x y z : Nat) : Axiom (imp (eq x y) (imp (el z x) (el z y)))
+  | e (φ : Wff) : Axiom (ex 1 (all 0 (and
+      (imp (imp (neg (el 0 2)) (eq 0 3)) (imp (all 1 φ) (el 0 1)))
+      (imp (el 0 1) (all 1 φ)))))
+
+/-- The theorems of T: closure of the axioms under modus ponens and generalisation. -/
+inductive Provable : Wff → Prop
+  | ax {φ : Wff} : Axiom φ → Provable φ
+  | mp {φ ψ : Wff} : Provable (imp φ ψ) → Provable φ → Provable ψ
+  | gen (x : Nat) {φ : Wff} : Provable φ → Provable (all x φ)
+
+end Wff
+
 end TinyCryptids

@@ -1,0 +1,1350 @@
+; Halts iff it finds a proof of v0 e. v0 (a contradiction) in the theory T of ../pa: Tarski's
+; system S2 of first-order logic with = and e., plus Friedman's set existence scheme (T is
+; equiconsistent with PA).  Built by pa_nsymbols/kbuild.py: the program of ../pa/program.py,
+; compiled by kary.py with 8 program-counter digits; symbols 0 (blank), 1..8 (digits; 1 is
+; also the gap and a register's unit), 9 (register separator).
+; 10 symbols, 122 states, 470 instructions (defined transitions, the halting one included).
+; Program: {'order': ['B2', 'B6c', 'B3', 'B8b', 'B8c', 'B8a', 'B1', 'B4', 'B6b', 'B7', 'E'], 'variants': {'E': ((3, 1, 2), 1), 'B4': ((2, 3, 1), 1), 'B8a': ((2, 3, 1), 0), 'B8c': ((2, 3, 1), 0), 'B6a': ((2, 1, 3), 0), 'B6b': ((2, 3, 1), 0), 'B3': ((2, 3, 1), 0), 'B7': ((2, 1, 3), 0), 'B1': ((2, 3, 1), 0), 'B6c': ((2, 1, 3), 0), 'B2': ((1, 3, 2), 0), 'B8b': ((2, 1, 3), 1)}, 'vchain': 'nested'}
+blank_symbol: 0
+bA
+  0 2 L bB
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+adv
+  0 0 R n_main___0
+  1 2 L scan
+  2 3 L scan
+  3 4 L scan
+  4 5 L scan
+  5 6 L scan
+  6 7 L scan
+  7 8 L scan
+  8 1 L adv
+  -
+bB
+  0 1 R bC
+  1 2 R bB
+  2 1 L bB
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+bC
+  0 2 R bA
+  1 1 L scan
+  2 1 R bB
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+carry1
+  0 1 L retok
+  1 1 R carry1
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 1 R carryS
+carryS
+  0 9 L retok
+  1 9 R carry1
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R carryS
+cdec1
+  0 9 R dstart
+  1 1 R cdec1
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R dstart
+cdec10
+  -
+  1 1 R cdec10
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R cdec9
+cdec2
+  -
+  1 1 R cdec2
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R cdec1
+cdec3
+  -
+  1 1 R cdec3
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R cdec2
+cdec4
+  -
+  1 1 R cdec4
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R cdec3
+cdec5
+  -
+  1 1 R cdec5
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R cdec4
+cdec6
+  -
+  1 1 R cdec6
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R cdec5
+cdec7
+  -
+  1 1 R cdec7
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R cdec6
+cdec8
+  -
+  1 1 R cdec8
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R cdec7
+cdec9
+  -
+  1 1 R cdec9
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R cdec8
+cinc1
+  0 9 R carry1
+  1 1 R cinc1
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R carry1
+cinc10
+  -
+  1 1 R cinc10
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R cinc9
+cinc2
+  -
+  1 1 R cinc2
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R cinc1
+cinc3
+  -
+  1 1 R cinc3
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R cinc2
+cinc4
+  -
+  1 1 R cinc4
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R cinc3
+cinc5
+  -
+  1 1 R cinc5
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R cinc4
+cinc6
+  -
+  1 1 R cinc6
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R cinc5
+cinc7
+  -
+  1 1 R cinc7
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R cinc6
+cinc8
+  -
+  1 1 R cinc8
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R cinc7
+cinc9
+  -
+  1 1 R cinc9
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 R cinc8
+dlast
+  -
+  1 0 L retok
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+dput
+  -
+  1 9 R dscan
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+dscan
+  0 0 L dlast
+  1 1 R dscan
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 1 L dput
+dstart
+  0 0 L retfail
+  1 1 R dscan
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+  9 9 L retfail
+ebrk1
+  -
+  1 1 L adv
+  2 1 L adv
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+ecnt1
+  -
+  -
+  -
+  3 1 L scan
+  -
+  -
+  -
+  -
+  -
+  -
+n_cons___0
+  -
+  1 1 R n_unpair_scratch2_scratch1_wffstack__0
+  2 2 R n_while_decnz_scratch1_3_wffstack_inc__0
+  3 3 R n_pair_scratch1_wffstack_topwff__0
+  4 4 R n_while_decnz_scratch1_3_topwff_inc__0
+  5 5 R cdec4
+  6 6 R cinc8
+  7 5 L scan
+  -
+  -
+n_drop___0
+  -
+  1 1 R n_f8
+  2 8 R n_fn_54___0
+  -
+  -
+  -
+  -
+  -
+  8 8 R n_fn_54___0
+  -
+n_f0
+  -
+  1 1 R n_wim___0
+  2 2 R n_f2
+  3 8 R n_par3___0
+  -
+  -
+  -
+  -
+  8 8 R n_par3___0
+  -
+n_f1
+  -
+  1 1 R n_par2___0
+  2 8 R n_par1___0
+  -
+  -
+  -
+  -
+  -
+  8 8 R n_par1___0
+  -
+n_f2
+  -
+  1 1 R n_wim___0
+  2 2 R n_select___0
+  3 8 R n_par2___0
+  -
+  -
+  -
+  -
+  8 8 R n_par2___0
+  -
+n_f3
+  -
+  1 1 R n_f1
+  2 8 R n_weq___0
+  -
+  -
+  -
+  -
+  -
+  8 8 R n_weq___0
+  -
+n_f4
+  -
+  1 1 R n_par1___0
+  2 2 R n_par3___0
+  3 3 R n_wel___0
+  4 4 R n_f0
+  5 8 R n_weq___0
+  -
+  -
+  8 8 R n_weq___0
+  -
+n_f5
+  -
+  1 1 R n_par3___0
+  2 2 R n_par1___0
+  3 8 R n_wim___0
+  -
+  -
+  -
+  -
+  8 8 R n_wim___0
+  -
+n_f6
+  -
+  1 1 R n_unpair_scratch2_scratch1_prooflist__0
+  2 8 R n_while_decnz_scratch2_3_prooflist_inc__0
+  -
+  -
+  -
+  -
+  -
+  8 8 R n_while_decnz_scratch2_3_prooflist_inc__0
+  -
+n_f7
+  -
+  1 1 R n_wim___0
+  2 2 R n_pushwff___0
+  3 3 R n_v_1___0
+  4 8 R n_wel___0
+  -
+  -
+  -
+  8 8 R n_wel___0
+  -
+n_f8
+  -
+  1 1 R n_unpair_scratch2_scratch1_wffstack__0
+  2 2 R cdec4
+  3 3 R cinc8
+  4 2 L scan
+  -
+  -
+  -
+  -
+  -
+n_fn_125___0
+  -
+  1 2 R cdec5
+  -
+  3 1 L scan
+  -
+  -
+  -
+  -
+  -
+  -
+n_fn_127___0
+  -
+  1 2 R cdec6
+  -
+  3 1 L scan
+  -
+  -
+  -
+  -
+  -
+  -
+n_fn_129___0
+  -
+  1 2 R cdec7
+  -
+  3 1 L scan
+  -
+  -
+  -
+  -
+  -
+  -
+n_fn_54___0
+  -
+  1 2 R cdec3
+  -
+  3 1 L scan
+  -
+  -
+  -
+  -
+  -
+  -
+n_fn_56___0
+  -
+  1 2 R cdec9
+  -
+  3 1 L scan
+  -
+  -
+  -
+  -
+  -
+  -
+n_if_eq_param2_scratch2_85__0
+  -
+  1 1 R n_s_99
+  2 2 R n_s_101
+  3 3 R n_fn_56___0
+  4 4 R cdec6
+  5 5 R cinc9
+  6 4 L scan
+  -
+  -
+  -
+n_if_not_decnz_prooflist_120__0
+  -
+  1 1 R n_s_121
+  2 2 R n_while_decnz_nextproof_75__0
+  3 3 R n_while_decnz_scratch1_3_nextproof_inc__0
+  4 4 R n_while_decnz_scratch2_3_prooflist_inc__0
+  5 8 R cinc2
+  -
+  -
+  -
+  -
+n_main___0
+  -
+  1 1 R n_main___0_c7
+  2 2 R n_main___0_c8
+  3 3 R n_main___0_c9
+  4 4 R n_main___0_c10
+  5 5 R n_main___0_c11
+  6 6 R n_main___0_c12
+  7 7 R n_main___0_c13
+  8 8 R n_main___0_c14
+  -
+n_main___0_c0
+  -
+  1 1 R n_wal___0
+  2 2 R n_wal___0
+  3 3 R n_f2
+  4 4 R n_f3
+  5 5 R n_wex___0
+  6 6 R n_select___0
+  7 7 R n_v_1___0
+  8 8 R n_pushwff___0
+  -
+n_main___0_c1
+  -
+  1 1 R n_v_1___0
+  2 2 R n_par3___0
+  3 3 R n_wal___0
+  4 4 R n_pushwff___0
+  5 5 R n_v_2___0
+  6 6 R n_wel___0
+  7 7 R n_wn___0
+  8 8 R n_pushwff___0
+  -
+n_main___0_c10
+  -
+  1 1 R n_par2___0
+  2 2 R n_wn___0
+  3 3 R n_par3___0
+  4 4 R n_f0
+  5 5 R n_wel___0
+  6 6 R n_f3
+  7 7 R n_f4
+  8 8 R n_par1___0
+  -
+n_main___0_c11
+  -
+  1 1 R n_par2___0
+  2 2 R n_wel___0
+  3 3 R n_f4
+  4 4 R n_f3
+  5 5 R n_par3___0
+  6 6 R n_par1___0
+  7 7 R n_weq___0
+  8 8 R n_f0
+  -
+n_main___0_c12
+  -
+  1 1 R n_wim___0
+  2 2 R n_f5
+  3 3 R n_f1
+  4 4 R n_wim___0
+  5 5 R n_f0
+  6 6 R n_wal___0
+  7 7 R n_par2___0
+  8 8 R n_f5
+  -
+n_main___0_c13
+  -
+  1 1 R n_wal___0
+  2 2 R n_f1
+  3 3 R n_wal___0
+  4 4 R n_f0
+  5 5 R n_par1___0
+  6 6 R n_wal___0
+  7 7 R n_wal___0
+  8 8 R n_par3___0
+  -
+n_main___0_c14
+  -
+  1 1 R n_f1
+  2 2 R n_main___0_c0
+  3 3 R n_main___0_c1
+  4 4 R n_main___0_c2
+  5 5 R n_main___0_c3
+  6 6 R n_main___0_c4
+  7 7 R n_main___0_c5
+  8 8 R n_main___0_c6
+  -
+n_main___0_c2
+  -
+  1 1 R n_v_3___0
+  2 2 R n_weq___0
+  3 3 R n_f7
+  4 4 R n_wim___0
+  5 5 R n_f7
+  6 6 R n_v_1___0
+  7 7 R n_par3___0
+  8 8 R n_wal___0
+  -
+n_main___0_c3
+  -
+  1 1 R n_wim___0
+  2 2 R n_wa___0
+  3 3 R n_wal___0
+  4 4 R n_wex___0
+  5 5 R n_select___0
+  6 6 R n_f3
+  7 7 R n_par3___0
+  8 8 R n_f3
+  -
+n_main___0_c4
+  -
+  1 1 R n_wal___0
+  2 2 R n_wim___0
+  3 3 R n_f1
+  4 4 R n_wel___0
+  5 5 R n_par3___0
+  6 6 R n_f1
+  7 7 R n_wel___0
+  8 8 R n_wal___0
+  -
+n_main___0_c5
+  -
+  1 1 R n_wim___0
+  2 2 R n_wa___0
+  3 3 R n_while_decnz_param3_75__0
+  4 4 R n_while_decnz_param1_3_param3_inc__0
+  5 5 R n_if_eq_param2_scratch2_85__0
+  6 6 R n_while_decnz_scratch1_3_param2_inc__0
+  7 7 R n_while_decnz_param3_75__0
+  8 8 R n_if_eq_param2_scratch2_85__0
+  -
+n_main___0_c6
+  -
+  1 1 R n_while_decnz_scratch1_3_param1_inc__0
+  2 2 R n_select___0
+  3 3 R n_s_146
+  4 4 R n_s_148
+  5 7 R cdec9
+  -
+  -
+  8 8 R n_s_144
+  -
+n_main___0_c7
+  -
+  1 1 R n_if_not_decnz_prooflist_120__0
+  2 2 R n_fn_125___0
+  3 3 R n_fn_127___0
+  4 4 R n_fn_129___0
+  5 5 R n_f6
+  6 6 R n_while_decnz_scratch1_3_axiomcode_inc__0
+  7 7 R n_f6
+  8 8 R n_while_decnz_scratch1_3_param1_inc__0
+  -
+n_main___0_c8
+  -
+  1 1 R n_f6
+  2 2 R n_while_decnz_scratch1_3_param2_inc__0
+  3 3 R n_f6
+  4 4 R n_while_decnz_scratch1_3_param3_inc__0
+  5 5 R n_pushwff___0
+  6 6 R n_par1___0
+  7 7 R n_wn___0
+  8 8 R n_par1___0
+  -
+n_main___0_c9
+  -
+  1 1 R n_wim___0
+  2 2 R n_par1___0
+  3 3 R n_f2
+  4 4 R n_f1
+  5 5 R n_wal___0
+  6 6 R n_wex___0
+  7 7 R n_par1___0
+  8 8 R n_f2
+  -
+n_pair_scratch1_wffstack_topwff__0
+  -
+  1 1 R n_while_decnz_wffstack_0__0
+  2 2 R cdec9
+  3 3 R cinc3
+  4 4 R n_while_decnz_topwff_3_wffstack_inc__0
+  5 5 R n_while_decnz_wffstack_0__0
+  6 2 L scan
+  -
+  -
+  -
+n_par1___0
+  -
+  1 1 R n_pushwff___0
+  2 2 R n_while_decnz_param1_0__0
+  3 8 R n_while_decnz_scratch1_3_param1_inc__0
+  -
+  -
+  -
+  -
+  8 8 R n_while_decnz_scratch1_3_param1_inc__0
+  -
+n_par2___0
+  -
+  1 1 R n_pushwff___0
+  2 2 R n_while_decnz_param2_0__0
+  3 8 R n_while_decnz_scratch1_3_param2_inc__0
+  -
+  -
+  -
+  -
+  8 8 R n_while_decnz_scratch1_3_param2_inc__0
+  -
+n_par3___0
+  -
+  1 1 R n_pushwff___0
+  2 2 R n_while_decnz_param3_0__0
+  3 8 R n_while_decnz_scratch1_3_param3_inc__0
+  -
+  -
+  -
+  -
+  8 8 R n_while_decnz_scratch1_3_param3_inc__0
+  -
+n_pushwff___0
+  -
+  1 1 R n_pair_scratch1_wffstack_topwff__0
+  2 8 R n_while_decnz_scratch1_3_wffstack_inc__0
+  -
+  -
+  -
+  -
+  -
+  8 8 R n_while_decnz_scratch1_3_wffstack_inc__0
+  -
+n_s_0
+  -
+  1 2 R cinc9
+  -
+  3 8 R cinc3
+  -
+  -
+  -
+  -
+  -
+  -
+n_s_101
+  -
+  1 2 R cdec4
+  -
+  3 3 R n_while_decnz_scratch2_____0
+  4 1 L ebrk1
+  -
+  -
+  -
+  -
+  -
+n_s_121
+  -
+  1 2 R cdec1
+  -
+  3 1 L ebrk1
+  -
+  -
+  -
+  -
+  -
+  -
+n_s_130
+  -
+  1 2 R cdec3
+  -
+  3 1 L ebrk1
+  -
+  -
+  -
+  -
+  -
+  -
+n_s_132
+  -
+  1 1 R n_s_130
+  2 2 R cdec4
+  3 3 R cinc3
+  4 2 L scan
+  -
+  -
+  -
+  -
+  -
+n_s_142
+  -
+  1 2 R cdec9
+  -
+  3 3 R cinc9
+  4 4 R cinc9
+  5 1 L ebrk1
+  -
+  -
+  -
+  -
+n_s_144
+  -
+  1 1 R n_s_142
+  2 2 R halt
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+n_s_146
+  -
+  1 2 R cdec5
+  -
+  3 3 R n_f8
+  4 4 R n_while_decnz_scratch1_3_param3_inc__0
+  5 5 R n_par1___0
+  6 6 R n_par3___0
+  7 7 R n_wal___0
+  8 8 R n_drop___0
+  -
+n_s_148
+  -
+  1 2 R cdec5
+  -
+  3 3 R n_f8
+  4 4 R n_while_decnz_scratch1_3_param2_inc__0
+  5 5 R n_f5
+  6 6 R n_while_decnz_topwff_3_scratch2_inc__0
+  7 7 R n_if_eq_param2_scratch2_85__0
+  8 8 R n_drop___0
+  -
+n_s_33
+  -
+  1 2 R cdec3
+  -
+  3 1 L ebrk1
+  -
+  -
+  -
+  -
+  -
+  -
+n_s_35
+  -
+  1 1 R n_s_33
+  2 2 R cdec4
+  3 3 R cinc3
+  4 2 L scan
+  -
+  -
+  -
+  -
+  -
+n_s_58
+  -
+  1 2 R cdec5
+  -
+  3 3 R n_fn_54___0
+  4 1 L ebrk1
+  -
+  -
+  -
+  -
+  -
+n_s_61
+  -
+  1 1 R n_s_58
+  2 2 R n_fn_56___0
+  3 8 R n_while_decnz_scratch1_3_topwff_inc__0
+  -
+  -
+  -
+  -
+  8 8 R n_while_decnz_scratch1_3_topwff_inc__0
+  -
+n_s_75
+  -
+  1 2 R cinc3
+  -
+  3 8 R cinc4
+  -
+  -
+  -
+  -
+  -
+  -
+n_s_95
+  -
+  1 2 R cdec4
+  -
+  3 1 L ecnt1
+  -
+  -
+  -
+  -
+  -
+  -
+n_s_99
+  -
+  1 2 R cdec10
+  -
+  3 3 R n_s_95
+  4 4 R n_while_decnz_param2_____0
+  5 1 L ebrk1
+  -
+  -
+  -
+  -
+n_select___0
+  -
+  1 1 R n_f8
+  2 8 R n_s_61
+  -
+  -
+  -
+  -
+  -
+  8 8 R n_s_61
+  -
+n_unpair_scratch2_scratch1_prooflist__0
+  -
+  1 2 R cdec1
+  -
+  3 3 R cinc4
+  4 4 R n_s_132
+  5 1 L scan
+  -
+  -
+  -
+  -
+n_unpair_scratch2_scratch1_wffstack__0
+  -
+  1 2 R cdec8
+  -
+  3 3 R cinc4
+  4 4 R n_s_35
+  5 1 L scan
+  -
+  -
+  -
+  -
+n_v_1___0
+  -
+  1 1 R n_pushwff___0
+  2 8 R cinc9
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+n_v_2___0
+  -
+  1 1 R n_v_1___0
+  2 8 R cinc9
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+n_v_3___0
+  -
+  1 1 R n_v_2___0
+  2 8 R cinc9
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+n_wa___0
+  -
+  1 1 R n_wn___0
+  2 2 R n_cons___0
+  3 3 R n_v_2___0
+  4 4 R n_cons___0
+  5 8 R n_wn___0
+  -
+  -
+  8 8 R n_wn___0
+  -
+n_wal___0
+  -
+  1 1 R n_cons___0
+  2 2 R n_v_3___0
+  3 7 R cinc9
+  -
+  -
+  -
+  -
+  8 8 R n_cons___0
+  -
+n_wel___0
+  -
+  1 1 R n_cons___0
+  2 2 R n_v_1___0
+  3 8 R n_cons___0
+  -
+  -
+  -
+  -
+  8 8 R n_cons___0
+  -
+n_weq___0
+  -
+  1 1 R n_cons___0
+  2 2 R n_pushwff___0
+  3 8 R n_cons___0
+  -
+  -
+  -
+  -
+  8 8 R n_cons___0
+  -
+n_wex___0
+  -
+  1 1 R n_wn___0
+  2 2 R n_cons___0
+  3 3 R n_v_3___0
+  4 6 R cinc9
+  -
+  -
+  7 7 R n_cons___0
+  8 8 R n_wn___0
+  -
+n_while_decnz_nextproof_75__0
+  -
+  1 2 R cdec2
+  -
+  3 3 R n_s_75
+  4 1 L scan
+  -
+  -
+  -
+  -
+  -
+n_while_decnz_param1_0__0
+  -
+  1 2 R cdec6
+  -
+  3 3 R n_s_0
+  4 1 L scan
+  -
+  -
+  -
+  -
+  -
+n_while_decnz_param1_3_param3_inc__0
+  -
+  1 2 R cdec6
+  -
+  3 3 R cinc7
+  4 1 L scan
+  -
+  -
+  -
+  -
+  -
+n_while_decnz_param2_____0
+  -
+  1 2 R cdec10
+  -
+  3 1 L scan
+  -
+  -
+  -
+  -
+  -
+  -
+n_while_decnz_param2_0__0
+  -
+  1 2 R cdec10
+  -
+  3 3 R n_s_0
+  4 1 L scan
+  -
+  -
+  -
+  -
+  -
+n_while_decnz_param3_0__0
+  -
+  1 2 R cdec7
+  -
+  3 3 R n_s_0
+  4 1 L scan
+  -
+  -
+  -
+  -
+  -
+n_while_decnz_param3_75__0
+  -
+  1 2 R cdec7
+  -
+  3 3 R n_s_75
+  4 1 L scan
+  -
+  -
+  -
+  -
+  -
+n_while_decnz_scratch1_3_axiomcode_inc__0
+  -
+  1 2 R cdec3
+  -
+  3 3 R cinc5
+  4 1 L scan
+  -
+  -
+  -
+  -
+  -
+n_while_decnz_scratch1_3_nextproof_inc__0
+  -
+  1 2 R cdec3
+  -
+  3 3 R cinc2
+  4 1 L scan
+  -
+  -
+  -
+  -
+  -
+n_while_decnz_scratch1_3_param1_inc__0
+  -
+  1 2 R cdec3
+  -
+  3 3 R cinc6
+  4 1 L scan
+  -
+  -
+  -
+  -
+  -
+n_while_decnz_scratch1_3_param2_inc__0
+  -
+  1 2 R cdec3
+  -
+  3 3 R cinc10
+  4 1 L scan
+  -
+  -
+  -
+  -
+  -
+n_while_decnz_scratch1_3_param3_inc__0
+  -
+  1 2 R cdec3
+  -
+  3 3 R cinc7
+  4 1 L scan
+  -
+  -
+  -
+  -
+  -
+n_while_decnz_scratch1_3_topwff_inc__0
+  -
+  1 2 R cdec3
+  -
+  3 3 R cinc9
+  4 1 L scan
+  -
+  -
+  -
+  -
+  -
+n_while_decnz_scratch1_3_wffstack_inc__0
+  -
+  1 2 R cdec3
+  -
+  3 3 R cinc8
+  4 1 L scan
+  -
+  -
+  -
+  -
+  -
+n_while_decnz_scratch2_____0
+  -
+  1 2 R cdec4
+  -
+  3 1 L scan
+  -
+  -
+  -
+  -
+  -
+  -
+n_while_decnz_scratch2_3_prooflist_inc__0
+  -
+  1 2 R cdec4
+  -
+  3 3 R cinc1
+  4 1 L scan
+  -
+  -
+  -
+  -
+  -
+n_while_decnz_topwff_3_scratch2_inc__0
+  -
+  1 2 R cdec9
+  -
+  3 3 R cinc4
+  4 1 L scan
+  -
+  -
+  -
+  -
+  -
+n_while_decnz_topwff_3_wffstack_inc__0
+  -
+  1 2 R cdec9
+  -
+  3 3 R cinc8
+  4 1 L scan
+  -
+  -
+  -
+  -
+  -
+n_while_decnz_wffstack_0__0
+  -
+  1 2 R cdec8
+  -
+  3 3 R n_s_0
+  4 1 L scan
+  -
+  -
+  -
+  -
+  -
+n_wim___0
+  -
+  1 1 R n_cons___0
+  2 2 R n_v_2___0
+  3 8 R n_cons___0
+  -
+  -
+  -
+  -
+  8 8 R n_cons___0
+  -
+n_wn___0
+  -
+  1 1 R n_v_3___0
+  2 8 R n_cons___0
+  -
+  -
+  -
+  -
+  -
+  8 8 R n_cons___0
+  -
+retfail
+  -
+  1 1 L retfail
+  2 1 L adv
+  -
+  4 1 L adv
+  5 1 L adv
+  -
+  7 1 L adv
+  -
+  9 9 L retfail
+retok
+  -
+  1 1 L retok
+  2 3 L scan
+  3 4 L scan
+  4 5 L scan
+  5 6 L scan
+  6 7 L scan
+  7 8 L scan
+  8 1 L adv
+  9 9 L retok
+scan
+  0 0 R n_main___0
+  1 1 L scan
+  2 2 L scan
+  3 3 L scan
+  4 4 L scan
+  5 5 L scan
+  6 6 L scan
+  7 7 L scan
+  8 8 L scan
+  -

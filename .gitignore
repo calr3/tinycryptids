@@ -1,3 +1,6 @@
 tools/sim
 __pycache__/
 .lake/
+pa/tools/evsim
+pa_nsymbols/tools/kevsim
+pa_nsymbols/tools/bootsearch
