@@ -20,6 +20,7 @@ Every main theorem depends only on `propext`, `Classical.choice` and `Quot.sound
 | `TinyCryptids/Core/Mirror.lean` | The mirror image of a machine (`mirror`, `Cfg.mir`): `Reach.mir`, `Reach.of_mir`, `Reach.embed` (a routine proved once runs mirrored in a bigger machine) |
 | `TinyCryptids/Core/Basic3.lean` | The same model with 3 symbols (`TM3`: `Sym` = `s0 s1 s2`, `s0` blank) and its single steps and scans, for `weakcollatz/sym3/` |
 | `TinyCryptids/Core/Multi.lean` | Machines with any number of symbols (namespace `TMK`): symbols `Nat` (0 blank), stream tapes `Nat → Nat`, `step`, `Halts`, `halts_iff_of_sim`; used by the 10-symbol PA machine (`pa_nsymbols/`) |
+| `TinyCryptids/Core/BeepK.lean` | `Beep.lean`'s `BeepsAt`, `QuasiHalts`, `run_sub` and `quasihalts_of_sub` for the machines of `Multi.lean`; used by the 4-symbol twin prime machine (`twinprimes/sym4/`) |
 | `TinyCryptids/Defs.lean` | **The definitions used in the theorem statements**, namespace `TinyCryptids`: `iterate`, `collatz`, `Prime`, `properDivSum`, `fact`, `leftFact`, `TwinPrimeConjecture`, `InfinitelyManyFermatPrimes`, `radBelow`, `rad`, `ABCConjecture`, and the theory T of the PA machines (`Wff`, `Wff.Axiom`, `Wff.Provable`); also `prime_iff_dvd` |
 | `TinyCryptids/<Machine>/` | One hand-designed machine per folder, namespace `TM.<Machine>` |
 | `TinyCryptids/PA/`, `TinyCryptids/PAK/` | The compiled PA machines: 2 symbols (`TM.PA`) and 10 symbols (`TMK.PA`); see the outlines below |
@@ -56,6 +57,7 @@ Beeping machines (`Core/Beep.lean`): the beep transition is `qb` reading `bb`.
 |---------|-----------|
 | `TM.FermatPrimesInf.quasihalts_iff`, `M16` | `QuasiHalts delta G0 false start ↔ ¬ InfinitelyManyFermatPrimes`, with `InfinitelyManyFermatPrimes := ∀ n, ∃ k, n ≤ k ∧ Prime (2 ^ 2 ^ k + 1)`; also `never_halts : ¬ Halts delta start` (and for `M16`: `delta2`, `St2.G0`, `start2`) |
 | `TM.TwinPrimes.quasihalts_iff`, `M18` | `QuasiHalts delta G2 false start ↔ ¬ TwinPrimeConjecture`, with `TwinPrimeConjecture := ∀ n, ∃ p, n ≤ p ∧ Prime p ∧ Prime (p + 2)`; also `never_halts : ¬ Halts delta start` (and for `M18`: `delta2`, `St2.G2`, `start2`) |
+| `TMK.TwinPrimes4.quasihalts_iff` (4 symbols, `Core/Multi.lean`, `Core/BeepK.lean`) | `QuasiHalts delta St.beep 0 start ↔ ¬ TwinPrimeConjecture`; also `never_halts` and `beeps_forever_iff` |
 
 The PA machines (`TinyCryptids/PA`, compiled by TMBuilder, whose `Machine.lean` is the compiled
 machine for any DAG; `TinyCryptids/PAK`, 10 symbols):
@@ -113,6 +115,13 @@ d − 3`), `shift_more` / `shift_beep` (`d + 1`, `r − 1`; R empty: `BeepCfg`),
 `reach_cs`; (→) a twin prime `p ≥ N + 3` beeps after step `N`; (←) `deltaNB` never halts from
 `CS (N + 3)` (`not_halts_of_progress`), so `quasihalts_of_sub`. `M18` by
 `quasihalts_iff_of_sim` with `excl`.
+`TinyCryptids/TwinPrimes4` is the 10-state, 4-symbol machine (`TMK`, `Core/Multi.lean`; beeps
+in `Core/BeepK.lean`). Tape `D R` with D's cells 3, R's cells 1 and a marker / cursor 2, so there
+is no separator. `Round`: `walk_step`, `walk`, `zig` and `rebuild` (`reb`'s zigzag), `check_fail`,
+`check_ok`, `zs_beep`, `start_beep`, `beep_step`, `after_beep` (the beep path makes candidate
+`m + 3`). `Main`: `test`, `cand_twin`, `cand_not` (sharing `TwinPrimes/Spec`), `reach_cand`
+(every `m ≥ 3` is a candidate or follows a twin prime candidate by 1 or 2), `twin_gap` (lesser
+twin primes `q < p < q + 3` are 3 and 5) and `reach_twin`, then (→) and (←) as above.
 
 **Fermat primes** (`TinyCryptids/FermatPrimes`). `../twinprimes`'s walk with odd `d` and odd
 `m`, testing `m` and `m − 1`, halting. `Spec`: `odd_not_dvd_pow2`, `pow2_of_no_odd`,

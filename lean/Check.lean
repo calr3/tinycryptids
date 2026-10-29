@@ -52,6 +52,13 @@ Run `lake env lean Check.lean` after `lake build`. -/
 #check @TM.TwinPrimes.M18.never_halts
 #print axioms TM.TwinPrimes.M18.never_halts
 #check @TM.TwinPrimes.M18.beep_transition
+#check @TMK.TwinPrimes4.quasihalts_iff
+#print axioms TMK.TwinPrimes4.quasihalts_iff
+#check @TMK.TwinPrimes4.never_halts
+#print axioms TMK.TwinPrimes4.never_halts
+#check @TMK.TwinPrimes4.beeps_forever_iff
+#print axioms TMK.TwinPrimes4.beeps_forever_iff
+#check @TMK.TwinPrimes4.beep_transition
 #check @TM.FermatPrimesInf.quasihalts_iff
 #print axioms TM.FermatPrimesInf.quasihalts_iff
 #check @TM.FermatPrimesInf.never_halts

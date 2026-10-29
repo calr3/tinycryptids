@@ -40,7 +40,8 @@ same theorems (`TM.TwinPrimes.quasihalts_iff`, `never_halts`), plus `beeps_forev
 beeps infinitely often iff the conjecture holds. All of them depend only on `propext`,
 `Classical.choice` and `Quot.sound` (`../lean/Check.lean`).
 
-`RECORDS.md` lists the machines and how each was obtained. `PROOF.md` walks through the
+`RECORDS.md` lists the machines and how each was obtained. `sym4/` has a 10-state, 4-symbol
+machine with 27 instructions (this one has 34), also proven in Lean. `PROOF.md` walks through the
 proof in plain words.
 
 ### Why a beeping machine
