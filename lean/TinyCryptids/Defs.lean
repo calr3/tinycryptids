@@ -35,6 +35,16 @@ theorem prime_iff_dvd (p : Nat) : Prime p ↔ 2 ≤ p ∧ ∀ d, d ∣ p → d =
 /-- The twin prime conjecture: there are infinitely many primes `p` with `p + 2` prime. -/
 def TwinPrimeConjecture : Prop := ∀ n, ∃ p, n ≤ p ∧ Prime p ∧ Prime (p + 2)
 
+/-- The Mersenne prime conjecture: there are infinitely many primes of the form `2 ^ k - 1`
+(infinitely many `k` with `2 ^ k - 1` prime). -/
+def MersennePrimeConjecture : Prop := ∀ n, ∃ k, n ≤ k ∧ Prime (2 ^ k - 1)
+
+/-- `p` is a Sophie Germain prime: `p` and `2 p + 1` are both prime. -/
+def SophieGermainPrime (p : Nat) : Prop := Prime p ∧ Prime (2 * p + 1)
+
+/-- There are only finitely many Sophie Germain primes: all of them lie below some bound. -/
+def FinitelyManySophieGermainPrimes : Prop := ∃ N, ∀ p, SophieGermainPrime p → p < N
+
 /-- There are infinitely many Fermat primes: infinitely many `n` with `2 ^ 2 ^ n + 1` prime. -/
 def InfinitelyManyFermatPrimes : Prop := ∀ n, ∃ k, n ≤ k ∧ Prime (2 ^ 2 ^ k + 1)
 

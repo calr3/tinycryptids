@@ -21,7 +21,7 @@ Every main theorem depends only on `propext`, `Classical.choice` and `Quot.sound
 | `TinyCryptids/Core/Basic3.lean` | The same model with 3 symbols (`TM3`: `Sym` = `s0 s1 s2`, `s0` blank) and its single steps and scans, for `weakcollatz/sym3/` |
 | `TinyCryptids/Core/Multi.lean` | Machines with any number of symbols (namespace `TMK`): symbols `Nat` (0 blank), stream tapes `Nat → Nat`, `step`, `Halts`, `halts_iff_of_sim`; used by the 10-symbol PA machine (`pa_nsymbols/`) |
 | `TinyCryptids/Core/BeepK.lean` | `Beep.lean`'s `BeepsAt`, `QuasiHalts`, `run_sub` and `quasihalts_of_sub` for the machines of `Multi.lean`; used by the 4-symbol twin prime machine (`twinprimes/sym4/`) |
-| `TinyCryptids/Defs.lean` | **The definitions used in the theorem statements**, namespace `TinyCryptids`: `iterate`, `collatz`, `Prime`, `properDivSum`, `fact`, `leftFact`, `TwinPrimeConjecture`, `InfinitelyManyFermatPrimes`, `radBelow`, `rad`, `ABCConjecture`, and the theory T of the PA machines (`Wff`, `Wff.Axiom`, `Wff.Provable`); also `prime_iff_dvd` |
+| `TinyCryptids/Defs.lean` | **The definitions used in the theorem statements**, namespace `TinyCryptids`: `iterate`, `collatz`, `Prime`, `properDivSum`, `fact`, `leftFact`, `TwinPrimeConjecture`, `MersennePrimeConjecture`, `SophieGermainPrime`, `FinitelyManySophieGermainPrimes`, `InfinitelyManyFermatPrimes`, `radBelow`, `rad`, `ABCConjecture`, and the theory T of the PA machines (`Wff`, `Wff.Axiom`, `Wff.Provable`); also `prime_iff_dvd` |
 | `TinyCryptids/<Machine>/` | One hand-designed machine per folder, namespace `TM.<Machine>` |
 | `TinyCryptids/PA/`, `TinyCryptids/PAK/` | The compiled PA machines: 2 symbols (`TM.PA`) and 10 symbols (`TMK.PA`); see the outlines below |
 | `Check.lean` | Every main theorem with `#check` and `#print axioms` |
@@ -56,6 +56,8 @@ Beeping machines (`Core/Beep.lean`): the beep transition is `qb` reading `bb`.
 | Theorem | Statement |
 |---------|-----------|
 | `TM.FermatPrimesInf.quasihalts_iff`, `M16` | `QuasiHalts delta G0 false start ↔ ¬ InfinitelyManyFermatPrimes`, with `InfinitelyManyFermatPrimes := ∀ n, ∃ k, n ≤ k ∧ Prime (2 ^ 2 ^ k + 1)`; also `never_halts : ¬ Halts delta start` (and for `M16`: `delta2`, `St2.G0`, `start2`) |
+| `TM.Mersenne.quasihalts_iff`, `M14` | `QuasiHalts delta G0 false start ↔ ¬ MersennePrimeConjecture`, with `MersennePrimeConjecture := ∀ n, ∃ k, n ≤ k ∧ Prime (2 ^ k - 1)`; also `never_halts : ¬ Halts delta start` (and for `M14`: `delta2`, `St2.G0`, `start2`) |
+| `TM.SophieGermain.quasihalts_iff`, `M17` | `QuasiHalts delta G0 false start ↔ FinitelyManySophieGermainPrimes`, with `SophieGermainPrime p := Prime p ∧ Prime (2 * p + 1)` and `FinitelyManySophieGermainPrimes := ∃ N, ∀ p, SophieGermainPrime p → p < N`; also `never_halts`, `beeps_forever_iff` (and for `M17`: `delta2`, `St2.G0`, `start2`) |
 | `TM.TwinPrimes.quasihalts_iff`, `M18` | `QuasiHalts delta G2 false start ↔ ¬ TwinPrimeConjecture`, with `TwinPrimeConjecture := ∀ n, ∃ p, n ≤ p ∧ Prime p ∧ Prime (p + 2)`; also `never_halts : ¬ Halts delta start` (and for `M18`: `delta2`, `St2.G2`, `start2`) |
 | `TMK.TwinPrimes4.quasihalts_iff` (4 symbols, `Core/Multi.lean`, `Core/BeepK.lean`) | `QuasiHalts delta St.beep 0 start ↔ ¬ TwinPrimeConjecture`; also `never_halts` and `beeps_forever_iff` |
 
@@ -140,6 +142,27 @@ machine without the counter: every pass beeps. `Spec`: `fpi_iff` (the passes are
 `../fermatprimes`'s `check_last`, `check_first` (joined in `check_fail`) and `check_ok`. `Main`:
 `test`, `cand_fp`, `cand_not`, `after_beep`, `cand_step`, `reach_cs`, `never_halts`, `quasihalts_iff`,
 `beeps_forever_iff`, as for Twin primes. `M16` by `quasihalts_iff_of_sim` with `excl`.
+
+**Mersenne primes** (`TinyCryptids/Mersenne`, beeping). `../twinprimes`'s walk with odd `d` and
+odd `m`: `Spec`: `Good` (`e ∤ m`, `e ∤ m + 1`), `MP`, `odd_not_dvd_pow2`, `pow2_of_no_odd`,
+`mersenne_iff` (odd `m` is a Mersenne prime iff every odd `e ∈ [3, m)` is good), `mpc_iff`.
+`Round`: `W d r c k` (`k` steps done, the R hole moving right; D's hole home on the blank left
+of D), `walk_step`, `walk_all` (the hole ends on `r % d`), `walk_end` (erase R's last cell,
+fill the separator), `alt` (`X1`/`X2` erase `2 i` cells), `ok_dance`, `check_ok`,
+`check_fail`, `shift` (`d + 2`, `r − 2`), `rebuild`, `beep_step`, `seed` (the beep for `m = 3`).
+`Main`: `fail_iff`, `test` (induction on `t`, `r = 2 t + 1`), `cand_mp`, `cand_not`,
+`after_beep`, `cand_step`, `reach_cs`, `never_halts`, `quasihalts_iff` (as for twin primes),
+`beeps_forever_iff`. `M14` by `quasihalts_iff_of_sim` with `excl`.
+
+**Sophie Germain primes** (`TinyCryptids/SophieGermain`, beeping). `../mersenne`'s tape with D's
+hole moving two cells per walk step. `Spec`: `Good` (`e ∤ n`, `e ∤ 2n + 1`), `sg_iff` (odd `n ≥ 5`
+is a Sophie Germain prime iff every odd `e ∈ [3, n − 2]` is good). `Walk`: `W`, `walk_step` (three
+cases: no wrap, `d − 2 → 0`, `d − 1 → 1`), `walk_all` (the hole ends on `2r % d`). `Round`:
+`walk_end` (erase R's last cell, scan to the hole and fill it: `KC`), `check_ok1`, `check_ok`,
+`check_fail`, `shift`, `rebuild` (the check run on the blanks left of the block), `beep_step`,
+`seed`. `Main`: `mod_two_mul`, `fail_iff`, `check`, `test`, `cand_sg`, `cand_not`, `after_beep`,
+`cand_step`, `reach_cs`, `never_halts`, `quasihalts_iff`, `beeps_forever_iff`. `M17`: the design
+in standard state order, by `quasihalts_iff_of_sim`.
 
 (→) by `not_halts_of_progress` over the round starts (each round strictly reaches the
 next when there is no counterexample); (←) by iterating the round up to the

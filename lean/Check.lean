@@ -68,6 +68,26 @@ Run `lake env lean Check.lean` after `lake build`. -/
 #check @TM.FermatPrimesInf.M16.never_halts
 #print axioms TM.FermatPrimesInf.M16.never_halts
 #check @TM.FermatPrimesInf.M16.beep_transition
+#check @TM.Mersenne.quasihalts_iff
+#print axioms TM.Mersenne.quasihalts_iff
+#check @TM.Mersenne.never_halts
+#print axioms TM.Mersenne.never_halts
+#check @TM.Mersenne.M14.quasihalts_iff
+#print axioms TM.Mersenne.M14.quasihalts_iff
+#check @TM.Mersenne.M14.never_halts
+#print axioms TM.Mersenne.M14.never_halts
+#check @TM.Mersenne.M14.beep_transition
+#check @TM.SophieGermain.quasihalts_iff
+#print axioms TM.SophieGermain.quasihalts_iff
+#check @TM.SophieGermain.never_halts
+#print axioms TM.SophieGermain.never_halts
+#check @TM.SophieGermain.beeps_forever_iff
+#print axioms TM.SophieGermain.beeps_forever_iff
+#check @TM.SophieGermain.M17.quasihalts_iff
+#print axioms TM.SophieGermain.M17.quasihalts_iff
+#check @TM.SophieGermain.M17.never_halts
+#print axioms TM.SophieGermain.M17.never_halts
+#check @TM.SophieGermain.M17.beep_transition
 
 -- beeping booping machines: some beep count between consecutive boops repeats forever iff the statement fails
 #check @TM.ABC.repeats_iff

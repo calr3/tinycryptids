@@ -1,0 +1,47 @@
+; Minimised from ../mersenne/mersenne.txt by minimize_clique.py
+; 14 states, 2 symbols
+
+blank_symbol: 0
+
+C4
+    0 1 L H1
+    1 1 L C4
+B2
+    0 0 L E
+    1 0 L Y1
+Y1
+    0 0 L Y2
+    1 1 L Y1
+Y2
+    0 1 R A2
+    1 1 L Y2
+A2
+    0 0 L W1
+    1 0 R Z1
+W1
+    0 0 R A2
+    1 1 L W1
+Z1
+    0 0 R Z2
+    1 1 R Z1
+Z2
+    0 1 R B2
+    1 1 R Z2
+E
+    0 1 R H1
+    1 0 L V
+V
+    0 1 L X1
+    1 1 L V
+X1
+    0 1 R C4
+    1 0 L X2
+X2
+    0 1 R X1
+    1 0 L X1
+H1
+    0 1 R H1
+    1 1 R G0
+G0
+    0 0 L C4
+    1 0 R B2

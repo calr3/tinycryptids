@@ -24,7 +24,8 @@ transition (if any) exactly as often as the design does in that round.
 
 Free states N1.. are first visited in index order (symmetry breaking), so UNSAT for k is
 a proof that no k-state round end fits within the step bounds. A SAT answer only fits the
-rounds given: simulate the result before trusting it. Needs python-sat.
+rounds given: simulate the result before trusting it (mersenne/ found its 14-state
+machine this way, with --k 7; --k 6 is UNSAT). Needs python-sat.
 """
 import sys, argparse, threading, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

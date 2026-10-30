@@ -21,6 +21,8 @@ import TinyCryptids.TwinPrimes.M18
 import TinyCryptids.TwinPrimes4.Main
 import TinyCryptids.FermatPrimes.M25
 import TinyCryptids.FermatPrimesInf.M16
+import TinyCryptids.Mersenne.M14
+import TinyCryptids.SophieGermain.M17
 import TinyCryptids.ABC.M235
 import TinyCryptids.PA.M309
 import TinyCryptids.PAK.M10
