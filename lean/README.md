@@ -48,6 +48,7 @@ Each hand-designed machine folder has the same shape:
 | `TM.FermatPrimes.halts_iff`, `M25` | `∃ n, 5 ≤ n ∧ Prime (2 ^ 2 ^ n + 1)` |
 | `TM.OddPerfect.halts_iff`, `M37` | `∃ n, n % 2 = 1 ∧ properDivSum n = n` |
 | `TM.Kurepa.halts_iff`, `M38` | `∃ p, Prime p ∧ 2 < p ∧ p ∣ leftFact p` |
+| `TM.WallSunSun2.halts_iff`, `M50` | `∃ p, Prime p ∧ p * p ∣ fib (wssIndex p)` |
 | `TM.Sierpinski.halts_iff`, `M60` | `∀ k, k % 2 = 1 → k < 78557 → ∃ n, 1 ≤ n ∧ Prime (k * 2 ^ n + 1)` (Σ₁: the machine halts iff it is true) |
 | `TM.Riesel.halts_iff`, `M76` | `∀ k, k % 2 = 1 → k < 509203 → ∃ n, 1 ≤ n ∧ Prime (k * 2 ^ n - 1)` (Σ₁ likewise) |
 
@@ -56,6 +57,7 @@ Beeping machines (`Core/Beep.lean`): the beep transition is `qb` reading `bb`.
 | Theorem | Statement |
 |---------|-----------|
 | `TM.FermatPrimesInf.quasihalts_iff`, `M16` | `QuasiHalts delta G0 false start ↔ ¬ InfinitelyManyFermatPrimes`, with `InfinitelyManyFermatPrimes := ∀ n, ∃ k, n ≤ k ∧ Prime (2 ^ 2 ^ k + 1)`; also `never_halts : ¬ Halts delta start` (and for `M16`: `delta2`, `St2.G0`, `start2`) |
+| `TM.WallSunSunInf.quasihalts_iff`, `M48` | `QuasiHalts delta q9 false start ↔ ¬ InfinitelyManyWallSunSunPrimes`, with `InfinitelyManyWallSunSunPrimes := ∀ n, ∃ p, n ≤ p ∧ Prime p ∧ p * p ∣ fib (wssIndex p)`; also `never_halts` (and for `M48`: `delta2`, `St2.q9`, `start2`) |
 | `TM.Mersenne.quasihalts_iff`, `M14` | `QuasiHalts delta G0 false start ↔ ¬ MersennePrimeConjecture`, with `MersennePrimeConjecture := ∀ n, ∃ k, n ≤ k ∧ Prime (2 ^ k - 1)`; also `never_halts : ¬ Halts delta start` (and for `M14`: `delta2`, `St2.G0`, `start2`) |
 | `TM.SophieGermain.quasihalts_iff`, `M17` | `QuasiHalts delta G0 false start ↔ FinitelyManySophieGermainPrimes`, with `SophieGermainPrime p := Prime p ∧ Prime (2 * p + 1)` and `FinitelyManySophieGermainPrimes := ∃ N, ∀ p, SophieGermainPrime p → p < N`; also `never_halts`, `beeps_forever_iff` (and for `M17`: `delta2`, `St2.G0`, `start2`) |
 | `TM.TwinPrimes.quasihalts_iff`, `M18` | `QuasiHalts delta G2 false start ↔ ¬ TwinPrimeConjecture`, with `TwinPrimeConjecture := ∀ n, ∃ p, n ≤ p ∧ Prime p ∧ Prime (p + 2)`; also `never_halts : ¬ Halts delta start` (and for `M18`: `delta2`, `St2.G2`, `start2`) |
@@ -189,6 +191,20 @@ advancing the T counter by `d` (saturating at `n + 1`: `add_unit`); `shift` move
 separator. `dloop`: over `d = 1 .. n−1` the counter becomes `min (properDivSum n) (n + 1)`.
 `round_end` (`re_fill`, `check`, `reset`): halt iff the counter is `n`; otherwise the round for
 `n + 2` starts. `seed_reach`: a pseudo-round `n = −1` reaches `RN 1`.
+
+**Wall–Sun–Sun, no primality test** (`TinyCryptids/WallSunSun2`). Every `m ≥ 2` runs the
+odometer and the counter (`Odo`, `Round`: `WallSunSun`'s routines on `B 00 E 00 D`, the round end
+`to_next`, `rebuild`, `fill`); `Main`: `round`, `seed_reach`, `halts_iff_idx` (halts iff some
+`m ≥ 2` has `m² ∣ fib (idx m)`). The number theory, in core Lean: `Fib` (`fib_add`,
+`fib_dvd_mul`, `fib_succ_coprime`, the rank `Rank`, `rank_dvd`, the lifting `lift`,
+`sq_of_sq`), `Gauss` (Gauss's lemma for 5: `perm_prod`, `r5_cong`, `r5_inj`, `gauss`,
+`mu_parity`), `Recip` (`ST_fib`, `S_mod`, `T_mod`, `prime_dvd_fib_wss`: `q ∣ F (wssIndex q)`),
+`Bridge` (`bridge`), `InfBridge` (`pow_of_pow`, `dvd_of_prime_pows`, `pass_dvd`, `inf_bridge`).
+
+**Wall–Sun–Sun, infinitely many** (`TinyCryptids/WallSunSunInf`, beeping). The same routines
+for `deltaNB` (the check beeps where `WallSunSun2` halts); the design is the seedless design plus
+the 48-state machine's seed run unrolled. `Main`: `round`, `round1` (concrete, one beep),
+`seed_reach`, `reach_rs`, `never_halts`, `quasihalts_iff` (with `inf_bridge`), `beeps_forever_iff`.
 
 **Kurepa** (`TinyCryptids/Kurepa`). `Spec`: `dvd_fact`, `leftFact_mod` (`!(q + k) ≡ !q mod q`),
 `exists_prime_dvd`, and `kurepa_iff`: some `n ≥ 3` divides `!n` iff some odd prime `p` divides `!p`

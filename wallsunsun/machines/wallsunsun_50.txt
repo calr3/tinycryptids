@@ -1,0 +1,155 @@
+; Minimised from ../wallsunsun/wallsunsun2.txt by minimize_clique.py
+; 50 states, 2 symbols
+
+blank_symbol: 0
+
+seed0
+    0 1 R seed1
+    1 0 L e2
+seed1
+    0 1 R seed2
+    1 0 L g4
+seed2
+    0 1 R seed3
+    1 0 L e1
+seed3
+    0 0 R seed4
+    1 1 R g0
+seed4
+    0 0 R seed5
+    1 1 L q11
+seed5
+    0 1 R seed6
+    1 1 R q9
+seed6
+    0 1 R seed7
+    1 1 R aw3
+seed7
+    0 1 R seed8
+    1 1 R a3
+seed8
+    0 1 R seed9
+    1 0 L m0
+seed9
+    0 0 R seed10
+    1 0 L PB1
+seed10
+    0 0 R seed11
+    1 1 L h4
+seed11
+    0 1 R seed12
+    1 0 R q1
+seed12
+    0 1 R seed13
+    1 1 R seed9
+seed13
+    0 1 R seed14
+    1 1 R b3
+seed14
+    0 1 L f3
+    1 1 R seed14
+e1
+    0 0 L e2
+    1 1 L e1
+e2
+    0 0 L e3
+    1 1 L e2
+e3
+    0 0 L r3
+    1 1 L seed8
+m0
+    0 0 R QE1
+    1 1 L m1
+m1
+    0 0 L h1
+    1 1 L m2
+m2
+    0 0 R QE1
+    1 1 L m3
+m3
+    0 0 R QE1
+    1 1 L m4
+m4
+    0 0 L h1
+    1 1 L m0
+h1
+    0 0 L h3
+    1 0 R QE1
+h3
+    0 0 R h4
+    1 1 L h3
+h4
+    0 1 L seed10
+    1 1 R h1
+sc
+    0 1 L sc
+    1 1 L h4
+QE1
+    0 0 R QE2
+    1 1 R QE1
+QE2
+    0 0 R QE1
+    1 1 L seed6
+a3
+    0 0 L aw1
+    1 1 L seed0
+aw1
+    0 0 R seed6
+    1 1 L aw1
+aw3
+    0 1 R PF1
+    1 0 R QD1
+QD1
+    0 0 R QD2
+    1 1 R QD1
+QD2
+    0 0 R QD1
+    1 1 L seed12
+b3
+    0 0 L bw1
+    1 1 L seed9
+bw1
+    0 0 R seed12
+    1 1 L bw1
+PB1
+    0 0 L PB2
+    1 1 L PB1
+PB2
+    0 0 L PB1
+    1 1 L e2
+r3
+    0 1 L sc
+    1 1 L sc
+q1
+    0 0 R q2
+    1 1 R q1
+q2
+    0 0 R q1
+    1 1 R seed3
+q9
+    0 0 L halt
+    1 1 L seed4
+q11
+    0 0 L g0
+    1 1 R seed2
+g0
+    0 0 L g1
+    1 1 R g0
+g1
+    0 1 L g2
+    1 1 L g1
+g2
+    0 0 L seed1
+    1 1 L g1
+g4
+    0 1 L aw3
+    1 1 L g4
+PF1
+    0 0 R PF2
+    1 1 R PF1
+PF2
+    0 0 R PF1
+    1 1 L seed13
+f3
+    0 0 R q11
+    1 1 L f3

@@ -150,4 +150,24 @@ inductive Provable : Wff → Prop
 
 end Wff
 
+def fib : Nat → Nat
+  | 0 => 0
+  | 1 => 1
+  | n + 2 => fib n + fib (n + 1)
+
+/-- `p - (p/5)` with `(p/5)` the Legendre symbol: the index of the Fibonacci number in
+the definition of a Wall–Sun–Sun prime. -/
+def wssIndex (p : Nat) : Nat :=
+  if p % 5 = 0 then p else if p % 5 = 1 ∨ p % 5 = 4 then p - 1 else p + 1
+
+/-- There are infinitely many Wall–Sun–Sun primes (primes `p` with `p² ∣ F(p - (p/5))`). -/
+def InfinitelyManyWallSunSunPrimes : Prop :=
+  ∀ n, ∃ p, n ≤ p ∧ Prime p ∧ p * p ∣ fib (wssIndex p)
+
+/-- Binomial coefficients by Pascal's rule. -/
+def choose : Nat → Nat → Nat
+  | _, 0 => 1
+  | 0, _ + 1 => 0
+  | n + 1, k + 1 => choose n k + choose n (k + 1)
+
 end TinyCryptids

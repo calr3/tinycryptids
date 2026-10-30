@@ -37,6 +37,10 @@ Run `lake env lean Check.lean` after `lake build`. -/
 #print axioms TM.Kurepa.halts_iff
 #check @TM.Kurepa.M38.halts_iff
 #print axioms TM.Kurepa.M38.halts_iff
+#check @TM.WallSunSun2.halts_iff
+#print axioms TM.WallSunSun2.halts_iff
+#check @TM.WallSunSun2.M50.halts_iff
+#print axioms TM.WallSunSun2.M50.halts_iff
 #check @TM.FermatPrimes.halts_iff
 #print axioms TM.FermatPrimes.halts_iff
 #check @TM.FermatPrimes.M25.halts_iff
@@ -68,6 +72,15 @@ Run `lake env lean Check.lean` after `lake build`. -/
 #check @TM.FermatPrimesInf.M16.never_halts
 #print axioms TM.FermatPrimesInf.M16.never_halts
 #check @TM.FermatPrimesInf.M16.beep_transition
+#check @TM.WallSunSunInf.quasihalts_iff
+#print axioms TM.WallSunSunInf.quasihalts_iff
+#check @TM.WallSunSunInf.never_halts
+#print axioms TM.WallSunSunInf.never_halts
+#check @TM.WallSunSunInf.M48.quasihalts_iff
+#print axioms TM.WallSunSunInf.M48.quasihalts_iff
+#check @TM.WallSunSunInf.M48.never_halts
+#print axioms TM.WallSunSunInf.M48.never_halts
+#check @TM.WallSunSunInf.M48.beep_transition
 #check @TM.Mersenne.quasihalts_iff
 #print axioms TM.Mersenne.quasihalts_iff
 #check @TM.Mersenne.never_halts

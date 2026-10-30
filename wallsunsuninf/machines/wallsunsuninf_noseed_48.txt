@@ -1,0 +1,149 @@
+; Minimised from ../wallsunsuninf/wallsunsuninf_noseed.txt by minimize_clique.py
+; 48 states, 2 symbols
+
+blank_symbol: 0
+
+e1
+    0 0 L e2
+    1 1 L e1
+e2
+    0 0 L e3
+    1 0 L PB1
+e3
+    0 0 R QD1
+    1 1 L w
+w
+    0 1 R b2
+    1 0 L m0
+m0
+    0 0 R QE1
+    1 1 L m1
+m1
+    0 0 L h1
+    1 1 L m2
+m2
+    0 0 R QE1
+    1 1 L m3
+m3
+    0 0 R QE1
+    1 1 L m4
+m4
+    0 0 L h1
+    1 1 L m0
+h1
+    0 0 L h3
+    1 0 R QE1
+h3
+    0 0 R h4
+    1 1 L h3
+h4
+    0 1 L nb2
+    1 1 R h1
+sc
+    0 1 L sc
+    1 1 L h4
+nb2
+    0 0 R ov
+    1 1 L h4
+ov
+    -
+    1 0 R q1
+QE1
+    0 0 R QE2
+    1 1 R QE1
+QE2
+    0 0 R QE1
+    1 1 L a1
+a1
+    0 1 R a2
+    1 0 L e1
+a2
+    -
+    1 1 R a3
+a3
+    0 0 L aw1
+    1 1 L a4
+a4
+    0 0 L g0
+    1 0 L rL
+aw1
+    0 0 R aw2
+    1 1 L aw1
+aw2
+    -
+    1 1 R aw3
+aw3
+    -
+    1 0 R QD1
+QD1
+    0 0 R e3
+    1 1 R QD1
+b2
+    -
+    1 1 R b3
+b3
+    0 0 L bw1
+    1 1 L e2
+bw1
+    0 0 R bw2
+    1 1 L bw1
+bw2
+    0 1 R PF1
+    1 1 R e2
+PB1
+    0 0 L PB2
+    1 1 L PB1
+PB2
+    0 0 L PB1
+    1 1 L rL
+rL
+    0 0 L r2
+    1 1 L rL
+r2
+    0 0 L r3
+    1 0 L g4
+r3
+    0 1 L sc
+    1 1 L sc
+q1
+    0 0 R q2
+    1 1 R q1
+q2
+    0 0 R q1
+    1 1 R q5
+q5
+    0 0 R q7
+    1 1 R g0
+q7
+    0 0 R q7
+    1 1 R q9
+q9
+    0 0 L a3
+    1 1 L a3
+g0
+    0 0 L g1
+    1 1 R g0
+g1
+    0 1 L g2
+    1 1 L g1
+g2
+    0 0 L r2
+    1 1 L g1
+g4
+    0 1 L bw2
+    1 1 L g4
+PF1
+    0 0 R PF2
+    1 1 R PF1
+PF2
+    0 0 R PF1
+    1 1 L f1
+f1
+    0 1 R f2
+    1 1 R a1
+f2
+    0 1 L f3
+    1 1 R f2
+f3
+    0 0 R f1
+    1 1 L f3

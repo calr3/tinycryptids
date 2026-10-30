@@ -17,6 +17,8 @@ import TinyCryptids.Sierpinski.M60
 import TinyCryptids.Riesel.M76
 import TinyCryptids.OddPerfect.M37
 import TinyCryptids.Kurepa.M38
+import TinyCryptids.WallSunSun2.M50
+import TinyCryptids.WallSunSunInf.M48
 import TinyCryptids.TwinPrimes.M18
 import TinyCryptids.TwinPrimes4.Main
 import TinyCryptids.FermatPrimes.M25
