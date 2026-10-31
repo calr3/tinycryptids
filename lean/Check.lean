@@ -45,6 +45,13 @@ Run `lake env lean Check.lean` after `lake build`. -/
 #print axioms TM.FermatPrimes.halts_iff
 #check @TM.FermatPrimes.M25.halts_iff
 #print axioms TM.FermatPrimes.M25.halts_iff
+-- Goldbach with 6 symbols (goldbach): also halts_iff_not, with GoldbachConjecture
+#check @TMK.Goldbach.halts_iff
+#print axioms TMK.Goldbach.halts_iff
+#check @TMK.Goldbach.M10.halts_iff
+#print axioms TMK.Goldbach.M10.halts_iff
+#check @TMK.Goldbach.M10.halts_iff_not
+#print axioms TMK.Goldbach.M10.halts_iff_not
 
 -- beeping machines: quasihalt (take the beep transition finitely often) iff the statement
 #check @TM.TwinPrimes.quasihalts_iff

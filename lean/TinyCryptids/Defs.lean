@@ -32,6 +32,9 @@ theorem prime_iff_dvd (p : Nat) : Prime p ↔ 2 ≤ p ∧ ∀ d, d ∣ p → d =
     refine ⟨h2, fun d hdp hd hm => ?_⟩
     rcases h d (Nat.dvd_of_mod_eq_zero hm) with h1 | h1 <;> omega
 
+/-- Goldbach's conjecture: every even number `2n ≥ 4` is the sum of two primes. -/
+def GoldbachConjecture : Prop := ∀ n, 2 ≤ n → ∃ p q, Prime p ∧ Prime q ∧ p + q = 2 * n
+
 /-- The twin prime conjecture: there are infinitely many primes `p` with `p + 2` prime. -/
 def TwinPrimeConjecture : Prop := ∀ n, ∃ p, n ≤ p ∧ Prime p ∧ Prime (p + 2)
 

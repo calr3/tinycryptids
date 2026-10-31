@@ -1,0 +1,127 @@
+; ============================================================================
+; A 10-state, 6-symbol Turing machine (34 instructions) that
+; HALTS IFF GOLDBACH'S CONJECTURE IS FALSE: started on a blank tape in the
+; first state, it halts iff some even number 2n >= 4 is not the sum of two
+; primes.
+;
+; THE HALT is the undefined transition of `e2` reading 5 (marked HALT below).
+; The other undefined transitions are never used (`-`).
+; Lean proof: lean/TinyCryptids/Goldbach/M10.lean,
+; theorem TMK.Goldbach.M10.halts_iff (and halts_iff_not).
+; Standard text: 1RD3LB---------5RF_0RD2RC2LB3LB---5RD_0LE2LB2RC3RC2LB5LE_1LD1LI1RD3LB------_0RH1RE1LE4LE1RA1LI_---1RG------------_---1RA------------_---1RH------1RH1LI_1RF5LJ------------_0RF1LJ---------1LJ
+; ============================================================================
+;
+; SYMBOLS: 0 blank, 1 a cell, 2 = x (a marked cell), 3 = B (the boundary,
+;   marked), 4 = b (the boundary, unmarked), 5 = s (the separator).
+;
+; TAPE at the start of each pair (p, q), p + q = n (blank elsewhere):
+;     0 0 [P: 1^p] s [Q: 1^q] 0 0    (Q may hold one stale b, on its 4th cell
+;                                     or later)
+;
+; ALGORITHM (as in ../build.py)
+;   pairs    for each even n: (n - 2, 2), (n - 3, 3), ... Test P, then Q if P
+;            is prime. Both prime: grow to (n, 2) for n + 2. One composite:
+;            the separator moves one cell left (p - 1, q + 1). After (2, n - 2)
+;            comes (1, n - 1): `e2` reads the separator on P's second cell and
+;            the machine HALTS.
+;   test     the primality of a block X (between two delimiters, 0 or s) by
+;            trial division in place: the divisor d is X's first d cells D, the
+;            rest R starts with the boundary; d | x iff d | r. `e1`, `e2` put
+;            the boundary on the third cell (d = 2).
+;   round    `mark` marks R's first cell B; a zigzag marks one cell of R (`zr`)
+;            and one cell of D (`zl`); when D is fully marked, `rst` unmarks it
+;            (a lazy reset). When R runs out, `chk` unmarks everything from the
+;            right (B -> b). An unmarked cell of D: d does not divide r, `chk`
+;            moves b one cell right (d + 1) and `mark` starts the next round.
+;            The left delimiter reached: d | r, X is composite. `mark` reading
+;            a delimiter: d = x, X is prime.
+;   exits    prime P (`mark` reads s): test Q. Prime Q (`mark` reads 0): grow
+;            (two cells after Q, `sh` writes s on Q's last cell, `wl` erases the
+;            old one). Composite P (`chk` reads 0): `kr` erases b on the way to
+;            the separator, then shift. Composite Q (`chk` reads s): shift at
+;            once (s -> 1, `sh` writes s on P's last cell, `wl` returns).
+;   boot     `sh` reading 0 runs the growth on the blank tape: (2, 2) after
+;            13 steps.
+; ============================================================================
+
+blank_symbol: 0
+
+mark    ; start a round: mark R's first cell B; a delimiter: d = x, the block is prime
+    0 1 R rst    ; Q prime: growth, the first new cell
+    1 3 L zl    ; the boundary B
+    -
+    -
+    -
+    5 5 R e1    ; P prime: test Q
+
+zl    ; zigzag: run left to D's last unmarked cell and mark it
+    0 0 R rst    ; D fully marked (X = P): reset
+    1 2 R zr    ; mark a cell of D
+    2 2 L zl
+    3 3 L zl
+    -
+    5 5 R rst    ; D fully marked (X = Q): reset
+
+zr    ; zigzag: run right to R's first unmarked cell and mark it; R used up: check
+    0 0 L chk    ; R used up (X = Q): check
+    1 2 L zl    ; mark a cell of R
+    2 2 R zr
+    3 3 R zr
+    4 2 L zl    ; a stale b counts as a 1
+    5 5 L chk    ; R used up (X = P): check
+
+rst    ; D fully marked: unmark it, mark its last cell; growth: the second new cell
+    0 1 L rst    ; growth: the second new cell
+    1 1 L sh    ; growth: the first new cell; shift from Q's last cell
+    2 1 R rst    ; unmark D
+    3 3 L zl    ; D unmarked: mark its last cell
+    -
+    -
+
+chk    ; R used up: unmark from the right (B -> b); then move b right (d + 1)
+    0 0 R kr    ; D fully marked: P composite
+    1 1 R chk    ; an unmarked cell of D: d + 1
+    2 1 L chk    ; unmark
+    3 4 L chk    ; B -> b
+    4 1 R mark    ; the boundary one cell right
+    5 1 L sh    ; D fully marked: Q composite, shift
+
+e1    ; test entry: X's first cell
+    -
+    1 1 R e2
+    -
+    -
+    -
+    -
+
+e2    ; test entry: X's second cell; the separator here (p = 1): HALT
+    -
+    1 1 R mark    ; d = 2
+    -
+    -
+    -
+    -    ; HALT
+
+kr    ; P composite: run right erasing b, to the separator
+    -
+    1 1 R kr
+    -
+    -
+    4 1 R kr    ; erase b
+    5 1 L sh    ; the separator: shift
+
+sh    ; shift: write the separator one cell left of the old one
+    0 1 R e1    ; boot only
+    1 5 L wl    ; the new separator
+    -
+    -
+    -
+    -
+
+wl    ; run left to P's first cell, erasing an old separator
+    0 0 R e1    ; P's first cell: test P
+    1 1 L wl
+    -
+    -
+    -
+    5 1 L wl    ; erase the old separator
