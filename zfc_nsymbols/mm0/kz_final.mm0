@@ -1,0 +1,16 @@
+import "kz_tm.mm0";
+import "k215-pa/pa-mm0/k215_literal_runtime_conditional.mm0";
+import "k215-pa/pa-mm0/k215_literal_runtime_native_iteration.mm0";
+import "k215-pa/pa-mm0/zfc_proofs.mm0";
+
+-- The 13-symbol machine of kz_tm.mm0 halts iff Glazer's register program k215P halts.
+theorem kz_halts_iff_program: $ kzHalts <-> k215PInitialHalts $;
+
+-- With three theorems of github.com/elliotglazer/k215-pa (checked there; their statements are
+-- copied verbatim: K215_halts_iff_ZFC_inconsistent_final, k215LiteralHalts_iff_program_given_native_law,
+-- k215PActualNativeLaw), the machine halts iff ZFC is inconsistent.
+theorem kz_halts_iff_ZFC_inconsistent
+  (hK215: $ k215LiteralHalts <-> zfcInconsistent $)
+  (hProgram: $ k215PNativeLaw -> (k215LiteralHalts <-> k215PInitialHalts) $)
+  (hNative: $ k215PNativeLaw $):
+  $ kzHalts <-> zfcInconsistent $;

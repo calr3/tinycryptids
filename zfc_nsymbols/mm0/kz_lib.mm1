@@ -1,0 +1,315 @@
+import "kz_tm.mm1";
+
+-- Generic lemmas about the machine of kz_tm: tape cells, single steps, runs, reachability.
+
+theorem kzKne0: $ kzK != 0 $ = 'peano1;
+
+-- a tape: the lowest base-kzK digit is the cell next to the head
+@_ local def kzPush (b n: nat): nat = $ b + kzK * n $;
+
+theorem kzPush_mod (b n: nat) (h: $ b < kzK $): $ kzPush b n % kzK = b $ =
+'(eqtr (modeq1 addcom) (ax_mp muladdmod2lt (iani kzKne0 h)));
+theorem kzPush_div (b n: nat) (h: $ b < kzK $): $ kzPush b n // kzK = n $ =
+'(eqtr (diveq1 addcom) (ax_mp muladddiv2lt (iani kzKne0 h)));
+theorem kzPush00: $ kzPush 0 0 = 0 $ = '(eqtr (addeq2 mul0) add0);
+
+theorem kzState_Q (q l r: nat): $ kzQ (kzState q l r) = q $ = 'fstpr;
+theorem kzState_L (q l r: nat): $ kzL (kzState q l r) = l $ = '(eqtr (fsteq sndpr) fstpr);
+theorem kzState_R (q l r: nat): $ kzR (kzState q l r) = r $ = '(eqtr (sndeq sndpr) sndpr);
+theorem kzAct_W (w d t: nat): $ kzWrite (w, d, t) = w $ = 'fstpr;
+theorem kzAct_D (w d t: nat): $ kzDir (w, d, t) = d $ = '(eqtr (fsteq sndpr) fstpr);
+theorem kzAct_T (w d t: nat): $ kzTarget (w, d, t) = t $ = '(eqtr (sndeq sndpr) sndpr);
+
+theorem kzMove_R (w t l r: nat): $ kzMove (w, 1, t) l r = kzState t (kzPush w l) (r // kzK) $ =
+'(eqtr (ifneg (mpbir (noteq (eqeq1 kzAct_D)) d1ne0)) (kzStateeq kzAct_T (addeq1 kzAct_W) eqid));
+theorem kzMove_L (w t l r: nat):
+  $ kzMove (w, 0, t) l r = kzState t (l // kzK) (kzPush (l % kzK) (kzPush w (r // kzK))) $ =
+'(eqtr (ifpos kzAct_D) (kzStateeq kzAct_T eqid (addeq2 (muleq2 (addeq1 kzAct_W)))));
+
+theorem kzStep_act (q l r: nat) (hq: $ q < kzH $):
+  $ kzStep (kzState q l r) = kzMove (kzAction q (r % kzK)) l r $ =
+'(eqtr (ifpos (mpbir (lteq1 kzState_Q) hq))
+  (kzMoveeq (kzActioneq kzState_Q (modeq1 kzState_R)) kzState_L kzState_R));
+
+-- one step right / left from a cell b
+theorem kzSR (q b w t l r: nat) (hq: $ q < kzH $) (hb: $ b < kzK $)
+  (ha: $ kzAction q b = (w, 1, t) $):
+  $ kzStep (kzState q l (kzPush b r)) = kzState t (kzPush w l) r $ =
+'(eqtr (kzStep_act hq) (eqtr (kzMoveeq1 (eqtr (kzActioneq2 (kzPush_mod hb)) ha))
+  (eqtr kzMove_R (kzStateeq3 (kzPush_div hb)))));
+theorem kzSL (q b c w t l r: nat) (hq: $ q < kzH $) (hb: $ b < kzK $) (hc: $ c < kzK $)
+  (ha: $ kzAction q b = (w, 0, t) $):
+  $ kzStep (kzState q (kzPush c l) (kzPush b r)) = kzState t l (kzPush c (kzPush w r)) $ =
+'(eqtr (kzStep_act hq) (eqtr (kzMoveeq1 (eqtr (kzActioneq2 (kzPush_mod hb)) ha))
+  (eqtr kzMove_L (kzStateeq (eqid) (kzPush_div hc)
+    (kzPusheq (kzPush_mod hc) (kzPusheq2 (kzPush_div hb)))))));
+
+-- runs
+theorem kzRun0 (s: nat): $ kzRun 0 s = s $ = (named 'rec0);
+theorem kzRunS (n s: nat): $ kzRun (suc n) s = kzStep (kzRun n s) $ =
+'(eqtr recS @ ! applame $ kzRun n s $ _ x _ kzStepeq);
+theorem kzRun1 (s: nat): $ kzRun 1 s = kzStep s $ = '(eqtr kzRunS (kzStepeq kzRun0));
+theorem kzRunAdd (m n s: nat): $ kzRun (m + n) s = kzRun n (kzRun m s) $ =
+(named @ induct '(ind) 'n
+  '(eqtr (kzRuneq1 add0) (eqcom kzRun0))
+  '(eqtrd (a1i (eqtr (kzRuneq1 addS) kzRunS))
+    (eqtrd (kzStepeqd id) (a1i (eqcom kzRunS)))));
+theorem kzRunF (n s: nat): $ kzRun (suc n) s = kzRun n (kzStep s) $ =
+'(eqtr (kzRuneq1 (eqcom add11)) (eqtr kzRunAdd (kzRuneq2 kzRun1)));
+
+-- n copies of the cell b
+@_ local def kzRep (b n r .z: nat): nat = $ rec r (\ z, kzPush b z) n $;
+theorem kzRep0 (b r: nat): $ kzRep b 0 r = r $ = (named 'rec0);
+theorem kzRepS (b n r: nat): $ kzRep b (suc n) r = kzPush b (kzRep b n r) $ =
+'(eqtr recS @ ! applame $ kzRep b n r $ _ z _ kzPusheq2);
+theorem kzRep_push (b n r: nat): $ kzRep b n (kzPush b r) = kzPush b (kzRep b n r) $ =
+(named @ induct '(ind) 'n
+  '(eqtr kzRep0 (eqcom (kzPusheq2 kzRep0)))
+  '(eqtrd (a1i kzRepS) (eqtrd (kzPusheq2d id) (a1i (eqcom (kzPusheq2 kzRepS))))));
+theorem kzRepS2 (b n r: nat): $ kzRep b (suc n) r = kzRep b n (kzPush b r) $ =
+'(eqtr kzRepS (eqcom kzRep_push));
+
+-- a state that keeps moving right over the cell b
+theorem kzLoopR_al {x y: nat} (q b n r: nat) (hq: $ q < kzH $) (hb: $ b < kzK $)
+  (ha: $ kzAction q b = (b, 1, q) $):
+  $ A. x kzRun n (kzState q x (kzRep b n r)) = kzState q (kzRep b n x) r $ =
+(named @ induct '(ind) 'n
+  '(ax_gen (eqtr kzRun0 (eqtr (kzStateeq3 kzRep0) (eqcom (kzStateeq2 kzRep0)))))
+  '(sylbi (!! cbval x y (eqeqd (kzRuneq2d (kzStateeq2d id)) (kzStateeq2d (kzRepeq3d id))))
+     (iald @ eqtrd
+       (a1i (eqtr kzRunF (kzRuneq2 (eqtr (kzStepeq (kzStateeq3 kzRepS)) (kzSR hq hb ha)))))
+       (eqtrd (eale (eqeqd (kzRuneq2d (kzStateeq2d id)) (kzStateeq2d (kzRepeq3d id))))
+         (a1i (kzStateeq2 (eqcom kzRepS2)))))));
+theorem kzLoopR (q b n l r: nat) (hq: $ q < kzH $) (hb: $ b < kzK $)
+  (ha: $ kzAction q b = (b, 1, q) $):
+  $ kzRun n (kzState q l (kzRep b n r)) = kzState q (kzRep b n l) r $ =
+(let ([x (dummy! 'nat)] [y (dummy! 'nat)])
+  '(ax_mp (!! eale ,x (eqeqd (kzRuneq2d (kzStateeq2d id)) (kzStateeq2d (kzRepeq3d id)))) (!! kzLoopR_al ,x ,y hq hb ha)));
+
+-- a state that keeps moving left over the cell b (the head is on the first b of the run)
+theorem kzLoopL_al {x y: nat} (q b n l: nat) (hq: $ q < kzH $) (hb: $ b < kzK $)
+  (ha: $ kzAction q b = (b, 0, q) $):
+  $ A. x kzRun n (kzState q (kzRep b n l) (kzPush b x)) = kzState q l (kzPush b (kzRep b n x)) $ =
+(named @ induct '(ind) 'n
+  '(ax_gen (eqtr kzRun0 (eqtr (kzStateeq2 kzRep0) (eqcom (kzStateeq3 (kzPusheq2 kzRep0))))))
+  '(sylbi (!! cbval x y (eqeqd (kzRuneq2d (kzStateeq3d (kzPusheq2d id))) (kzStateeq3d (kzPusheq2d (kzRepeq3d id)))))
+     (iald @ eqtrd
+       (a1i (eqtr kzRunF (kzRuneq2 (eqtr (kzStepeq (kzStateeq2 kzRepS)) (kzSL hq hb hb ha)))))
+       (eqtrd (eale (eqeqd (kzRuneq2d (kzStateeq3d (kzPusheq2d id))) (kzStateeq3d (kzPusheq2d (kzRepeq3d id)))))
+         (a1i (kzStateeq3 (kzPusheq2 (eqcom kzRepS2))))))));
+theorem kzLoopL (q b n l r: nat) (hq: $ q < kzH $) (hb: $ b < kzK $)
+  (ha: $ kzAction q b = (b, 0, q) $):
+  $ kzRun n (kzState q (kzRep b n l) (kzPush b r)) = kzState q l (kzPush b (kzRep b n r)) $ =
+(let ([x (dummy! 'nat)] [y (dummy! 'nat)])
+  '(ax_mp (!! eale ,x (eqeqd (kzRuneq2d (kzStateeq3d (kzPusheq2d id))) (kzStateeq3d (kzPusheq2d (kzRepeq3d id)))))
+    (!! kzLoopL_al ,x ,y hq hb ha)));
+
+-- reachability
+@_ local def kzReach (s t .n: nat): wff = $ E. n kzRun n s = t $;
+theorem kzReach_I (n s t: nat) (h: $ kzRun n s = t $): $ kzReach s t $ =
+'(!! iexie ,(dummy! 'nat) (eqtrd (kzRuneq1d id) (a1i h)));
+theorem kzReach_refl (s: nat): $ kzReach s s $ = '(kzReach_I kzRun0);
+theorem kzReach_step (s t: nat) (h: $ kzStep s = t $): $ kzReach s t $ = '(kzReach_I (eqtr kzRun1 h));
+theorem kzReach_tr (a b c: nat) (h1: $ kzReach a b $) (h2: $ kzReach b c $): $ kzReach a c $ =
+'(ax_mp (!! eex ,(dummy! 'nat) (mpi h2 (!! eexd ,(dummy! 'nat) (exp (!! iexde ,(dummy! 'nat) (eqtrd (kzRuneq1d anr)
+   (eqtrd (a1i kzRunAdd) (eqtrd (kzRuneq2d anll) anlr)))))))) h1);
+theorem kzReach_eq (a b c: nat) (h1: $ kzReach a b $) (h2: $ b = c $): $ kzReach a c $ =
+'(mpbi (kzReacheq2 h2) h1);
+theorem kzReach_steq (s t u: nat) (h1: $ kzStep s = t $) (h2: $ kzReach t u $): $ kzReach s u $ =
+'(kzReach_tr (kzReach_step h1) h2);
+
+-- reachability in at least one step
+@_ local def kzReachP (s t .n: nat): wff = $ E. n kzRun (suc n) s = t $;
+theorem kzRP_I (n s t: nat) (h: $ kzRun (suc n) s = t $): $ kzReachP s t $ =
+'(!! iexie ,(dummy! 'nat) (eqtrd (kzRuneq1d (suceqd id)) (a1i h)));
+theorem kzRP_step (s u t: nat) (h1: $ kzStep s = u $) (h2: $ kzReach u t $): $ kzReachP s t $ =
+'(ax_mp (!! eex ,(dummy! 'nat) (!! iexde ,(dummy! 'nat)
+   (eqtrd (kzRuneq1d (suceqd anr)) (eqtrd (a1i (eqtr kzRunF (kzRuneq2 h1))) anl)))) h2);
+theorem kzRP_R (s t: nat) (h: $ kzReachP s t $): $ kzReach s t $ =
+'(ax_mp (!! eex ,(dummy! 'nat) (!! iexde ,(dummy! 'nat) (eqtrd (kzRuneq1d anr) anl))) h);
+theorem kzRP_unstep (s t: nat) (h: $ kzReachP s t $): $ kzReach (kzStep s) t $ =
+'(ax_mp (!! eex ,(dummy! 'nat) (!! iexde ,(dummy! 'nat)
+   (eqtrd (kzRuneq1d anr) (eqtrd (a1i (eqcom kzRunF)) anl)))) h);
+theorem kzRP_tr1 (a b c: nat) (h1: $ kzReachP a b $) (h2: $ kzReach b c $): $ kzReachP a c $ =
+'(kzRP_step eqid (kzReach_tr (kzRP_unstep h1) h2));
+theorem kzRP_tr2 (a b c: nat) (h1: $ kzReach a b $) (h2: $ kzReachP b c $): $ kzReachP a c $ =
+'(ax_mp (!! eex ,(dummy! 'nat) (mpi h2 (!! eexd ,(dummy! 'nat) (exp (!! iexde ,(dummy! 'nat)
+   (eqtrd (kzRuneq1d (suceqd anr)) (eqtrd (a1i (eqtr (kzRuneq1 (eqcom addS)) kzRunAdd))
+     (eqtrd (kzRuneq2d anll) anlr)))))))) h1);
+theorem kzRP_stepeq (a b c: nat) (h1: $ kzStep a = kzStep b $) (h2: $ kzReachP b c $): $ kzReachP a c $ =
+'(kzRP_step h1 (kzRP_unstep h2));
+theorem kzRP_eq (a b c: nat) (h1: $ kzReachP a b $) (h2: $ b = c $): $ kzReachP a c $ =
+'(mpbi (kzReachPeq2 h2) h1);
+
+-- the head on the top cell of a left tape V
+@_ local def kzLS (q V r: nat): nat = $ kzState q (V // kzK) (kzPush (V % kzK) r) $;
+theorem kzSplit (V: nat): $ kzPush (V % kzK) (V // kzK) = V $ = '(eqtr addcom divmod);
+theorem kzLS_push (q c V r: nat) (h: $ c < kzK $): $ kzLS q (kzPush c V) r = kzState q V (kzPush c r) $ =
+'(kzStateeq eqid (kzPush_div h) (kzPusheq1 (kzPush_mod h)));
+theorem kzSLg (q b w t l r: nat) (hq: $ q < kzH $) (hb: $ b < kzK $) (ha: $ kzAction q b = (w, 0, t) $):
+  $ kzStep (kzState q l (kzPush b r)) = kzLS t l (kzPush w r) $ =
+'(eqtr (kzStep_act hq) (eqtr (kzMoveeq1 (eqtr (kzActioneq2 (kzPush_mod hb)) ha))
+  (eqtr kzMove_L (kzStateeq3 (kzPusheq2 (kzPusheq2 (kzPush_div hb)))))));
+theorem kzLoopLS_al {x y: nat} (q b n V: nat) (hq: $ q < kzH $) (hb: $ b < kzK $)
+  (ha: $ kzAction q b = (b, 0, q) $):
+  $ A. x kzRun n (kzLS q (kzRep b n V) x) = kzLS q V (kzRep b n x) $ =
+(named @ induct '(ind) 'n
+  '(ax_gen (eqtr kzRun0 (eqtr (kzLSeq2 kzRep0) (eqcom (kzLSeq3 kzRep0)))))
+  '(sylbi (!! cbval x y (eqeqd (kzRuneq2d (kzLSeq3d id)) (kzLSeq3d (kzRepeq3d id))))
+     (iald @ eqtrd
+       (a1i (eqtr kzRunF (kzRuneq2 (eqtr (kzStepeq (eqtr (kzLSeq2 kzRepS) (kzLS_push hb))) (kzSLg hq hb ha)))))
+       (eqtrd (eale (eqeqd (kzRuneq2d (kzLSeq3d id)) (kzLSeq3d (kzRepeq3d id))))
+         (a1i (kzLSeq3 (eqcom kzRepS2)))))));
+theorem kzLoopLS (q b n V r: nat) (hq: $ q < kzH $) (hb: $ b < kzK $)
+  (ha: $ kzAction q b = (b, 0, q) $):
+  $ kzRun n (kzLS q (kzRep b n V) r) = kzLS q V (kzRep b n r) $ =
+(let ([x (dummy! 'nat)] [y (dummy! 'nat)])
+  '(ax_mp (!! eale ,x (eqeqd (kzRuneq2d (kzLSeq3d id)) (kzLSeq3d (kzRepeq3d id)))) (!! kzLoopLS_al ,x ,y hq hb ha)));
+
+-- the inc carry: states c1 (a 1 pending) and cS (a separator S pending); the pending symbol is
+-- the top of the virtual left tape V
+@_ local def kzPend (c1 cS V X: nat): nat = $ kzState (if (V % kzK = 1) c1 cS) (V // kzK) X $;
+theorem kzPend_1 (c1 cS V X: nat): $ V % kzK = 1 -> kzPend c1 cS V X = kzState c1 (V // kzK) X $ =
+'(kzStateeq1d ifpos);
+theorem kzPend_S (c1 cS S V X: nat) (hS1: $ S != 1 $):
+  $ V % kzK = S -> kzPend c1 cS V X = kzState cS (V // kzK) X $ =
+'(kzStateeq1d (syl ifneg (mpbird (noteqd (eqeq1d id)) (a1i hS1))));
+theorem kzPend_push1 (c1 cS V X: nat) (h1: $ 1 < kzK $): $ kzPend c1 cS (kzPush 1 V) X = kzState c1 V X $ =
+'(eqtr (ax_mp kzPend_1 (kzPush_mod h1)) (kzStateeq2 (kzPush_div h1)));
+theorem kzPend_pushS (c1 cS S V X: nat) (hS: $ S < kzK $) (hS1: $ S != 1 $):
+  $ kzPend c1 cS (kzPush S V) X = kzState cS V X $ =
+'(eqtr (ax_mp (kzPend_S hS1) (kzPush_mod hS)) (kzStateeq2 (kzPush_div hS)));
+
+theorem kzPend_step1 (c1 cS S V X: nat) (hc1: $ c1 < kzH $) (hcS: $ cS < kzH $) (h1: $ 1 < kzK $)
+  (hS1: $ S != 1 $) (a11: $ kzAction c1 1 = (1, 1, c1) $) (aS1: $ kzAction cS 1 = (S, 1, c1) $):
+  $ V % kzK = 1 \/ V % kzK = S -> kzStep (kzPend c1 cS V (kzPush 1 X)) = kzPend c1 cS (kzPush 1 V) X $ =
+'(ax_mp (ax_mp eor
+   (eqtrd (kzStepeqd kzPend_1) (eqtrd (a1i (kzSR hc1 h1 a11))
+     (eqtrd (kzStateeq2d (kzPusheq1d (eqcomd id))) (a1i (eqtr (kzStateeq2 kzSplit) (eqcom (kzPend_push1 h1))))))))
+   (eqtrd (kzStepeqd (kzPend_S hS1)) (eqtrd (a1i (kzSR hcS h1 aS1))
+     (eqtrd (kzStateeq2d (kzPusheq1d (eqcomd id))) (a1i (eqtr (kzStateeq2 kzSplit) (eqcom (kzPend_push1 h1))))))));
+theorem kzPend_stepS (c1 cS S V X: nat) (hc1: $ c1 < kzH $) (hcS: $ cS < kzH $) (hS: $ S < kzK $)
+  (hS1: $ S != 1 $) (a1S: $ kzAction c1 S = (1, 1, cS) $) (aSS: $ kzAction cS S = (S, 1, cS) $):
+  $ V % kzK = 1 \/ V % kzK = S -> kzStep (kzPend c1 cS V (kzPush S X)) = kzPend c1 cS (kzPush S V) X $ =
+'(ax_mp (ax_mp eor
+   (eqtrd (kzStepeqd kzPend_1) (eqtrd (a1i (kzSR hc1 hS a1S))
+     (eqtrd (kzStateeq2d (kzPusheq1d (eqcomd id))) (a1i (eqtr (kzStateeq2 kzSplit) (eqcom (kzPend_pushS hS hS1))))))))
+   (eqtrd (kzStepeqd (kzPend_S hS1)) (eqtrd (a1i (kzSR hcS hS aSS))
+     (eqtrd (kzStateeq2d (kzPusheq1d (eqcomd id))) (a1i (eqtr (kzStateeq2 kzSplit) (eqcom (kzPend_pushS hS hS1))))))));
+
+theorem kzPend_loop_al {x y: nat} (c1 cS S n X: nat) (hc1: $ c1 < kzH $) (hcS: $ cS < kzH $)
+  (h1: $ 1 < kzK $) (hS1: $ S != 1 $)
+  (a11: $ kzAction c1 1 = (1, 1, c1) $) (aS1: $ kzAction cS 1 = (S, 1, c1) $):
+  $ A. x ((x % kzK = 1 \/ x % kzK = S) ->
+      kzRun n (kzPend c1 cS x (kzRep 1 n X)) = kzPend c1 cS (kzRep 1 n x) X) $ =
+(named @ induct '(ind) 'n
+  '(ax_gen (a1i (eqtr kzRun0 (eqtr (kzPendeq4 kzRep0) (eqcom (kzPendeq3 kzRep0))))))
+  '(sylbi (!! cbval x y (imeqd (oreqd (eqeq1d (modeq1d id)) (eqeq1d (modeq1d id)))
+       (eqeqd (kzRuneq2d (kzPendeq3d id)) (kzPendeq3d (kzRepeq3d id)))))
+     (iald @ exp @ eqtrd
+       (a1i (eqtr kzRunF (kzRuneq2 (kzStepeq (kzPendeq4 kzRepS)))))
+       (eqtrd (kzRuneq2d (syl (kzPend_step1 hc1 hcS h1 hS1 a11 aS1) anr))
+         (eqtrd (mpd (a1i (ax_mp orl (kzPush_mod h1)))
+           (syl (eale (imeqd (oreqd (eqeq1d (modeq1d id)) (eqeq1d (modeq1d id)))
+             (eqeqd (kzRuneq2d (kzPendeq3d id)) (kzPendeq3d (kzRepeq3d id))))) anl))
+           (a1i (kzPendeq3 (eqcom kzRepS2))))))));
+theorem kzPend_loop (c1 cS S n V X: nat) (hc1: $ c1 < kzH $) (hcS: $ cS < kzH $)
+  (h1: $ 1 < kzK $) (hS1: $ S != 1 $)
+  (a11: $ kzAction c1 1 = (1, 1, c1) $) (aS1: $ kzAction cS 1 = (S, 1, c1) $):
+  $ (V % kzK = 1 \/ V % kzK = S) -> kzRun n (kzPend c1 cS V (kzRep 1 n X)) = kzPend c1 cS (kzRep 1 n V) X $ =
+(let ([x (dummy! 'nat)] [y (dummy! 'nat)])
+  '(ax_mp (!! eale ,x (imeqd (oreqd (eqeq1d (modeq1d id)) (eqeq1d (modeq1d id)))
+       (eqeqd (kzRuneq2d (kzPendeq3d id)) (kzPendeq3d (kzRepeq3d id)))))
+    (!! kzPend_loop_al ,x ,y hc1 hcS h1 hS1 a11 aS1)));
+
+-- a whole register block  S 1^b  crossed by the carry
+theorem kzPend_block (c1 cS S b V X: nat) (hc1: $ c1 < kzH $) (hcS: $ cS < kzH $)
+  (h1: $ 1 < kzK $) (hS: $ S < kzK $) (hS1: $ S != 1 $)
+  (a11: $ kzAction c1 1 = (1, 1, c1) $) (a1S: $ kzAction c1 S = (1, 1, cS) $)
+  (aS1: $ kzAction cS 1 = (S, 1, c1) $) (aSS: $ kzAction cS S = (S, 1, cS) $):
+  $ (V % kzK = 1 \/ V % kzK = S) ->
+    kzRun (suc b) (kzPend c1 cS V (kzPush S (kzRep 1 b X))) = kzPend c1 cS (kzRep 1 b (kzPush S V)) X $ =
+'(eqtrd (a1i kzRunF) (eqtrd (kzRuneq2d (kzPend_stepS hc1 hcS hS hS1 a1S aSS))
+   (a1i (ax_mp (kzPend_loop hc1 hcS h1 hS1 a11 aS1) (ax_mp orr (kzPush_mod hS))))));
+
+-- the carry reaches the blank: it writes the pending symbol and `sc` (scan) runs left; the
+-- next step is the same as from `sc` on the top cell of V
+theorem kzLS_def (q V r: nat): $ kzLS q V r = kzState q (V // kzK) (kzPush (V % kzK) r) $ = 'eqid;
+theorem kzPend_end1 (c1 cS sc V: nat) (hc1: $ c1 < kzH $) (hsc: $ sc < kzH $)
+  (h0: $ 0 < kzK $) (h1: $ 1 < kzK $)
+  (a10: $ kzAction c1 0 = (1, 0, sc) $) (as1: $ kzAction sc 1 = (1, 0, sc) $):
+  $ V % kzK = 1 -> kzStep (kzPend c1 cS V 0) = kzStep (kzLS sc V 0) $ =
+'(eqtrd (kzStepeqd (eqtrd kzPend_1 (a1i (kzStateeq3 (eqcom kzPush00)))))
+   (eqtrd (a1i (kzSLg hc1 h0 a10))
+     (eqcomd (eqtrd (a1i (kzStepeq kzLS_def))
+       (eqtrd (kzStepeqd (kzStateeq3d (kzPusheq1d id))) (a1i (kzSLg hsc h1 as1)))))));
+theorem kzPend_endS (c1 cS S sc V: nat) (hcS: $ cS < kzH $) (hsc: $ sc < kzH $)
+  (h0: $ 0 < kzK $) (hS: $ S < kzK $) (hS1: $ S != 1 $)
+  (aS0: $ kzAction cS 0 = (S, 0, sc) $) (asS: $ kzAction sc S = (S, 0, sc) $):
+  $ V % kzK = S -> kzStep (kzPend c1 cS V 0) = kzStep (kzLS sc V 0) $ =
+'(eqtrd (kzStepeqd (eqtrd (kzPend_S hS1) (a1i (kzStateeq3 (eqcom kzPush00)))))
+   (eqtrd (a1i (kzSLg hcS h0 aS0))
+     (eqcomd (eqtrd (a1i (kzStepeq kzLS_def))
+       (eqtrd (kzStepeqd (kzStateeq3d (kzPusheq1d id))) (a1i (kzSLg hsc hS asS)))))));
+theorem kzPend_end (c1 cS S sc V: nat) (hc1: $ c1 < kzH $) (hcS: $ cS < kzH $) (hsc: $ sc < kzH $)
+  (h0: $ 0 < kzK $) (h1: $ 1 < kzK $) (hS: $ S < kzK $) (hS1: $ S != 1 $)
+  (a10: $ kzAction c1 0 = (1, 0, sc) $) (aS0: $ kzAction cS 0 = (S, 0, sc) $)
+  (as1: $ kzAction sc 1 = (1, 0, sc) $) (asS: $ kzAction sc S = (S, 0, sc) $):
+  $ (V % kzK = 1 \/ V % kzK = S) -> kzStep (kzPend c1 cS V 0) = kzStep (kzLS sc V 0) $ =
+'(ax_mp (ax_mp eor (kzPend_end1 hc1 hsc h0 h1 a10 as1)) (kzPend_endS hcS hsc h0 hS hS1 aS0 asS));
+
+-- the decnz shift: states ds (move right), dp (put a separator back), dl (erase the last 1)
+theorem kzDec_block (ds dp S c L X: nat) (hds: $ ds < kzH $) (hdp: $ dp < kzH $)
+  (h1: $ 1 < kzK $) (hS: $ S < kzK $)
+  (ad1: $ kzAction ds 1 = (1, 1, ds) $) (adS: $ kzAction ds S = (1, 0, dp) $)
+  (ap1: $ kzAction dp 1 = (S, 1, ds) $):
+  $ kzReachP (kzState ds (kzPush 1 L) (kzPush S (kzRep 1 c X))) (kzState ds (kzRep 1 (suc c) (kzPush S L)) X) $ =
+'(kzRP_step (kzSL hds hS h1 adS) (kzReach_steq (kzSR hdp h1 ap1)
+   (kzReach_eq (kzReach_I (eqtr (kzRuneq2 (kzStateeq3 (eqcom kzRepS))) (kzLoopR hds h1 ad1))) eqid)));
+theorem kzDec_end (ds dl sc L: nat) (hds: $ ds < kzH $) (hdl: $ dl < kzH $)
+  (h0: $ 0 < kzK $) (h1: $ 1 < kzK $)
+  (ad0: $ kzAction ds 0 = (0, 0, dl) $) (al1: $ kzAction dl 1 = (0, 0, sc) $):
+  $ kzReachP (kzState ds (kzPush 1 L) 0) (kzLS sc L 0) $ =
+'(kzRP_step (eqtr (kzStepeq (kzStateeq3 (eqcom kzPush00))) (kzSL hds h0 h1 ad0))
+   (kzReach_eq (kzReach_step (kzSLg hdl h1 al1)) (kzLSeq3 (eqtr (kzPusheq2 kzPush00) kzPush00))));
+
+-- a chain state crossing the 1s of a block and the separator after them
+theorem kzChain (c c2 S n L X: nat) (hc: $ c < kzH $) (h1: $ 1 < kzK $) (hS: $ S < kzK $)
+  (a1: $ kzAction c 1 = (1, 1, c) $) (aS: $ kzAction c S = (S, 1, c2) $):
+  $ kzReachP (kzState c L (kzRep 1 n (kzPush S X))) (kzState c2 (kzPush S (kzRep 1 n L)) X) $ =
+'(kzRP_tr2 (kzReach_I (kzLoopR hc h1 a1)) (kzRP_step (kzSR hc hS aS) kzReach_refl));
+
+-- list lookup in the transition table
+theorem kzNth_0 (a l: nat): $ kzNth 0 (a : l) = a $ = '(eqtr (subeq1 nthZ) sucsub1);
+theorem kzNth_S (n a l: nat): $ kzNth (suc n) (a : l) = kzNth n l $ = '(subeq1 nthS);
+theorem kzLt_suc (a b: nat) (h: $ suc a < b $): $ a < b $ = '(ax_mp (ax_mp lttr ltsucid) h);
+
+-- composition helpers
+theorem kzR_cv (a b c: nat) (h1: $ a = b $) (h2: $ kzReach b c $): $ kzReach a c $ = '(mpbir (kzReacheq1 h1) h2);
+theorem kzRP_cv (a b c: nat) (h1: $ a = b $) (h2: $ kzReachP b c $): $ kzReachP a c $ = '(mpbir (kzReachPeq1 h1) h2);
+theorem kzRP_RP (a b c: nat) (h1: $ kzReachP a b $) (h2: $ kzReachP b c $): $ kzReachP a c $ =
+'(kzRP_tr1 h1 (kzRP_R h2));
+theorem kzR_RP (a b c: nat) (h1: $ kzReach a b $) (h2: $ kzReachP b c $): $ kzReachP a c $ = '(kzRP_tr2 h1 h2);
+theorem kzRP_RR (a b c: nat) (h1: $ kzReachP a b $) (h2: $ kzReach b c $): $ kzReachP a c $ = '(kzRP_tr1 h1 h2);
+theorem kzR_RR (a b c: nat) (h1: $ kzReach a b $) (h2: $ kzReach b c $): $ kzReach a c $ = '(kzReach_tr h1 h2);
+theorem kzRP_st (s t u: nat) (h1: $ kzStep s = t $) (h2: $ kzReach t u $): $ kzReachP s u $ = '(kzRP_step h1 h2);
+theorem kzRP_stP (s t u: nat) (h1: $ kzStep s = t $) (h2: $ kzReachP t u $): $ kzReachP s u $ =
+'(kzRP_step h1 (kzRP_R h2));
+theorem kzRP_end (s t: nat) (h1: $ kzStep s = t $): $ kzReachP s t $ = '(kzRP_step h1 kzReach_refl);
+
+-- a left step on the top cell of a left tape
+theorem kzLS_step (q c w t V r: nat) (hq: $ q < kzH $) (hc: $ c < kzK $) (ha: $ kzAction q c = (w, 0, t) $):
+  $ kzStep (kzLS q (kzPush c V) r) = kzLS t V (kzPush w r) $ =
+'(eqtr (kzStepeq (kzLS_push hc)) (kzSLg hq hc ha));
+
+-- the top cell of  1^n S ..  and of  1^n 1 ..  is 1 or S
+theorem kzHv_S (S n W: nat) (h1: $ 1 < kzK $) (hS: $ S < kzK $):
+  $ kzRep 1 n (kzPush S W) % kzK = 1 \/ kzRep 1 n (kzPush S W) % kzK = S $ =
+(named @ induct '(ind) 'n
+  '(ax_mp orr (eqtr (modeq1 kzRep0) (kzPush_mod hS)))
+  '(a1i (ax_mp orl (eqtr (modeq1 kzRepS) (kzPush_mod h1)))));
+theorem kzHv_1 (S n W: nat) (h1: $ 1 < kzK $):
+  $ kzRep 1 n (kzPush 1 W) % kzK = 1 \/ kzRep 1 n (kzPush 1 W) % kzK = S $ =
+(named @ induct '(ind) 'n
+  '(ax_mp orl (eqtr (modeq1 kzRep0) (kzPush_mod h1)))
+  '(a1i (ax_mp orl (eqtr (modeq1 kzRepS) (kzPush_mod h1)))));

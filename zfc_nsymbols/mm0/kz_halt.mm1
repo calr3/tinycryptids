@@ -1,0 +1,66 @@
+import "kz_simall.mm1";
+import "k215-pa/pa-mm0/k215_literal_runtime_reach.mm1";
+
+-- Halting along the simulation:  kzRel s c -> (k215PHaltsFrom s <-> kzHaltsFrom c).
+
+theorem kzReach_tri (a b c: nat): $ kzReach a b -> kzReach b c -> kzReach a c $ =
+(let ([i (dummy! 'nat)] [j (dummy! 'nat)] [k (dummy! 'nat)])
+ '(!! eex ,i (!! eexd ,j (exp (!! iexde ,k (eqtrd (kzRuneq1d anr)
+   (eqtrd (a1i kzRunAdd) (eqtrd (kzRuneq2d anll) anlr))))))));
+
+-- forward: c reaches a configuration related to t
+@_ local def kzRR (c t .e: nat): wff = $ E. e (kzReach c e /\ kzRel t e) $;
+theorem kzRR_Id (c d t: nat): $ kzReach c d /\ kzRel t d -> kzRR c t $ =
+'(!! iexde ,(dummy! 'nat) (iand (mpbird (kzReacheqd eqidd anr) (anwl anl)) (mpbird (kzReleqd eqidd anr) (anwl anr))));
+theorem kzRR_next (c e t: nat): $ kzReach c e -> kzNext t e -> kzRR c (k215PStep t) $ =
+'(!! eexd ,(dummy! 'nat) (exp (syl kzRR_Id (iand (sylc kzReach_tri anl (syl kzRP_Ri (syl anl anr))) (syl anr anr)))));
+theorem kzFwd_step (c t: nat): $ kzRR c t -> kzRR c (k215PStep t) $ =
+'(casesd
+   (exp (mpbird (kzRReqd eqidd (syl kzP_stop anr)) anl))
+   (!! eex ,(dummy! 'nat) (exp (sylc kzRR_next (anwl anl) (mpd anr (anwl (syl anr (syl kzSimAll anr))))))));
+theorem kzFwd_run (n s c: nat): $ kzRel s c -> kzRR c (k215PIter n s) $ =
+(named @ induct '(ind) 'n
+  '(syl kzRR_Id (iand (a1i kzReach_refl) (mpbird (kzReleqd (a1i k215PIter_zero) eqidd) id)))
+  '(imim2i (syl (ax_mp bi2 (kzRReq2 k215PIter_succ)) kzFwd_step)));
+theorem kzRR_halt (c t: nat): $ kzRR c t -> k215PStatus t = 4 -> kzHaltsFrom c $ =
+'(!! eex ,(dummy! 'nat) (exp (sylc kzHF_reach (anwl anl) (mpd anr (anwl (syl anlr (syl kzSimAll anr)))))));
+theorem kzFwd (s c: nat): $ kzRel s c -> k215PHaltsFrom s -> kzHaltsFrom c $ =
+'(!! eexd ,(dummy! 'nat) (syl kzRR_halt kzFwd_run));
+
+-- backward: c reaches, in n steps or more, a configuration related to t
+@_ local def kzRRs (c t n .x .e: nat): wff = $ E. x E. e (kzRun (n + x) c = e /\ kzRel t e) $;
+theorem kzRRs_Id (c t n x e: nat): $ kzRun (n + x) c = e /\ kzRel t e -> kzRRs c t n $ =
+(let ([X (dummy! 'nat)] [E (dummy! 'nat)])
+ '(!! iexde ,X (!! iexde ,E (iand
+   (mpbird (eqeqd (kzRuneq1d (addeq2d (anwl anr))) anr) (anwl (anwl anl)))
+   (mpbird (kzReleqd eqidd anr) (anwl (anwl anr)))))));
+theorem kzBwd_arith (n x k: nat): $ suc n + (x + k) = n + x + suc k $ =
+'(eqtr addS1 (eqtr (suceq (eqcom addass)) (eqcom addS)));
+theorem kzBwd_aux (c e f n x k: nat): $ kzRun (n + x) c = e -> kzRun (suc k) e = f -> kzRun (suc n + (x + k)) c = f $ =
+'(exp (eqtrd (a1i (eqtr (kzRuneq1 kzBwd_arith) kzRunAdd)) (eqtrd (kzRuneq2d anl) anr)));
+theorem kzRRs_next2 (c e f n x t: nat):
+  $ kzRun (n + x) c = e -> kzReachP e f -> kzRel (k215PStep t) f -> kzRRs c (k215PStep t) (suc n) $ =
+'(!! eexd ,(dummy! 'nat) (syl6 (exp kzRRs_Id) kzBwd_aux));
+theorem kzRRs_next (c e n x t: nat): $ kzRun (n + x) c = e -> kzNext t e -> kzRRs c (k215PStep t) (suc n) $ =
+'(!! eexd ,(dummy! 'nat) (exp (mpd (syl anr anr) (sylc kzRRs_next2 anl (syl anl anr)))));
+theorem kzBwd_step (c t n: nat): $ kzRRs c t n -> ~ k215PStatus t = 4 -> kzRRs c (k215PStep t) (suc n) $ =
+(let ([x (dummy! 'nat)] [e (dummy! 'nat)])
+ '(!! eex ,x (!! eex ,e (exp (sylc kzRRs_next (anwl anl) (mpd anr (anwl (syl anr (syl kzSimAll anr)))))))));
+theorem kzBwd_run (n s c: nat): $ kzRel s c -> ~ k215PHaltsFrom s -> kzRRs c (k215PIter n s) n $ =
+(named @ induct '(ind) 'n
+  '(a1d (syl kzRRs_Id (iand (a1i (eqtr (kzRuneq1 add0) kzRun0)) (mpbird (kzReleqd (a1i k215PIter_zero) eqidd) id))))
+  '(exp (exp (mpbird (kzRRseqd eqidd (a1i k215PIter_succ) eqidd)
+     (sylc kzBwd_step (mpd anr (mpd (anwl anr) (anwl anl)))
+       (syl (ax_mp con3 k215PHaltsFrom_intro) anr))))));
+theorem kzBwd_aux2 (c e T x: nat): $ kzRun (T + x) c = e -> kzQ e < kzH -> ~ kzQ (kzRun T c) = kzH $ =
+'(exp (mt2d anr (exp (mpbird (noteqd (lteq1d
+   (eqtrd (kzQeqd (eqtrd (eqcomd (anwl anl)) (eqtrd (a1i kzRunAdd) (syl kzRun_halt anr)))) anr)))
+   (a1i ltirr)))));
+theorem kzBwd_T (c s T: nat): $ kzRel s c -> ~ k215PHaltsFrom s -> ~ kzQ (kzRun T c) = kzH $ =
+(let ([x (dummy! 'nat)] [e (dummy! 'nat)])
+ '(syl6 (!! eex ,x (!! eex ,e (sylc kzBwd_aux2 anl (syl anll (syl kzSimAll anr))))) kzBwd_run));
+theorem kzBwd (s c: nat): $ kzRel s c -> kzHaltsFrom c -> k215PHaltsFrom s $ =
+'(!! eexd ,(dummy! 'nat) (con4d kzBwd_T));
+
+theorem kzEquiv (s c: nat): $ kzRel s c -> (k215PHaltsFrom s <-> kzHaltsFrom c) $ =
+'(ibid kzFwd kzBwd);

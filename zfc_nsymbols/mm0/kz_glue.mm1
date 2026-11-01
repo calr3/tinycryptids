@@ -1,0 +1,72 @@
+import "kz_rel.mm1";
+
+-- halting from a configuration; the halt label is absorbing
+@_ local def kzHaltsFrom (c .n: nat): wff = $ E. n kzQ (kzRun n c) = kzH $;
+
+theorem kzStep_halt (s: nat): $ kzQ s = kzH -> kzStep s = s $ =
+'(syl ifneg (mpbird (noteqd (lteq1d id)) (a1i ltirr)));
+theorem kzRun_halt (n s: nat): $ kzQ s = kzH -> kzRun n s = s $ =
+(named @ induct '(ind) 'n
+  '(a1i kzRun0)
+  '(exp @ eqtrd (a1i kzRunS) (eqtrd (kzStepeqd (mpd anr anl)) (syl kzStep_halt anr))));
+theorem kzHF_run (m c: nat): $ kzQ (kzRun m c) = kzH -> kzHaltsFrom c $ =
+'(!! iexde ,(dummy! 'nat) (eqtrd (kzQeqd (kzRuneq1d anr)) anl));
+theorem kzHF_reach (c d: nat): $ kzReach c d -> kzHaltsFrom d -> kzHaltsFrom c $ =
+(let ([m (dummy! 'nat)] [n (dummy! 'nat)] [k (dummy! 'nat)])
+ '(!! eex ,m (!! eexd ,n (exp (!! iexde ,k
+    (eqtrd (kzQeqd (kzRuneq1d anr)) (eqtrd (kzQeqd (a1i kzRunAdd))
+      (eqtrd (kzQeqd (kzRuneq2d anll)) anlr))))))));
+theorem kzRP_Ri (s t: nat): $ kzReachP s t -> kzReach s t $ =
+'(!! eex ,(dummy! 'nat) (!! iexde ,(dummy! 'nat) (eqtrd (kzRuneq1d anr) anl)));
+theorem kzHF_RPi (c d: nat) (h4: $ kzQ d = kzH $): $ kzReachP c d -> kzHaltsFrom c $ =
+'(syl (com12 kzHF_reach (ax_mp kzHF_run (eqtr (kzQeq kzRun0) h4))) kzRP_Ri);
+theorem kzHF_RP (c d: nat) (h1: $ kzReachP c d $) (h2: $ kzQ d = kzH $): $ kzHaltsFrom c $ =
+'(ax_mp (ax_mp kzHF_reach (kzRP_R h1)) (ax_mp kzHF_run (eqtr (kzQeq kzRun0) h2)));
+
+-- k215P: a halted state stays
+theorem kzP_stop (s: nat): $ k215PStatus s = 4 -> k215PStep s = s $ = 'ifpos;
+
+-- what the simulation gives at every related pair
+@_ local def kzNext (s c .d: nat): wff = $ E. d (kzReachP c d /\ kzRel (k215PStep s) d) $;
+@_ local def kzGood (s c: nat): wff =
+$ kzQ c < kzH /\ (k215PStatus s = 4 -> kzHaltsFrom c) /\ (~ k215PStatus s = 4 -> kzNext s c) $;
+
+-- facts about k215P at a known pc
+theorem kzStat (s N e: nat) (hl: $ k215PLookup N = e $): $ k215PPC s = N -> k215PStatus s = k215PETag e $ =
+'(eqtrd (k215PETageqd (k215PLookupeqd id)) (a1i (k215PETageq hl)));
+theorem kzStepAt (s N r: nat) (h: $ k215PStep (k215PState N (k215PRegs s)) = r $):
+  $ k215PPC s = N -> k215PStep s = r $ =
+'(eqtrd (k215PStepeqd (eqtrd (a1i (eqcom k215PState_rebuild)) (k215PStateeq1d id))) (a1i h));
+
+-- the three kinds of states
+theorem kzG_det (s c N C d s2: nat)
+  (h1: $ k215PPC s = N -> ~ k215PStatus s = 4 $)
+  (h2: $ k215PPC s = N -> k215PStep s = s2 $)
+  (h3: $ kzReachP C d $) (h4: $ kzRel s2 d $) (h5: $ kzQ C < kzH $):
+  $ k215PPC s = N /\ c = C -> kzGood s c $ =
+'(iand (iand (mpbird (lteq1d (kzQeqd anr)) (a1i h5)) (syl absurd (syl h1 anl)))
+   (a1d (!! iexde ,(dummy! 'nat) (iand (mpbird (kzReachPeqd (anwl anr) anr) (a1i h3))
+     (mpbird (kzReleqd (anwl (syl h2 anl)) anr) (a1i h4))))));
+theorem kzG_halt (s c N C d: nat)
+  (h1: $ k215PPC s = N -> k215PStatus s = 4 $) (h3: $ kzReachP C d $) (h4: $ kzQ d = kzH $)
+  (h5: $ kzQ C < kzH $):
+  $ k215PPC s = N /\ c = C -> kzGood s c $ =
+'(iand (iand (mpbird (lteq1d (kzQeqd anr)) (a1i h5))
+     (a1d (syl (kzHF_RPi h4) (mpbird (kzReachPeqd anr eqidd) (a1i h3)))))
+   (syl absurdr (syl h1 anl)));
+theorem kzG_dec (s c N C dz dp sz sp r: nat)
+  (h1: $ k215PPC s = N -> ~ k215PStatus s = 4 $)
+  (h2z: $ k215PPC s = N -> r = 0 -> k215PStep s = sz $)
+  (h2p: $ k215PPC s = N -> r != 0 -> k215PStep s = sp $)
+  (h3z: $ r = 0 -> kzReachP C dz $) (h3p: $ r != 0 -> kzReachP C dp $)
+  (h4z: $ r = 0 -> kzRel sz dz $) (h4p: $ r != 0 -> kzRel sp dp $)
+  (h5: $ kzQ C < kzH $):
+  $ k215PPC s = N /\ c = C -> kzGood s c $ =
+(let ([x (dummy! 'nat)]) '(iand (iand (mpbird (lteq1d (kzQeqd anr)) (a1i h5)) (syl absurd (syl h1 anl)))
+   (a1d (casesd
+     (exp (!! iexde ,x (iand
+       (mpbird (kzReachPeqd (anwl (anwl anr)) anr) (anwl (syl h3z anr)))
+       (mpbird (kzReleqd (anwl (sylc h2z (anwl anl) anr)) anr) (anwl (syl h4z anr))))))
+     (exp (!! iexde ,x (iand
+       (mpbird (kzReachPeqd (anwl (anwl anr)) anr) (anwl (syl h3p anr)))
+       (mpbird (kzReleqd (anwl (sylc h2p (anwl anl) anr)) anr) (anwl (syl h4p anr))))))))));

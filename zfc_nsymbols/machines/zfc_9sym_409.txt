@@ -1,0 +1,1528 @@
+; Halts iff ZFC is inconsistent: simulates E. Glazer's register program k215P (the program of
+; the 2-symbol machine K215, github.com/elliotglazer/k215-pa, which halts iff ZFC is inconsistent:
+; MM0 theorem K215_halts_iff_ZFC_inconsistent), step for step, after a 4-instruction prologue
+; that sets r0 = 4 (k215P's initial state).  Built by zfc_nsymbols/build.py (compiler.py).
+; Symbols: 0 blank, 1..7 program-counter digits 0..6 (1 is also the gap and a register's unit),
+; 8 register separator.
+; 9 symbols, 152 states, 409 instructions (defined transitions, the halting one included).
+blank_symbol: 0
+bA
+  0 2 L bB
+  1 1 R bA
+  2 1 L bB
+  -
+  -
+  -
+  -
+  -
+  -
+adv
+  0 0 R n186
+  1 2 L scan
+  2 1 L adv
+  3 4 L scan
+  4 5 L scan
+  5 6 L scan
+  6 7 L scan
+  7 1 L adv
+  -
+bB
+  0 1 R bA
+  1 0 L bC
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+bC
+  0 1 R bC
+  1 0 R bA
+  2 1 L scan
+  -
+  -
+  -
+  -
+  -
+  -
+carry1
+  0 1 L scan
+  1 1 R carry1
+  -
+  -
+  -
+  -
+  -
+  -
+  8 1 R carryS
+carryS
+  0 8 L scan
+  1 8 R carry1
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R carryS
+cdec1
+  0 8 R dstart
+  1 1 R cdec1
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R dstart
+cdec2
+  -
+  1 1 R cdec2
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R cdec1
+cdec3
+  -
+  1 1 R cdec3
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R cdec2
+cdec4
+  -
+  1 1 R cdec4
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R cdec3
+cdec5
+  -
+  1 1 R cdec5
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R cdec4
+cdec6
+  -
+  1 1 R cdec6
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R cdec5
+cdec7
+  -
+  1 1 R cdec7
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R cdec6
+cdec8
+  -
+  1 1 R cdec8
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R cdec7
+cdec9
+  -
+  1 1 R cdec9
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R cdec8
+cinc1
+  0 8 R carry1
+  1 1 R cinc1
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R carry1
+cinc2
+  -
+  1 1 R cinc2
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R cinc1
+cinc3
+  -
+  1 1 R cinc3
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R cinc2
+cinc4
+  -
+  1 1 R cinc4
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R cinc3
+cinc5
+  -
+  1 1 R cinc5
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R cinc4
+cinc6
+  -
+  1 1 R cinc6
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R cinc5
+cinc7
+  -
+  1 1 R cinc7
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R cinc6
+cinc8
+  -
+  1 1 R cinc8
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R cinc7
+cinc9
+  -
+  1 1 R cinc9
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 R cinc8
+dlast
+  -
+  1 0 L scan
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+dput
+  -
+  1 8 R dscan
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+dscan
+  0 0 L dlast
+  1 1 R dscan
+  -
+  -
+  -
+  -
+  -
+  -
+  8 1 L dput
+dstart
+  0 0 L retfail
+  1 1 R dscan
+  -
+  -
+  -
+  -
+  -
+  -
+  8 8 L retfail
+ebrk1
+  -
+  1 1 L adv
+  -
+  -
+  -
+  -
+  -
+  -
+  -
+ebrk2
+  -
+  -
+  2 1 L ebrk1
+  -
+  -
+  -
+  -
+  -
+  -
+ebrk3
+  -
+  -
+  2 1 L ebrk2
+  -
+  -
+  -
+  -
+  -
+  -
+ecnt1
+  -
+  -
+  2 1 L scan
+  -
+  -
+  -
+  -
+  -
+  -
+ecnt2
+  -
+  1 1 L ecnt1
+  2 1 L ecnt1
+  -
+  -
+  -
+  -
+  -
+  -
+n0
+  -
+  1 2 R cdec2
+  2 1 L ebrk1
+  -
+  -
+  -
+  -
+  -
+  -
+n1
+  -
+  1 2 R cinc3
+  2 1 L ecnt2
+  -
+  -
+  -
+  -
+  -
+  -
+n10
+  -
+  1 2 R cdec4
+  2 2 R n9
+  -
+  -
+  -
+  -
+  -
+  -
+n100
+  -
+  1 1 R n99
+  2 2 R n81
+  -
+  -
+  -
+  -
+  -
+  -
+n103
+  -
+  1 1 R n74
+  2 2 R n76
+  -
+  -
+  -
+  -
+  -
+  -
+n106
+  -
+  1 1 R n50
+  2 3 R n46
+  3 3 R n46
+  4 4 R n85
+  5 5 R n100
+  6 6 R n103
+  7 7 R n96
+  -
+n11
+  -
+  1 1 R n8
+  2 2 R n10
+  -
+  -
+  -
+  -
+  -
+  -
+n110
+  -
+  1 1 R n87
+  2 4 R n57
+  -
+  4 4 R n57
+  5 5 R n85
+  6 6 R n84
+  7 7 R n81
+  -
+n113
+  -
+  1 1 R n80
+  2 2 R n99
+  -
+  -
+  -
+  -
+  -
+  -
+n115
+  -
+  1 1 R n70
+  2 2 R n73
+  -
+  -
+  -
+  -
+  -
+  -
+n116
+  -
+  1 1 R n75
+  2 2 R n115
+  -
+  -
+  -
+  -
+  -
+  -
+n118
+  -
+  1 1 R n66
+  2 2 R n103
+  -
+  -
+  -
+  -
+  -
+  -
+n123
+  -
+  1 1 R n88
+  2 2 R n89
+  -
+  -
+  -
+  -
+  -
+  -
+n124
+  -
+  1 1 R n87
+  2 4 R n70
+  -
+  4 4 R n70
+  5 5 R n70
+  6 6 R n115
+  7 7 R n123
+  -
+n126
+  -
+  1 1 R n60
+  2 3 R n113
+  3 3 R n113
+  4 4 R n116
+  5 5 R n66
+  6 6 R n118
+  7 7 R n124
+  -
+n128
+  -
+  1 1 R n106
+  2 4 R n110
+  -
+  4 4 R n110
+  5 5 R n90
+  6 6 R n80
+  7 7 R n126
+  -
+n13
+  -
+  1 3 R cinc4
+  -
+  3 3 R n11
+  4 1 L ecnt1
+  -
+  -
+  -
+  -
+n133
+  -
+  1 1 R n99
+  2 3 R n128
+  3 3 R n128
+  4 4 R n87
+  5 5 R n87
+  6 6 R n123
+  7 7 R n124
+  -
+n138
+  -
+  1 2 R cdec5
+  2 2 R n24
+  -
+  -
+  -
+  -
+  -
+  -
+n14
+  -
+  1 2 R cdec2
+  2 2 R n13
+  -
+  -
+  -
+  -
+  -
+  -
+n140
+  -
+  1 1 R n87
+  2 5 R n55
+  -
+  -
+  5 5 R n55
+  6 6 R n88
+  7 7 R n138
+  -
+n141
+  -
+  1 1 R n95
+  2 3 R n79
+  3 3 R n79
+  4 4 R n97
+  5 5 R n133
+  6 6 R n89
+  7 7 R n140
+  -
+n142
+  -
+  1 1 R n79
+  2 2 R n141
+  -
+  -
+  -
+  -
+  -
+  -
+n144
+  -
+  1 2 R cdec3
+  2 1 L ecnt2
+  -
+  -
+  -
+  -
+  -
+  -
+n145
+  -
+  1 1 R n144
+  2 1 L ebrk2
+  -
+  -
+  -
+  -
+  -
+  -
+n146
+  -
+  1 2 R cdec8
+  2 2 R n145
+  -
+  -
+  -
+  -
+  -
+  -
+n147
+  -
+  1 1 R n8
+  2 1 L ebrk2
+  -
+  -
+  -
+  -
+  -
+  -
+n148
+  -
+  1 1 R n146
+  2 2 R n147
+  -
+  -
+  -
+  -
+  -
+  -
+n149
+  -
+  1 2 R cdec8
+  2 1 L scan
+  -
+  -
+  -
+  -
+  -
+  -
+n150
+  -
+  1 1 R n144
+  2 1 L ebrk3
+  -
+  -
+  -
+  -
+  -
+  -
+n151
+  -
+  1 1 R n149
+  2 2 R n150
+  -
+  -
+  -
+  -
+  -
+  -
+n152
+  -
+  1 1 R n148
+  2 2 R n151
+  -
+  -
+  -
+  -
+  -
+  -
+n154
+  -
+  1 1 R n152
+  2 3 R cdec6
+  3 2 L scan
+  -
+  -
+  -
+  -
+  -
+n157
+  -
+  1 2 R cdec9
+  2 2 R n43
+  -
+  -
+  -
+  -
+  -
+  -
+n158
+  -
+  1 1 R n10
+  2 2 R n157
+  -
+  -
+  -
+  -
+  -
+  -
+n159
+  -
+  1 1 R n55
+  2 3 R n70
+  3 3 R n70
+  4 4 R n72
+  5 5 R n142
+  6 6 R n154
+  7 7 R n158
+  -
+n164
+  -
+  1 1 R n57
+  2 3 R n61
+  3 3 R n61
+  4 4 R n69
+  5 5 R n159
+  6 6 R n154
+  7 1 L ebrk2
+  -
+n165
+  -
+  1 2 R cdec5
+  2 2 R n164
+  -
+  -
+  -
+  -
+  -
+  -
+n166
+  -
+  1 1 R n65
+  2 2 R n21
+  -
+  -
+  -
+  -
+  -
+  -
+n167
+  -
+  1 1 R n152
+  2 2 R n41
+  -
+  -
+  -
+  -
+  -
+  -
+n168
+  -
+  1 1 R n166
+  2 2 R n167
+  -
+  -
+  -
+  -
+  -
+  -
+n169
+  -
+  1 1 R n165
+  2 2 R n168
+  -
+  -
+  -
+  -
+  -
+  -
+n17
+  -
+  1 1 R n14
+  2 3 R cdec4
+  3 4 R cinc2
+  4 2 L scan
+  -
+  -
+  -
+  -
+n171
+  -
+  1 3 R cdec5
+  -
+  3 3 R n169
+  4 1 L ebrk1
+  -
+  -
+  -
+  -
+n172
+  -
+  1 1 R n171
+  2 2 R n46
+  -
+  -
+  -
+  -
+  -
+  -
+n174
+  -
+  1 3 R cdec5
+  -
+  3 3 R n172
+  4 1 L ebrk1
+  -
+  -
+  -
+  -
+n175
+  -
+  1 1 R n152
+  2 2 R halt
+  -
+  -
+  -
+  -
+  -
+  -
+n179
+  -
+  1 1 R n174
+  2 5 R cinc3
+  -
+  -
+  5 5 R n175
+  6 6 R n49
+  7 7 R n44
+  -
+n184
+  -
+  1 2 R cinc1
+  2 3 R cinc1
+  3 3 R n7
+  4 4 R n17
+  5 5 R n19
+  6 6 R n179
+  7 3 L scan
+  -
+n186
+  -
+  1 2 R cinc1
+  2 7 R cinc1
+  -
+  -
+  -
+  -
+  7 7 R n184
+  -
+n19
+  -
+  1 2 R cdec3
+  2 3 R cinc5
+  3 1 L scan
+  -
+  -
+  -
+  -
+  -
+n2
+  -
+  1 2 R cinc2
+  2 2 R n1
+  -
+  -
+  -
+  -
+  -
+  -
+n21
+  -
+  1 2 R cdec6
+  2 2 R n9
+  -
+  -
+  -
+  -
+  -
+  -
+n22
+  -
+  1 2 R cinc6
+  2 1 L ecnt1
+  -
+  -
+  -
+  -
+  -
+  -
+n23
+  -
+  1 2 R cdec7
+  2 2 R n22
+  -
+  -
+  -
+  -
+  -
+  -
+n24
+  -
+  1 2 R cinc4
+  2 2 R n1
+  -
+  -
+  -
+  -
+  -
+  -
+n25
+  -
+  1 2 R cdec6
+  2 2 R n24
+  -
+  -
+  -
+  -
+  -
+  -
+n26
+  -
+  1 2 R cdec3
+  2 2 R n22
+  -
+  -
+  -
+  -
+  -
+  -
+n3
+  -
+  1 2 R cdec1
+  2 2 R n2
+  -
+  -
+  -
+  -
+  -
+  -
+n30
+  -
+  1 1 R n25
+  2 3 R cdec3
+  3 4 R cinc4
+  4 4 R n26
+  5 1 L scan
+  -
+  -
+  -
+n32
+  -
+  1 2 R cdec4
+  2 3 R cinc7
+  3 1 L scan
+  -
+  -
+  -
+  -
+  -
+n35
+  -
+  1 1 R n21
+  2 5 R n23
+  -
+  -
+  5 5 R n23
+  6 6 R n30
+  7 7 R n32
+  -
+n36
+  -
+  1 2 R cinc6
+  2 2 R n1
+  -
+  -
+  -
+  -
+  -
+  -
+n37
+  -
+  1 2 R cdec9
+  2 2 R n36
+  -
+  -
+  -
+  -
+  -
+  -
+n39
+  -
+  1 2 R cdec3
+  2 3 R cinc9
+  3 1 L scan
+  -
+  -
+  -
+  -
+  -
+n40
+  -
+  1 1 R n37
+  2 2 R n39
+  -
+  -
+  -
+  -
+  -
+  -
+n41
+  -
+  1 1 R n35
+  2 2 R n40
+  -
+  -
+  -
+  -
+  -
+  -
+n42
+  -
+  1 2 R cdec8
+  2 2 R n36
+  -
+  -
+  -
+  -
+  -
+  -
+n43
+  -
+  1 2 R cinc8
+  2 1 L ecnt1
+  -
+  -
+  -
+  -
+  -
+  -
+n44
+  -
+  1 2 R cdec3
+  2 2 R n43
+  -
+  -
+  -
+  -
+  -
+  -
+n45
+  -
+  1 1 R n42
+  2 2 R n44
+  -
+  -
+  -
+  -
+  -
+  -
+n46
+  -
+  1 1 R n35
+  2 2 R n45
+  -
+  -
+  -
+  -
+  -
+  -
+n47
+  -
+  1 1 R n41
+  2 2 R n46
+  -
+  -
+  -
+  -
+  -
+  -
+n48
+  -
+  1 2 R cdec7
+  2 2 R n13
+  -
+  -
+  -
+  -
+  -
+  -
+n49
+  -
+  1 1 R n48
+  2 2 R n32
+  -
+  -
+  -
+  -
+  -
+  -
+n5
+  -
+  1 2 R cinc1
+  2 3 R cdec3
+  3 1 L scan
+  -
+  -
+  -
+  -
+  -
+n50
+  -
+  1 2 R cinc6
+  2 3 R cinc6
+  3 1 L adv
+  -
+  -
+  -
+  -
+  -
+n54
+  -
+  1 1 R n30
+  2 3 R cdec4
+  3 3 R n50
+  4 4 R n50
+  5 2 L scan
+  -
+  -
+  -
+n55
+  -
+  1 1 R n49
+  2 2 R n54
+  -
+  -
+  -
+  -
+  -
+  -
+n56
+  -
+  1 1 R n55
+  2 2 R n50
+  -
+  -
+  -
+  -
+  -
+  -
+n57
+  -
+  1 1 R n47
+  2 2 R n56
+  -
+  -
+  -
+  -
+  -
+  -
+n58
+  -
+  1 2 R cdec5
+  2 2 R n36
+  -
+  -
+  -
+  -
+  -
+  -
+n59
+  -
+  1 1 R n58
+  2 2 R n19
+  -
+  -
+  -
+  -
+  -
+  -
+n6
+  -
+  1 1 R n3
+  2 2 R n5
+  -
+  -
+  -
+  -
+  -
+  -
+n60
+  -
+  1 1 R n35
+  2 2 R n59
+  -
+  -
+  -
+  -
+  -
+  -
+n61
+  -
+  1 1 R n60
+  2 2 R n41
+  -
+  -
+  -
+  -
+  -
+  -
+n63
+  -
+  1 1 R n39
+  2 2 R n41
+  -
+  -
+  -
+  -
+  -
+  -
+n64
+  -
+  1 1 R n17
+  2 2 R n63
+  -
+  -
+  -
+  -
+  -
+  -
+n65
+  -
+  1 1 R n64
+  2 2 R n55
+  -
+  -
+  -
+  -
+  -
+  -
+n66
+  -
+  1 1 R n41
+  2 2 R n60
+  -
+  -
+  -
+  -
+  -
+  -
+n69
+  -
+  1 1 R n17
+  2 4 R n44
+  -
+  4 4 R n44
+  5 5 R n55
+  6 6 R n65
+  7 7 R n66
+  -
+n7
+  -
+  1 1 R n0
+  2 2 R n6
+  -
+  -
+  -
+  -
+  -
+  -
+n70
+  -
+  1 1 R n46
+  2 2 R n60
+  -
+  -
+  -
+  -
+  -
+  -
+n72
+  -
+  1 1 R n55
+  2 2 R n55
+  -
+  -
+  -
+  -
+  -
+  -
+n73
+  -
+  1 1 R n55
+  2 3 R cinc6
+  3 1 L adv
+  -
+  -
+  -
+  -
+  -
+n74
+  -
+  1 1 R n61
+  2 2 R n73
+  -
+  -
+  -
+  -
+  -
+  -
+n75
+  -
+  1 1 R n60
+  2 2 R n46
+  -
+  -
+  -
+  -
+  -
+  -
+n76
+  -
+  1 1 R n75
+  2 2 R n73
+  -
+  -
+  -
+  -
+  -
+  -
+n79
+  -
+  1 1 R n55
+  2 5 R n74
+  -
+  -
+  5 5 R n74
+  6 6 R n50
+  7 7 R n76
+  -
+n8
+  -
+  1 2 R cdec3
+  2 1 L ebrk1
+  -
+  -
+  -
+  -
+  -
+  -
+n80
+  -
+  1 1 R n47
+  2 2 R n73
+  -
+  -
+  -
+  -
+  -
+  -
+n81
+  -
+  1 1 R n57
+  2 3 R cinc6
+  3 1 L adv
+  -
+  -
+  -
+  -
+  -
+n82
+  -
+  1 1 R n80
+  2 2 R n81
+  -
+  -
+  -
+  -
+  -
+  -
+n84
+  -
+  1 1 R n72
+  2 2 R n41
+  -
+  -
+  -
+  -
+  -
+  -
+n85
+  -
+  1 1 R n66
+  2 2 R n56
+  -
+  -
+  -
+  -
+  -
+  -
+n86
+  -
+  1 1 R n35
+  2 3 R cinc6
+  3 1 L adv
+  -
+  -
+  -
+  -
+  -
+n87
+  -
+  1 1 R n55
+  2 2 R n56
+  -
+  -
+  -
+  -
+  -
+  -
+n88
+  -
+  1 1 R n86
+  2 2 R n55
+  -
+  -
+  -
+  -
+  -
+  -
+n89
+  -
+  1 1 R n87
+  2 2 R n88
+  -
+  -
+  -
+  -
+  -
+  -
+n9
+  -
+  1 2 R cinc3
+  2 1 L ecnt1
+  -
+  -
+  -
+  -
+  -
+  -
+n90
+  -
+  1 1 R n86
+  2 2 R n89
+  -
+  -
+  -
+  -
+  -
+  -
+n91
+  -
+  1 1 R n90
+  2 2 R n60
+  -
+  -
+  -
+  -
+  -
+  -
+n92
+  -
+  1 1 R n85
+  2 2 R n91
+  -
+  -
+  -
+  -
+  -
+  -
+n95
+  -
+  1 1 R n50
+  2 4 R n82
+  -
+  4 4 R n82
+  5 5 R n56
+  6 6 R n84
+  7 7 R n92
+  -
+n96
+  -
+  1 1 R n84
+  2 2 R n70
+  -
+  -
+  -
+  -
+  -
+  -
+n97
+  -
+  1 1 R n80
+  2 2 R n96
+  -
+  -
+  -
+  -
+  -
+  -
+n99
+  -
+  1 1 R n56
+  2 2 R n55
+  -
+  -
+  -
+  -
+  -
+  -
+retfail
+  -
+  1 1 L retfail
+  2 1 L adv
+  3 1 L adv
+  -
+  -
+  -
+  -
+  8 8 L retfail
+scan
+  0 0 R n186
+  1 1 L scan
+  2 2 L scan
+  3 3 L scan
+  4 4 L scan
+  5 5 L scan
+  6 6 L scan
+  7 7 L scan
+  8 8 L scan
