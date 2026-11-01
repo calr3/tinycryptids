@@ -16,7 +16,7 @@ def nested(lemma, n, base):
 
 def act_lines(D):
     m, qs, idx = gen_spec.machine_numbers(D)
-    N, K = len(qs), D + 2
+    N, K = len(qs), m.K
     out = ['import "kz_lib.mm1";', '']
     # bounds
     out.append(f'theorem kzLtK_{K - 1}: $ {num(K - 1)} < kzK $ = \'ltsucid;')

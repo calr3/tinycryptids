@@ -1,6 +1,6 @@
 # The Metamath Zero proof
 
-`kz_final.mm0` states, about the 13-symbol machine `../machines/zfc_13sym_398.txt` (its transition
+`kz_final.mm0` states, about the 12-symbol machine `../machines/zfc_12sym_376.txt` (its transition
 table is `kz_tm.mm0`, generated from the machine file by `gen_spec.py`):
 
 ```
@@ -65,17 +65,21 @@ folded into the gap, so each configuration has one canonical form.
    split on whether a register is empty (`kzPend_step1/S`, `kzPend_loop`, `kzPend_block`,
    `kzPend_end`). Also the dec shift (`kzDec_block`, `kzDec_end`) and a chain crossing a block
    (`kzChain`).
-2. **Transitions** (`gen_act.py` → `kz_act.mm1`): `kzAction q b = (w, d, t)` for each of the 398
+2. **Transitions** (`gen_act.py` → `kz_act.mm1`): `kzAction q b = (w, d, t)` for each of the 376
    transitions, and the digit and state bounds.
 3. **Register macros** (`gen_sim.py` → `kz_mac.mm1`). Each takes the op from its chain state across
    the gap and the file, for inc, decnz > 0 and decnz = 0, for every register and every file size
    0–9 (lazy creation included). Each is generic in the left tape, the gap and the register values.
-4. **Steps** (`gen_pcs.py` → `kz_p000…013.mm1`). For each (pc, canonical tape) and each branch, the
+4. **Steps** (`gen_pcs.py` → `kz_p000…012.mm1`). For each (pc, canonical tape) and each branch, the
    configuration reaches (`kzReachP`) the next state's configuration. The generator executes the
    machine symbolically and emits the proof: walk, leaf transition, macro, scan back, and follow-on
-   cycles for prologue and rewritten-decnz slots. There are 6600 lemmas: the prologue and the first
+   cycles for prologue and rewritten-decnz slots. There are 6306 lemmas: the prologue and the first
    328 k215P steps with a partial register file, then every state reachable over both branches of
-   every decnz with all 9 registers (4912 states).
+   every decnz with all 9 registers (4765 states). A virtual goto (a k215P pc whose control slot
+   was dropped, see `../README.md`) is a state too: its configuration is `scan` on the blank left
+   of the root with its target's tape, one step before the target's. The lemma of the step into
+   it stops there, and its own lemma is that one step, so each k215P step still takes at least
+   one machine step.
 5. **Relation** (`gen_rel.py` → `kz_rel.mm1`). `kzRel s c` is a balanced disjunction of
    `kzD<i> s c`: s has state i's pc and c is state i's configuration with s's registers.
    `gen_glue.py` → `kz_s*.mm1` proves `kzD<i> s c -> kzGood s c` for each state, from Glazer's
@@ -87,8 +91,8 @@ folded into the gap, so each configuration has one canonical form.
    configuration related to `k215PIter n s`. Backward: in at least n steps, so a halt at time T
    would make a configuration related to a running state halted. Together these give
    `kzEquiv: kzRel s c -> (k215PHaltsFrom s <-> kzHaltsFrom c)`.
-7. **Start** (`gen_boot.py` → `kz_boot.mm1`, `gen_prefix.py` → `kz_prefix.mm1`). The boot's 3180
-   steps; the prologue and the 328 prefix steps chained with concrete registers;
+7. **Start** (`gen_boot.py` → `kz_boot.mm1`, `gen_prefix.py` → `kz_prefix.mm1`). The boot's 3186
+   steps (it ends by running r0's inc); the prologue and the 328 prefix steps chained with concrete registers;
    `k215PIter 328 k215PInitial` computed; `kzRel` at that state. `kz_final.mm1` shifts halting
    along both runs and concludes.
 

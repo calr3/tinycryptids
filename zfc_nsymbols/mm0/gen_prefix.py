@@ -5,14 +5,17 @@ import os, sys, json
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
-from gen_sim import Sim, cells, Rep, FileRef, Cfg, Push, ZERO
+from gen_sim import Sim, cells, Rep, FileRef, Cfg, Push, ZERO, nd
 from gen_rel import pnum
 from gen_glue import Glue
 from program import P
 
 
-def conf(S, digits, vals):
-    return Cfg('st', S.root, Push(0, ZERO), cells(list(digits), Rep(S.M.G - len(digits), FileRef(vals))))
+def conf(S, digits, vals, virtual=False):
+    r = cells(list(digits), Rep(S.M.G - len(digits), FileRef(vals)))
+    if virtual:
+        return Cfg('st', S.M.q('scan'), ZERO, Push(0, r))
+    return Cfg('st', S.root, Push(0, ZERO), r)
 
 
 def vec(regs):
@@ -33,7 +36,9 @@ def main(D, chunk=40):
     order = S.m.reg_order
     out = ['import "kz_halt.mm1";', 'import "kz_boot.mm1";', '']
     # the machine: kzBoot, the prologue, then the prefix lemmas, in segments with explicit ends
-    confs = [conf(S, r['digits'], [pnum(r['regs'][o]) for o in order[:r['k']]]) for r in run]
+    confs = [conf(S, r['digits'], [pnum(r['regs'][o]) for o in order[:min(r['k'], 9)]] + ['0'] * (r['k'] - min(r['k'], 9)),
+                  r['pc'] in S.m.virtual_pcs)
+             for r in run]
     names = ['kzBoot', prologue] + [r['lemma'] for r in run[:-1]]
     # names[0]: blank -> conf of the fresh tape (k = 0); names[1]: -> confs[0]; names[i + 2]: confs[i] -> confs[i + 1]
     segs, cur = [], None
@@ -76,6 +81,8 @@ def main(D, chunk=40):
         return f'({"k215PAtCB" if e["tag"] == 2 else "k215PAtCC"} {LK})'
     N = len(run) - 1
     prev = None
+    if N == 0:
+        out.append(f"theorem kzPI0: $ k215PIter 0 k215PInitial = {pstate(run[0]['pc'], run[0]['regs'])} $ =\n'k215PIter_zero;")
     for n0 in range(0, N, chunk):
         n1 = min(N, n0 + chunk)
         pf = 'k215PIter_zero' if n0 == 0 else prev

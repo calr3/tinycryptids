@@ -9,11 +9,13 @@ rnd = random.Random(int(sys.argv[3]) if len(sys.argv) > 3 else 1)
 m = build.machine(D)
 bad = 0
 for pc in range(NP):
+    if pc in m.virtual_pcs:
+        continue                      # a dropped goto: no configuration of its own
     for _ in range(trials):
         regs = [rnd.choice([0, 0, 1, 2, 3, rnd.randint(0, 20)]) for _ in range(9)]
         ok, _, _ = m.check_pc(pc, regs)
         if not ok:
             bad += 1
             print('mismatch', pc, P[pc], regs)
-print(f'D={D}: {NP} pcs x {trials}: {bad} mismatches')
+print(f'D={D}: {NP - len(m.virtual_pcs)} pcs x {trials}: {bad} mismatches ({len(m.virtual_pcs)} virtual gotos skipped)')
 sys.exit(1 if bad else 0)

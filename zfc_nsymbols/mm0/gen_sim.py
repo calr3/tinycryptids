@@ -121,11 +121,17 @@ def fold(segs):
 
 
 # ---------------------------------------------------------------- the machine
+def nd():
+    """dummy registers after the 9 (the boot wrote their separators): constant 0"""
+    import compiler
+    return compiler.PRESEP or 0
+
+
 class Mach:
     def __init__(self, D):
         self.D = D
         self.m, self.qs, self.idx = gen_spec.machine_numbers(D)
-        self.K, self.S = D + 2, D + 1
+        self.K, self.S = self.m.K, self.m.SEP
         self.reg_order = self.m.reg_order
         self.G = self.m.G
         self.tm = self.m.tm
@@ -268,8 +274,8 @@ class Macros:
 
     def statement(self, op, j, k):
         M = self.M
-        vals = [f'v{i}' for i in range(1, k + 1)]
-        names = [v for i, v in enumerate(vals) if not (op == 'dec0' and i == j - 1)]
+        vals = [f'v{i}' if i <= 9 else '0' for i in range(1, k + 1)]     # dummies are 0
+        names = [v for i, v in enumerate(vals) if not (op == 'dec0' and i == j - 1) and v != '0']
         start = vals[:]
         if op == 'decp' and j <= k:
             start[j - 1] = f'(suc v{j})'
@@ -349,8 +355,21 @@ class Macros:
                 segs.append(('R', f'(kzReach_I (ax_mp (kzPend_block {hyp["block"]}) {hv}))',
                              Cfg('pend', cfg.q, Rep(n, Push(S, cfg.l)), X)))
                 cfg = segs[-1][2]
-            hv = self.hv(cfg.l)
-            segs.append(('SE', f'(ax_mp (kzPend_end {hyp["end"]}) {hv})', Cfg('ls', self.scan, cfg.l, ZERO)))
+            if nd():
+                # a dummy separator is always last: the shift ends in cS on a separator
+                V = cfg.l
+                if isinstance(V, Push):
+                    assert V.c == S, V
+                    hvS = f'(kzPush_mod {M.hb(S)})'
+                else:
+                    assert isinstance(V, Rep) and V.n == '0' and isinstance(V.t, Push) and V.t.c == S, V
+                    hvS = f'(eqtr (modeq1 kzRep0) (kzPush_mod {M.hb(S)}))'
+                hS_ = (f'{M.hq(self.cS)} {M.hq(self.scan)} {M.hb(0)} {M.hb(S)} kzS_ne1 '
+                       f'{M.A(self.cS, 0)} {M.A(self.scan, S)}')
+                segs.append(('SE', f'(ax_mp (kzPend_endS {hS_}) {hvS})', Cfg('ls', self.scan, cfg.l, ZERO)))
+            else:
+                hv = self.hv(cfg.l)
+                segs.append(('SE', f'(ax_mp (kzPend_end {hyp["end"]}) {hv})', Cfg('ls', self.scan, cfg.l, ZERO)))
             cfg = segs[-1][2]
             return self.scan_back(segs, cfg, b)
         if op == 'decp':
@@ -468,7 +487,7 @@ def macro_file(D, ks=(9,)):
     MC = Macros(M)
     S = M.S
     out = ['import "kz_act.mm1";', '']
-    out += file_defs(S)
+    out += file_defs(S, 9 + nd())
     out.append(f"theorem kzS_ne1: $ {num(S)} != 1 $ = '(mpbir (noteq peano2) peano1);")
     out.append('')
     for k in ks:
@@ -483,6 +502,9 @@ def macro_file(D, ks=(9,)):
 if __name__ == '__main__':
     D = int(sys.argv[1])
     ks = [int(x) for x in sys.argv[2:]] or [9]
+    Mach(D)                              # sets the compiler's options
+    if nd():
+        ks = [9 + nd()]
     open(os.path.join(HERE, 'kz_mac.mm1'), 'w').write('\n'.join(macro_file(D, ks)) + '\n')
     print('kz_mac.mm1 written')
 
@@ -515,8 +537,13 @@ class Sim:
         self.inv = {tuple(t): pc for pc, t in self.m.pc_tape.items()}
         self.chains = {M.q(f'c{op}{j}'): (op, j) for op in ('inc', 'dec') for j in range(1, 10)}
 
-    def conf(self, digits, vals):
-        return Cfg('st', self.root, BASE, cells(digits, Rep(self.M.G - len(digits), FileRef(vals))))
+    def conf(self, digits, vals, virtual=False):
+        """the configuration of a state; a virtual (dropped goto) state's is one step earlier:
+        scan on the blank left of the root, the target's tape"""
+        r = cells(digits, Rep(self.M.G - len(digits), FileRef(vals)))
+        if virtual:
+            return Cfg('st', self.M.q('scan'), J, Push(0, r))
+        return Cfg('st', self.root, BASE, r)
 
     def decode(self, digits):
         """the k215P pc of a canonical tape, or None (a prologue / rewritten slot)"""
@@ -575,9 +602,9 @@ class Sim:
             segs.append(seg)
         return segs[-1][2]
 
-    def canon(self, cfg, segs):
+    def canon(self, cfg, segs, base=('r',)):
         """fold trailing fresh cells into the gap; returns (cfg, digits)"""
-        path, t, digs = ['r'], cfg.r, []
+        path, t, digs = list(base), sub(cfg, list(base)), []
         while isinstance(t, Push):
             digs.append(t.c - 1)
             path.append('t')
@@ -592,17 +619,31 @@ class Sim:
             cfg = seg[2]
         return cfg, tuple(digs)
 
-    def run(self, digits, vals, branch, k, maxcycles=6):
+    def run(self, digits, vals, branch, k, maxcycles=6, start_virtual=False, end_virtual=False):
         """symbolic execution from conf(digits, vals) for one k215P step.
         branch: 'inc', 'dec0', 'decp' (for the op of the leaf), 'ctl', 'halt'.
+        start_virtual: from a virtual state's configuration (one step, to the target's);
+        end_virtual: stop one step before the root (the next k215P state is virtual).
         Returns (segs, end cfg, end digits, end vals, end k, end pc)"""
         M, segs = self.M, []
-        cfg = self.conf(digits, vals)
+        cfg = self.conf(digits, vals, start_virtual)
+        if start_virtual:
+            cfg = self.cstep(cfg, segs)
+            assert cfg.kind == 'st' and cfg.q == self.root and cfg.l == BASE, cfg
+            pc, _ = self.decode(digits)
+            return segs, cfg, digits, vals, k, pc
         first = True
+        xmark = None
         for cyc in range(maxcycles):
             lf = self.leaf(digits)
             pc, _ = self.decode(digits)
             if not first and pc is not None:
+                if end_virtual:
+                    # cut at the step scan -> root and canonicalize the scan configuration
+                    segs = segs[:xmark + 1]
+                    cfg = segs[-1][2]
+                    cfg, d2 = self.canon(cfg, segs, ('r', 't'))
+                    assert d2 == digits, (d2, digits)
                 return segs, cfg, digits, vals, k, pc
             br = branch if first else ('inc' if lf[0] == 'inc' else 'ctl')
             first = False
@@ -644,6 +685,11 @@ class Sim:
                 vals = new
                 while not (cfg.kind == 'st' and cfg.q == self.root and cfg.l == BASE):
                     cfg = self.cstep(cfg, segs)
+            for i in range(len(segs) - 1, -1, -1):
+                c = segs[i][2]
+                if c.kind == 'st' and c.q == M.q('scan') and c.l == J:
+                    xmark = i
+                    break
             cfg, digits = self.canon(cfg, segs)
         raise AssertionError('too many cycles')
 
@@ -653,8 +699,9 @@ def branches(e):
 
 
 def start_vals(S, e, br, k):
-    vals = [f'v{i}' for i in range(1, k + 1)]
-    names = list(vals)
+    kr = min(k, 9)
+    vals = [f'v{i}' for i in range(1, kr + 1)] + ['0'] * (k - kr)
+    names = vals[:kr]
     if br in ('dec0', 'decp'):
         j = S.m.reg_order.index(e['arg'])
         if j < k:
@@ -666,12 +713,26 @@ def start_vals(S, e, br, k):
     return vals, names
 
 
+def successor(pc, br):
+    from program import P
+    e = P[pc]
+    return {'inc': e['pos'], 'decp': e['pos'], 'dec0': e['zero'], 'ctl': e['zero'], 'halt': None}[br]
+
+
 def pc_theorem(S, name, pc, digits, br, k):
+    """the lemma for one k215P step; result (next pc, digits, vals, k): the next pc is the
+    k215P successor, virtual or not"""
     from program import P
     e = P[pc]
     vals, names = start_vals(S, e, br, k)
-    segs, cfg, d2, v2, k2, pc2 = S.run(digits, vals, br, k)
-    a = S.conf(digits, vals)
+    sv = pc in S.m.virtual_pcs
+    nxt = successor(pc, br)
+    ev = nxt in S.m.virtual_pcs
+    segs, cfg, d2, v2, k2, pc2 = S.run(digits, vals, br, k, start_virtual=sv, end_virtual=ev)
+    if ev:
+        assert pc2 == P[nxt]['zero'], (pc, nxt, pc2)
+        pc2 = nxt
+    a = S.conf(digits, vals, sv)
     pf, kind = fold(segs)
     assert kind == 'P'
     binders = ' '.join(names + ['J'])

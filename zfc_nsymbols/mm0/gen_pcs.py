@@ -12,7 +12,7 @@ import os, sys, json
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
-from gen_sim import Sim, strip, branches, pc_theorem, start_vals
+from gen_sim import Sim, strip, branches, pc_theorem, start_vals, nd
 from program import P
 
 
@@ -45,8 +45,9 @@ def main(D, chunk):
         if pc is None:
             # the prologue: from the fresh tape, k = 0, through the 4 incs to pc 0
             from gen_sim import fold, Cfg
-            segs, cfg, d2, v2, k2, pc2 = S.run(digits, [], 'inc', 0)
-            a = S.conf(digits, [])
+            v0 = ([str(getattr(S.m, 'boot_r0', 0))] + ['0'] * (k - 1)) if k else []
+            segs, cfg, d2, v2, k2, pc2 = S.run(digits, v0, 'inc', k)
+            a = S.conf(digits, v0)
             pf, kind = fold(segs)
             thm = f"theorem {name} (J: nat):\n  $ kzReachP {a}\n    {cfg} $ =\n'{pf};"
             res = (pc2, d2, v2, k2)
@@ -61,9 +62,12 @@ def main(D, chunk):
         return ent
 
     # the prologue
-    ent = lemma(None, (), 'inc', 0, 'prologue')
-    assert ent['next_pc'] == 0 and ent['next_k'] == 1
-    pc, digits, k = 0, tuple(ent['next_digits']), 1
+    r0 = getattr(S.m, 'boot_r0', 0)                     # the boot made register 1 (r0)
+    KF = 9 + nd()                                       # registers in the file at the end
+    k0 = KF if nd() else (1 if r0 else 0)
+    ent = lemma(None, (), 'inc', k0, 'prologue')
+    assert ent['next_pc'] == 0 and ent['next_k'] == max(k0, 1)
+    pc, digits, k = 0, tuple(ent['next_digits']), max(k0, 1)
     regs = [4] + [0] * 8
     run = [dict(pc=pc, digits=list(digits), k=k, regs=regs, lemma=None)]
     while k < 9:
@@ -81,11 +85,11 @@ def main(D, chunk):
     while todo:
         pc, digits = todo.pop()
         for br in branches(P[pc]):
-            ent = lemma(pc, digits, br, 9, 'main')
+            ent = lemma(pc, digits, br, KF, 'main')
             if ent['next_pc'] == 'halt':
                 continue
             nxt = (ent['next_pc'], tuple(ent['next_digits']))
-            assert ent['next_k'] == 9
+            assert ent['next_k'] == KF
             if nxt not in states:
                 states.add(nxt)
                 todo.append(nxt)

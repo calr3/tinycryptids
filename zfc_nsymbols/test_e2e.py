@@ -7,7 +7,7 @@ import build
 from compiler import P
 D = int(sys.argv[1]); maxsteps = int(float(sys.argv[2])) if len(sys.argv) > 2 else 10**7
 m = build.machine(D)
-inv = {tuple(t): pc for pc, t in m.pc_tape.items()}
+inv = {tuple(t): pc for pc, t in m.pc_tape.items() if pc not in m.virtual_pcs}
 t = collections.defaultdict(int); q, h = m.start, 0
 regs, pc, seen, base = [4] + [0] * 8, 0, 0, None
 for steps in range(maxsteps):
@@ -27,6 +27,8 @@ for steps in range(maxsteps):
                 if regs[e['arg']]: regs[e['arg']] -= 1; pc = e['pos']
                 else: pc = e['zero']
             else: pc = e['zero']
+            while pc in m.virtual_pcs:    # a dropped goto
+                pc = P[pc]['zero']
         assert inv[tuple(norm)] == pc and r == regs, (seen, inv[tuple(norm)], r, pc, regs)
         seen += 1
 print(f'D={D}: {maxsteps} TM steps, {seen} k215P steps agree')

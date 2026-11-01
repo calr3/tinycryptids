@@ -6,7 +6,7 @@ import os, sys, json
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
-from gen_sim import Sim, cells, Rep, FileRef, Cfg, Push, ZERO, num
+from gen_sim import Sim, cells, Rep, FileRef, Cfg, Push, ZERO, num, nd
 from gen_rel import pnum, tree
 from program import P
 
@@ -83,12 +83,16 @@ class Glue:
                 pf = f'(ax_mp {"orl" if b == "L" else "orr"} {pf})'
         return pf
 
-    def conf_cong(self, digits, eqs, ded=False):
-        """kzState root (kzPush 0 0) (cells (kzRep 1 g (kzF9 ..)))  =  same with eqs on the 9 args"""
+    def conf_cong(self, digits, eqs, ded=False, virtual=False):
+        """kzState root (kzPush 0 0) (cells (kzRep 1 g (kzF9 ..)))  =  same with eqs on the 9 args
+        (virtual: kzState scan 0 (kzPush 0 (cells ..)))"""
         d = 'd' if ded else ''
-        pf = f'(kzF9eq{d} {" ".join(eqs)})'
+        eqs = list(eqs) + [('eqidd' if ded else 'eqid')] * nd()
+        pf = f'(kzF{9 + nd()}eq{d} {" ".join(eqs)})'
         pf = f'(kzRepeq3{d} {pf})'
         for _ in digits:
+            pf = f'(kzPusheq2{d} {pf})'
+        if virtual:
             pf = f'(kzPusheq2{d} {pf})'
         return f'(kzStateeq3{d} {pf})'
 
@@ -98,7 +102,8 @@ class Glue:
         LK = self.look[str(pc)][0]
         N = pnum(pc)
         tag, a = e['tag'], e['arg']
-        h5 = f'(mpbir (lteq1 kzState_Q) kzLtH_{self.root})'
+        virt = self.S.m.virtual_pcs
+        h5 = f'(mpbir (lteq1 kzState_Q) kzLtH_{self.S.M.q("scan") if pc in virt else self.root})'
         stat = f'(eqtrd (kzStat {LK}) (a1i k215PETag_entry))'
         not4 = f'(mtbird (eqeq1d {stat}) (a1i kzNe_{tag}_4))' if tag != 4 else None
         hdr = f'theorem kzS{i} (s c: nat): $ kzD{i} s c -> kzGood s c $ =\n'
@@ -120,7 +125,7 @@ class Glue:
                 step = f'(kzStepAt ({"k215PAtCB" if tag == 2 else "k215PAtCC"} {LK}))'
                 eqs = [f'(k215PR{o}eq k215PRegs_state)' for o in self.order]
             nd = tuple(le['next_digits'])
-            leaf = f'(iani k215PPC_state (eqcom {self.conf_cong(nd, eqs)}))'
+            leaf = f'(iani k215PPC_state (eqcom {self.conf_cong(nd, eqs, False, le["next_pc"] in virt)}))'
             return hdr + f"'(kzG_det {not4} {step} {le['name']} {self.intro(j, leaf)} {h5});"
         # decnz
         lz, lp = self.lem[(pc, digits, 'dec0')], self.lem[(pc, digits, 'decp')]
@@ -145,7 +150,7 @@ class Glue:
             else:
                 ez.append(f'(a1i (k215PR{o}eq k215PRegs_state))')
         ndz = tuple(lz['next_digits'])
-        leafz = f'(iand (a1i k215PPC_state) (eqcomd {self.conf_cong(ndz, ez, True)}))'
+        leafz = f'(iand (a1i k215PPC_state) (eqcomd {self.conf_cong(ndz, ez, True, lz["next_pc"] in virt)}))'
         h4z = self.intro(jz, leafz, ded=True)
         ep = []
         for o in self.order:
@@ -154,7 +159,7 @@ class Glue:
             else:
                 ep.append(f'(eqtr (k215PR{o}eq k215PRegs_state) kzRS_{a}_{o})')
         ndp = tuple(lp['next_digits'])
-        leafp = f'(iani k215PPC_state (eqcom {self.conf_cong(ndp, ep)}))'
+        leafp = f'(iani k215PPC_state (eqcom {self.conf_cong(ndp, ep, False, lp["next_pc"] in virt)}))'
         h4p = f'(a1i {self.intro(jp, leafp)})'
         return hdr + f"'(kzG_dec {not4} {h2z} {h2p} {h3z} {h3p} {h4z} {h4p} {h5});"
 

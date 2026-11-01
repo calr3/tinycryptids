@@ -21,7 +21,7 @@ def machine_numbers(D):
 
 def spec(D):
     m, qs, idx = machine_numbers(D)
-    N, K = len(qs), D + 2
+    N, K = len(qs), m.K
     H = N
     out = [f'import "{PEANO}.mm0";', '',
            f'-- The {K}-symbol machine zfc_nsymbols/machines/zfc_{K}sym_{m.count()}.txt: {N} states',

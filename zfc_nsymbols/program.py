@@ -60,8 +60,14 @@ class DAG:
     """Binary DAG, relative hash-consing.  node id -> (car, cdr); a child is an int (node) or a
     leaf tuple.  pc_path[pc] = the sequence of (node, bit) from the root to pc's leaf (the
     IR path; a decX leaf's IR path ends at its rewritten dec leaf)."""
-    def __init__(self, prologue=0):
+    def __init__(self, prologue=0, regroup=None, native_decx=False):
+        self.native_decx = native_decx
         paths, leaves = trie()
+        regroup = regroup or {}
+        if regroup:
+            import regram
+            _, _, targets = regram.semantic()
+        where = {}               # trie path -> (regrouped node a, its new bits under a)
         self.nodes = []
         memo = {}
 
@@ -75,12 +81,39 @@ class DAG:
         def build(a):
             if a in leaves:
                 lf = leaves[a]
+                if lf[0] == 'decX' and native_decx:
+                    return ('dec', lf[1], lf[2])
                 if lf[0] == 'decX':
                     # X = (Z, brk k+1), Z = (dec r, brk 2)
                     z = intern(('dec', lf[1]), ('brk', 2))
                     return intern(z, ('brk', lf[2] + 1))
                 return lf
+            if a in regroup:
+                return build_regroup(a, regroup[a])
             return intern(build(a + (0,)), build(a + (1,)))
+
+        def build_regroup(a, tree):
+            """a's children read through transparent trie nodes (regram.items), re-bracketed by
+            `tree`: nested lists of item indices, each list a right-nested sequence"""
+            its = regram.items(a, leaves, targets)
+            seen = []
+
+            def mk(t, bits):
+                if isinstance(t, int):
+                    x = its[t]
+                    seen.append(t)
+                    where[x] = (a, bits)
+                    if x in leaves and leaves[x][0] in ('brk', 'cnt'):
+                        up = leaves[x][1] - (len(x) - len(a))
+                        assert up >= 0, (x, a)
+                        return (leaves[x][0], len(bits) + up)
+                    return build(x)
+                if len(t) == 1:
+                    return mk(t[0], bits)
+                return intern(mk(t[0], bits + (0,)), mk(t[1:], bits + (1,)))
+            r = mk(tree, ())
+            assert seen == list(range(len(its))), 'the tree must list the items in order'
+            return r
         self.root = build(())
         self.prefix = ()
         self.synth = []          # IR paths of the prologue's leaves (not k215P pcs)
@@ -95,7 +128,13 @@ class DAG:
             self.prefix = (1,) * prologue + (0,)
         self.pc_ir = []          # IR bit path of each pc's leaf
         for i, p in enumerate(paths):
-            self.pc_ir.append(self.prefix + p + ((0, 0) if leaves[p][0] == 'decX' else ()))
+            q = p
+            for j in range(len(p), -1, -1):
+                if p[:j] in where:
+                    a, bits = where[p[:j]]
+                    q = a + bits + p[j:]
+                    break
+            self.pc_ir.append(self.prefix + q + ((0, 0) if leaves[p][0] == 'decX' and not native_decx else ()))
         self.leaf_kind = [leaves[p] for p in paths]
 
     def walk(self, bits):
