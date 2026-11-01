@@ -21,7 +21,7 @@ Every main theorem depends only on `propext`, `Classical.choice` and `Quot.sound
 | `TinyCryptids/Core/Basic3.lean` | The same model with 3 symbols (`TM3`: `Sym` = `s0 s1 s2`, `s0` blank) and its single steps and scans, for `weakcollatz/sym3/` |
 | `TinyCryptids/Core/Multi.lean` | Machines with any number of symbols (namespace `TMK`): symbols `Nat` (0 blank), stream tapes `Nat → Nat`, `step`, `Halts`, `halts_iff_of_sim`; used by the 6-symbol Goldbach machine (`goldbach/`) and the 10-symbol PA machine (`pa_nsymbols/`) |
 | `TinyCryptids/Core/BeepK.lean` | `Beep.lean`'s `BeepsAt`, `QuasiHalts`, `run_sub` and `quasihalts_of_sub` for the machines of `Multi.lean`; used by the 4-symbol twin prime machine (`twinprimes/sym4/`) |
-| `TinyCryptids/Defs.lean` | **The definitions used in the theorem statements**, namespace `TinyCryptids`: `iterate`, `collatz`, `Prime`, `properDivSum`, `fact`, `leftFact`, `GoldbachConjecture`, `TwinPrimeConjecture`, `MersennePrimeConjecture`, `SophieGermainPrime`, `FinitelyManySophieGermainPrimes`, `InfinitelyManyFermatPrimes`, `radBelow`, `rad`, `ABCConjecture`, and the theory T of the PA machines (`Wff`, `Wff.Axiom`, `Wff.Provable`); also `prime_iff_dvd` |
+| `TinyCryptids/Defs.lean` | **The definitions used in the theorem statements**, namespace `TinyCryptids`: `iterate`, `collatz`, `Prime`, `properDivSum`, `fact`, `leftFact`, `GoldbachConjecture`, `TwinPrimeConjecture`, `MersennePrimeConjecture`, `SophieGermainPrime`, `FinitelyManySophieGermainPrimes`, `InfinitelyManyFermatPrimes`, `radBelow`, `rad`, `ABCConjecture`, `PillaiConjecture`, and the theory T of the PA machines (`Wff`, `Wff.Axiom`, `Wff.Provable`); also `prime_iff_dvd` |
 | `TinyCryptids/<Machine>/` | One hand-designed machine per folder, namespace `TM.<Machine>` |
 | `TinyCryptids/PA/`, `TinyCryptids/PAK/` | The compiled PA machines: 2 symbols (`TM.PA`) and 10 symbols (`TMK.PA`); see the outlines below |
 | `Check.lean` | Every main theorem with `#check` and `#print axioms` |
@@ -77,6 +77,7 @@ Beeping booping machines (`Core/BeepBoop.lean`): the beep is `qb` reading `bb`, 
 | Theorem | Statement |
 |---------|-----------|
 | `TM.ABC.repeats_iff`, `M235` | `RepeatsForever delta xe3 false xq6 false start ↔ ¬ ABCConjecture`, with `ABCConjecture := ∀ n, 1 ≤ n → ∃ N, ∀ a b, 1 ≤ a → 1 ≤ b → Nat.gcd a b = 1 → N ≤ a + b → (a + b) ^ n ≤ rad (a * b * (a + b)) ^ (n + 1)`; also `never_halts : ¬ Halts delta start` (and for `M235`: `delta2`, `St2.xe3`, `St2.xq6`, `start2`) |
+| `TM.Pillai.repeats_iff`, `M91` | `RepeatsForever delta zX3 true zX3 false start ↔ ¬ PillaiConjecture`, with `PillaiConjecture := ∀ k, 1 ≤ k → ∃ N, ∀ a b x y, 2 ≤ a → 2 ≤ b → 2 ≤ x → 2 ≤ y → a ^ x = b ^ y + k → a + b + x + y < N`; also `never_halts : ¬ Halts delta start` (and for `M91`: `delta2`, `St2.zX3`, `start2`) |
 
 ## Proof outlines
 
@@ -239,6 +240,15 @@ tests `pass_A/B/C`, `hit_A/B/C`, `new_R`, `notnew_R`, `next_d`, `last_d`. `PairE
 `good_iff`. `Main`: `factor_loop`, `power` (a `Trace`), `pair_trace`, `seed`, `Tm`, `never_halts`,
 `repeats_iff` by `repeatsForever_of_segments`. `M235` by `repeatsForever_iff_of_sim` with
 `excl_beep` and `excl_boop`.
+
+**Pillai's conjecture** (`TinyCryptids/Pillai`, beeping booping). `Copy`, `Pow`, `NextBase`:
+`../fermat`'s routines, with any stream left of the exponent block (`leftOf pre k e W`) and the
+exponent cursor moving on to the next block when a power is done (`e_next`, `pow_full`).
+`Compare`: the zig-zag as a `Trace`: `zz_step`, `zz_A`, `zz_R`, the beep loop `beeps`, `zz` (events
+`zev`), `compare_entry`. `Tuple`: `setup`, `clear_home` (`Home.go`), `tuple_check`. `Enum`:
+the NEXCOM step for four blocks. `Main`: `reached`, `tot_mono`, `tot_big`, `seed_reach`
+(166 concrete steps), `seg_ex`, `Tm`, `never_halts`, `good_iff`, `repeats_iff` by
+`repeatsForever_of_segments`. `M91` by `repeatsForever_iff_of_sim`.
 
 **PA** (`TinyCryptids/PA`, see `../pa/PROOF.md`). `Machine.lean`: the machine TMBuilder compiles
 from any decision DAG; `M309.lean` checks the 309-state table is that machine for the program's

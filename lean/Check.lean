@@ -120,6 +120,16 @@ Run `lake env lean Check.lean` after `lake build`. -/
 #print axioms TM.ABC.M235.never_halts
 #check @TM.ABC.M235.beep_transition
 #check @TM.ABC.M235.boop_transition
+#check @TM.Pillai.repeats_iff
+#print axioms TM.Pillai.repeats_iff
+#check @TM.Pillai.never_halts
+#print axioms TM.Pillai.never_halts
+#check @TM.Pillai.M91.repeats_iff
+#print axioms TM.Pillai.M91.repeats_iff
+#check @TM.Pillai.M91.never_halts
+#print axioms TM.Pillai.M91.never_halts
+#check @TM.Pillai.M91.beep_transition
+#check @TM.Pillai.M91.boop_transition
 
 -- PA: halts iff the theory T (S2 + Friedman's E, equiconsistent with PA) proves v0 ∈ v0
 #check @TM.PA.halts_iff

@@ -102,6 +102,15 @@ def ABCConjecture : Prop :=
   ∀ n, 1 ≤ n → ∃ N, ∀ a b, 1 ≤ a → 1 ≤ b → Nat.gcd a b = 1 → N ≤ a + b →
     (a + b) ^ n ≤ rad (a * b * (a + b)) ^ (n + 1)
 
+/-- Pillai's conjecture: for every `k ≥ 1`, `a ^ x - b ^ y = k` has only finitely many solutions
+with `a, b, x, y ≥ 2` ("finitely many" as a bound on `a + b + x + y`). -/
+def PillaiConjecture : Prop :=
+  ∀ k, 1 ≤ k → ∃ N, ∀ a b x y, 2 ≤ a → 2 ≤ b → 2 ≤ x → 2 ≤ y → a ^ x = b ^ y + k →
+    a + b + x + y < N
+
+/-- `3 ^ 2 - 2 ^ 3 = 1` (Catalan's, now Mihăilescu's, theorem: the only solution for `k = 1`). -/
+example : (3 : Nat) ^ 2 = 2 ^ 3 + 1 := by decide
+
 /-! ## The theory T of the PA machine
 
 First-order logic with `=` and `∈` (Tarski's system S2) plus one set existence scheme of

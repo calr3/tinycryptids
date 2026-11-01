@@ -1,0 +1,471 @@
+; ============================================================================
+; A 91-state, 2-symbol BEEPING BOOPING Turing machine whose output repeats a
+; value forever IFF PILLAI'S CONJECTURE IS FALSE.
+;
+; THE BEEP is the transition of state zX3 reading 1 (marked BEEP below),
+; THE BOOP the transition of the same state reading 0 (marked BOOP below).
+; Started on a blank tape in the first state, the machine never halts. Its
+; output is the sequence of beep counts between consecutive boops (Bram
+; Cohen's Beeping Booping Busy Beavers). Some value occurs in it infinitely
+; often iff some k >= 1 has infinitely many solutions of a^x - b^y = k with
+; a, b, x, y >= 2, i.e. iff Pillai's conjecture fails.
+; Lean proof: lean/TinyCryptids/Pillai/M91.lean,
+; theorem TM.Pillai.M91.repeats_iff (and never_halts).
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 132-state design of build.py / pillai.txt with states
+;   merged. States are merged only when their defined transitions agree, and
+;   no other state joins the beep/boop state (it reads both symbols), so the
+;   two special transitions are taken exactly where the design takes them.
+;   Each state below plays one or more ROLES of the design (its name joins
+;   them); each transition line is tagged [role] with the role(s) that use
+;   it. A '-' line is never used.
+;
+; THE IDEA
+;   For every (x, y, a, b) with x, y, a, b >= 2 (NEXCOM order of the block
+;   lengths, which reaches every tuple): A := 1 + a^x, R := b^y, then erase a
+;   cell of A and a cell of R in turn. If R runs out first with A - R >= 2,
+;   i.e. a^x > b^y, the next cell of A is erased, each further one with a
+;   BEEP (a^x - b^y - 1 beeps), then the BOOP. Otherwise no event. So a
+;   value v repeats forever iff a^x - b^y = v + 1 has infinitely many
+;   solutions.
+;
+; TAPE LAYOUT (unary blocks of 1s separated by 00; a single 0 inside a
+; block is a HOLE, a cursor)
+;
+;      x 00 y 00 a 00 b 00 M 00 A 0 R 0 Q
+;
+;   x, y: E + 2 cells for the exponent E; the exponent cursor on cells
+;         1 .. E + 1 (x's cell 1 is the anchor between tuples).
+;   a, b: v + 2 cells for the base v; a marker hole on cell 1 of the base
+;         being powered, its round cursor on cells 3 .. v + 1.
+;   M: one cell. A: 1 + a^x after the first power. R: the running power
+;   (its hole is the single 0 after A). Q: scratch for copies of R.
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; sd0    [seed] write x = 1 0 1 1 1 (the hole on cell 1 counts the blocks still to write)
+; u7     [enumerate_tuples] transfer: block cell 4 (0: minimal, it gains it back)
+start_sd0_u7
+    0 1 R sd1_e7_u2            ; [sd0, u7]
+    1 1 R u8                   ; [u7]
+
+; ---------- SEED: x = 3 with a counting hole; 00 1111 three times (y, a, b = 2); M; then A, R via cr4 
+
+; PL1    [seed] parser: move left to the next hole (00 pairs crossed); back to the hole
+PL1
+    0 0 L PL2                  ; [PL1]
+    1 1 L PL1                  ; [PL1]
+; PL2    [seed] parser: move left to the next hole (00 pairs crossed); back to the hole
+PL2
+    0 0 L PL1                  ; [PL2]
+    1 1 R S1_f5                ; [PL2]
+; R1     [seed] right to three 0s
+R1
+    0 0 R R2                   ; [R1]
+    1 1 R R1                   ; [R1]
+; R2     [seed] right to three 0s
+R2
+    0 0 R R3                   ; [R2]
+    1 1 R R1                   ; [R2]
+; R3     [seed] 0: the blank: append 1111 after 00
+R3
+    0 1 R sd2_W2_u3            ; [R3]
+    1 1 R R1                   ; [R3]
+; T1     [seed] right to three 0s
+T1
+    0 0 R T2                   ; [T1]
+    1 1 R T1                   ; [T1]
+; T2     [seed] right to three 0s
+T2
+    0 0 R T3_eAt               ; [T2]
+    1 1 R T1                   ; [T2]
+
+; ---------- ENUMERATE: (x, y, a, b) -> the next tuple (NEXCOM) ----------
+
+; en2    [enumerate_tuples] x cell 2
+; HE2    [compare_and_clear] parser: move left to the next hole (00 pairs crossed)
+en2_HE2
+    0 0 L HE1                  ; [HE2]
+    1 1 R en3_X1               ; [en2, HE2]
+; en3    [enumerate_tuples] x cell 3
+; X1     [compare_and_clear] fill the cursor found (on a cell 1; in the seed: the anchor)
+en3_X1
+    0 1 L H1                   ; [X1]
+    1 1 R en4_eF1_cr5          ; [en3]
+; en4    [enumerate_tuples] x cell 4 (1: x > min)
+; eF1    [pow_routines] power done: the cursor moves on to cell 1
+; cr5    [compare_and_clear] restore: 0 (separator)
+en4_eF1_cr5
+    0 0 R f1_eF2_cr6           ; [en4, eF1, cr5]
+    1 1 R e6                   ; [en4]
+; e6     [enumerate_tuples] h = 1: right across x
+e6
+    0 0 L sd1_e7_u2            ; [e6]
+    1 1 R e6                   ; [e6]
+; sd1    [seed] write x = 1 0 1 1 1 (the hole on cell 1 counts the blocks still to write)
+; e7     [enumerate_tuples] h = 1: x loses its last cell
+; u2     [enumerate_tuples] transfer: the separator
+sd1_e7_u2
+    0 0 R sd2_W2_u3            ; [sd1, u2]
+    1 0 R e8_k3_nb2            ; [e7]
+; e8     [enumerate_tuples] h = 1: the separator
+; k3     [enumerate_tuples] next block cell 0
+; nb2    [pow_routines] next base: the separator
+e8_k3_nb2
+    0 0 R e9_nb3               ; [e8, nb2]
+    1 1 R k4_HL2               ; [k3]
+; e9     [enumerate_tuples] h = 1: y gains a cell; back to the anchor
+; nb3    [pow_routines] next base: cell 0 of the next block
+e9_nb3
+    0 1 L HS1                  ; [e9]
+    1 1 R nb4                  ; [nb3]
+; HS1    [enumerate_tuples] parser: move left to the next hole (00 pairs crossed); back to the anchor -> setup
+HS1
+    0 0 L HS2_f3               ; [HS1]
+    1 1 L HS1                  ; [HS1]
+; HS2    [enumerate_tuples] parser: move left to the next hole (00 pairs crossed); back to the anchor -> setup
+; f3     [enumerate_tuples] block cell 1
+HS2_f3
+    0 0 L HS1                  ; [HS2]
+    1 1 R f4_su0               ; [HS2, f3]
+; f1     [enumerate_tuples] the separator
+; eF2    [pow_routines] of the next block
+; cr6    [compare_and_clear] restore: 0 (A empty, R's hole)
+f1_eF2_cr6
+    0 0 R f2_cr7               ; [f1, cr6]
+    1 1 R n4_eF3               ; [eF2]
+; f2     [enumerate_tuples] block cell 0
+; cr7    [compare_and_clear] restore: R = 1; then to the cursor left in a (HE2)
+f2_cr7
+    0 1 L en2_HE2              ; [cr7]
+    1 1 R HS2_f3               ; [f2]
+; f4     [enumerate_tuples] block cell 2
+; su0    [setup] on the anchor
+f4_su0
+    0 0 R su1                  ; [su0]
+    1 1 R S1_f5                ; [f4]
+; S1     [seed] on the hole
+; f5     [enumerate_tuples] block cell 3
+S1_f5
+    0 0 R S2_n5                ; [S1]
+    1 1 R f6                   ; [f5]
+; f6     [enumerate_tuples] block cell 4 (1: not minimal, this is B_h)
+f6
+    0 0 R f1_eF2_cr6           ; [f6]
+    1 1 R k1_su2               ; [f6]
+; k1     [enumerate_tuples] right across B_h
+; su2    [setup] the separator; then across y into the next-base step
+k1_su2
+    0 0 R k2_nb1               ; [k1, su2]
+    1 1 R k1_su2               ; [k1]
+; k2     [enumerate_tuples] the separator
+; nb1    [pow_routines] next base: right across the block
+k2_nb1
+    0 0 R e8_k3_nb2            ; [k2, nb1]
+    1 1 R k2_nb1               ; [nb1]
+; k4     [enumerate_tuples] next block cell 1 (0: the marker M, B_h is b)
+; HL2    [enumerate_tuples] parser: move left to the next hole (00 pairs crossed)
+k4_HL2
+    0 0 L HL1                  ; [k4, HL2]
+    1 1 L S3_n2_n6_g1          ; [k4, HL2]
+; S3     [seed] fill the old hole (the new one is right of it)
+; n2     [enumerate_tuples] back
+; n6     [enumerate_tuples] B_h
+; g1     [enumerate_tuples] last: x grows on the left
+S3_n2_n6_g1
+    0 1 R S4_g2                ; [S3, g1]
+    1 1 L n3_n7                ; [n2, n6]
+; n3     [enumerate_tuples] the next block gains a cell
+; n7     [enumerate_tuples] B_h
+n3_n7
+    0 1 L n4_eF3               ; [n3]
+    1 1 L n8_MQ2               ; [n7]
+; n4     [enumerate_tuples] the separator
+; eF3    [pow_routines] cell 1 of the next block: the exponent cursor; then to the marker
+n4_eF3
+    0 0 L S2_n5                ; [n4]
+    1 0 R MN1                  ; [eF3]
+; S2     [seed] 0: the hole was on x's last cell: M (T1)
+; n5     [enumerate_tuples] B_h loses a cell
+S2_n5
+    0 0 R T1                   ; [S2]
+    1 0 L S3_n2_n6_g1          ; [S2, n5]
+; n8     [enumerate_tuples] B_h
+; MQ2    [pow_routines] parser: move right to the next hole (00 pairs crossed)
+n8_MQ2
+    0 0 R MQ1                  ; [MQ2]
+    1 1 L n9_q0                ; [n8, MQ2]
+; n9     [enumerate_tuples] B_h
+; q0     [pow_routines] add R into A: fill the 0 between them
+n9_q0
+    0 1 R g3_q1                ; [q0]
+    1 1 L n10                  ; [n9]
+; n10    [enumerate_tuples] B_h still > min? (1: transfer its excess to x)
+n10
+    0 0 L HS2_f3               ; [n10]
+    1 1 L HU1                  ; [n10]
+; HL1    [enumerate_tuples] parser: move left to the next hole (00 pairs crossed)
+HL1
+    0 0 L k4_HL2               ; [HL1]
+    1 1 L HL1                  ; [HL1]
+; S4     [seed] over the new hole
+; g2     [enumerate_tuples] last: the anchor moves
+S4_g2
+    0 0 R R1                   ; [S4]
+    1 0 R g3_q1                ; [g2]
+; g3     [enumerate_tuples] last: the old anchor filled
+; q1     [pow_routines] add R into A: right across R, write 1 past it (R = 1)
+g3_q1
+    0 1 L uh_q2                ; [g3, q1]
+    1 1 R g3_q1                ; [q1]
+; HU1    [enumerate_tuples] parser: move left to the next hole (00 pairs crossed)
+HU1
+    0 0 L HU2                  ; [HU1]
+    1 1 L HU1                  ; [HU1]
+; HU2    [enumerate_tuples] parser: move left to the next hole (00 pairs crossed)
+HU2
+    0 0 L HU1                  ; [HU2]
+    1 1 R uh_q2                ; [HU2]
+; uh     [enumerate_tuples] transfer: on the anchor
+; q2     [pow_routines] the new gap; then back to the exponent cursor
+uh_q2
+    0 0 R u1                   ; [uh]
+    1 0 L LF1                  ; [q2]
+; u1     [enumerate_tuples] transfer: right across x, x gains a cell
+u1
+    0 1 R sd1_e7_u2            ; [u1]
+    1 1 R u1                   ; [u1]
+; sd2    [seed] write x = 1 0 1 1 1 (the hole on cell 1 counts the blocks still to write)
+; W2     [seed] append 1111: second cell
+; u3     [enumerate_tuples] transfer: the block loses cell 0
+sd2_W2_u3
+    0 1 R sd3_W3_m3            ; [sd2, W2]
+    1 0 R u4_NB2               ; [u3]
+; u4     [enumerate_tuples] transfer: block
+; NB2    [pow_routines] parser: move left to the next hole (00 pairs crossed); back to the base cursor
+u4_NB2
+    0 0 L NB1                  ; [NB2]
+    1 1 R u5_bAt               ; [u4, NB2]
+; u5     [enumerate_tuples] transfer: block
+; bAt    [pow_routines] base step: on the base cursor, fill it
+u5_bAt
+    0 1 R bA2                  ; [bAt]
+    1 1 R sd4_W4_u6            ; [u5]
+; sd4    [seed] write x = 1 0 1 1 1 (the hole on cell 1 counts the blocks still to write)
+; W4     [seed] append 1111: fourth cell; back to the hole
+; u6     [enumerate_tuples] transfer: block
+sd4_W4_u6
+    0 1 L PL1                  ; [sd4, W4]
+    1 1 R start_sd0_u7         ; [u6]
+; u8     [enumerate_tuples] transfer: B_h still > min?
+u8
+    0 0 L HS1                  ; [u8]
+    1 1 L HU1                  ; [u8]
+
+; ---------- SETUP: the marker on a, R = 1 added into the empty A --------
+
+; su1    [setup] right across x
+su1
+    0 0 R k1_su2               ; [su1]
+    1 1 R su1                  ; [su1]
+
+; ---------- POWERS: R := a^x, added into A, then R := b^y ---------------
+
+; bA2    [pow_routines] 0: the cursor was on the last cell: merge
+bA2
+    0 0 R MM2                  ; [bA2]
+    1 0 R MC1                  ; [bA2]
+; MC1    [pow_routines] parser: move right to the next hole (00 pairs crossed); to R; punch the copy cursor on R's first cell
+MC1
+    0 0 R MC2                  ; [MC1]
+    1 1 R MC1                  ; [MC1]
+; MC2    [pow_routines] parser: move right to the next hole (00 pairs crossed); to R; punch the copy cursor on R's first cell
+MC2
+    0 0 R MC1                  ; [MC2]
+    1 0 R c1                   ; [MC2]
+; MM1    [pow_routines] parser: move right to the next hole (00 pairs crossed); to R: merge Q into R
+MM1
+    0 0 R MM2                  ; [MM1]
+    1 1 R MM1                  ; [MM1]
+; MM2    [pow_routines] parser: move right to the next hole (00 pairs crossed); to R: merge Q into R
+MM2
+    0 0 R MM1                  ; [MM2]
+    1 1 R m1                   ; [MM2]
+; c1     [pow_routines] to R's end, over the single 0
+c1
+    0 0 R c2                   ; [c1]
+    1 1 R c1                   ; [c1]
+; c2     [pow_routines] to Q's end, append a cell
+c2
+    0 1 L c3                   ; [c2]
+    1 1 R c2                   ; [c2]
+; c3     [pow_routines] back over Q and the single 0
+c3
+    0 0 L c4                   ; [c3]
+    1 1 L c3                   ; [c3]
+; c4     [pow_routines] back to the copy cursor, fill it
+c4
+    0 1 R c5                   ; [c4]
+    1 1 L c4                   ; [c4]
+; c5     [pow_routines] 0: R ended, the copy is done; 1: next cursor
+c5
+    0 0 L c6                   ; [c5]
+    1 0 R c1                   ; [c5]
+; c6     [pow_routines] back over R to its hole (the gap after A)
+c6
+    0 0 L NB1                  ; [c6]
+    1 1 L c6                   ; [c6]
+; NB1    [pow_routines] parser: move left to the next hole (00 pairs crossed); back to the base cursor
+NB1
+    0 0 L u4_NB2               ; [NB1]
+    1 1 L NB1                  ; [NB1]
+; m1     [pow_routines] merge R 0 Q: right across R, fill the single 0
+m1
+    0 1 R m2                   ; [m1]
+    1 1 R m1                   ; [m1]
+; m2     [pow_routines] merge: right across Q
+m2
+    0 0 L sd3_W3_m3            ; [m2]
+    1 1 R m2                   ; [m2]
+; sd3    [seed] write x = 1 0 1 1 1 (the hole on cell 1 counts the blocks still to write)
+; W3     [seed] append 1111: third cell
+; m3     [pow_routines] merge: erase Q's last cell
+sd3_W3_m3
+    0 1 R sd4_W4_u6            ; [sd3, W3]
+    1 0 L m4                   ; [m3]
+; m4     [pow_routines] merge: back over R to its hole; then to the exponent cursor
+m4
+    0 0 L LF1                  ; [m4]
+    1 1 L m4                   ; [m4]
+; LF1    [pow_routines] parser: move left to the next hole (00 pairs crossed); skip the marker
+LF1
+    0 0 L LF2                  ; [LF1]
+    1 1 L LF1                  ; [LF1]
+; LF2    [pow_routines] parser: move left to the next hole (00 pairs crossed); skip the marker
+LF2
+    0 0 L LF1                  ; [LF2]
+    1 1 L LG1                  ; [LF2]
+; LG1    [pow_routines] parser: move left to the next hole (00 pairs crossed); the exponent cursor
+LG1
+    0 0 L LG2                  ; [LG1]
+    1 1 L LG1                  ; [LG1]
+; LG2    [pow_routines] parser: move left to the next hole (00 pairs crossed); the exponent cursor
+LG2
+    0 0 L LG1                  ; [LG2]
+    1 1 R T3_eAt               ; [LG2]
+; T3     [seed] 0: the blank: M = 1 after 00, then A and R
+; eAt    [pow_routines] exponent step: on the exponent cursor, fill it
+T3_eAt
+    0 1 R eA2_cr4              ; [T3, eAt]
+    1 1 R T1                   ; [T3]
+; eA2    [pow_routines] 0: the cursor was on the last cell
+; cr4    [compare_and_clear] restore: 0 (separator)
+eA2_cr4
+    0 0 R en4_eF1_cr5          ; [eA2, cr4]
+    1 0 R MB1                  ; [eA2]
+; MB1    [pow_routines] parser: move right to the next hole (00 pairs crossed); to the marker: next round
+MB1
+    0 0 R MB2                  ; [MB1]
+    1 1 R MB1                  ; [MB1]
+; MB2    [pow_routines] parser: move right to the next hole (00 pairs crossed); to the marker: next round
+MB2
+    0 0 R MB1                  ; [MB2]
+    1 1 R bA2                  ; [MB2]
+; MN1    [pow_routines] parser: move right to the next hole (00 pairs crossed); to the marker
+MN1
+    0 0 R MN2                  ; [MN1]
+    1 1 R MN1                  ; [MN1]
+; MN2    [pow_routines] parser: move right to the next hole (00 pairs crossed); to the marker
+MN2
+    0 0 R MN1                  ; [MN2]
+    1 1 L nb0_H5               ; [MN2]
+; nb0    [pow_routines] next base: fill the marker
+; H5     [compare_and_clear] home: the anchor on x cell 1
+nb0_H5
+    0 1 R k2_nb1               ; [nb0]
+    1 0 R en2_HE2              ; [H5]
+; nb4    [pow_routines] 0: M -> compare
+nb4
+    0 0 R CP2                  ; [nb4]
+    1 0 R MQ1                  ; [nb4]
+; MQ1    [pow_routines] parser: move right to the next hole (00 pairs crossed)
+MQ1
+    0 0 R n8_MQ2               ; [MQ1]
+    1 1 R MQ1                  ; [MQ1]
+
+; ---------- COMPARE A = 1 + a^x with R = b^y: BEEP, BOOP; clear, restore, home 
+
+; CP1    [compare_and_clear] parser: move right to the next hole (00 pairs crossed)
+CP1
+    0 0 R CP2                  ; [CP1]
+    1 1 R CP1                  ; [CP1]
+; CP2    [compare_and_clear] parser: move right to the next hole (00 pairs crossed)
+CP2
+    0 0 R CP1                  ; [CP2]
+    1 1 L zH1                  ; [CP2]
+; zH1    [compare_and_clear] zig-zag: left over the gap, erase A's last cell
+zH1
+    0 0 L zH1                  ; [zH1]
+    1 0 L zA1                  ; [zH1]
+; zA1    [compare_and_clear] 0: A is empty (A <= R): clear the rest of R
+zA1
+    0 0 R zK1                  ; [zA1]
+    1 1 R zG1                  ; [zA1]
+; zG1    [compare_and_clear] zig-zag: right over the gap, erase R's first cell
+zG1
+    0 0 R zG1                  ; [zG1]
+    1 0 R zZ1                  ; [zG1]
+; zZ1    [compare_and_clear] 0: R is empty: A has 1 + a^x - b^y cells
+zZ1
+    0 0 L zX1                  ; [zZ1]
+    1 1 L zH1                  ; [zZ1]
+; zK1    [compare_and_clear] A is empty: right over the gap, erase R's first cell
+zK1
+    0 0 R zK1                  ; [zK1]
+    1 0 R cr1                  ; [zK1]
+; zX1    [compare_and_clear] erase one more cell of A
+zX1
+    0 0 L zX1                  ; [zX1]
+    1 0 L zX2                  ; [zX1]
+; zX2    [compare_and_clear] 0: a^x = b^y; 1: a^x > b^y, erase it
+zX2
+    0 0 L cr3                  ; [zX2]
+    1 0 L zX3                  ; [zX2]
+; zX3    [compare_and_clear] the beep: erase the rest of A
+zX3
+    0 0 L cr3                  ; [zX3]   BOOP
+    1 0 L zX3                  ; [zX3]   BEEP
+; cr1    [compare_and_clear] clear: erase the rest of R
+cr1
+    0 0 L cr3                  ; [cr1]
+    1 0 R cr1                  ; [cr1]
+; cr3    [compare_and_clear] clear: left to M
+cr3
+    0 0 L cr3                  ; [cr3]
+    1 1 R eA2_cr4              ; [cr3]
+; HE1    [compare_and_clear] parser: move left to the next hole (00 pairs crossed)
+HE1
+    0 0 L en2_HE2              ; [HE1]
+    1 1 L HE1                  ; [HE1]
+; H1     [compare_and_clear] home: left
+H1
+    0 0 L H2                   ; [H1]
+    1 1 L H1                   ; [H1]
+; H2     [compare_and_clear] home: after a 0
+H2
+    0 0 L H3                   ; [H2]
+    1 1 L H1                   ; [H2]
+; H3     [compare_and_clear] home: after 0 0 (0: the blank)
+H3
+    0 0 R H4                   ; [H3]
+    1 1 L H1                   ; [H3]
+; H4     [compare_and_clear] home: right to x
+H4
+    0 0 R H4                   ; [H4]
+    1 1 R nb0_H5               ; [H4]
