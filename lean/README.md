@@ -49,6 +49,7 @@ Each hand-designed machine folder has the same shape:
 | `TM.FermatPrimes.halts_iff`, `M25` | `∃ n, 5 ≤ n ∧ Prime (2 ^ 2 ^ n + 1)` |
 | `TM.OddPerfect.halts_iff`, `M37` | `∃ n, n % 2 = 1 ∧ properDivSum n = n` |
 | `TM.Kurepa.halts_iff`, `M38` | `∃ p, Prime p ∧ 2 < p ∧ p ∣ leftFact p` |
+| `TM.Legendre.halts_iff`, `M44` | `∃ n, 1 ≤ n ∧ ∀ p, n ^ 2 < p → p < (n + 1) ^ 2 → ¬ Prime p` |
 | `TM.WallSunSun2.halts_iff`, `M50` | `∃ p, Prime p ∧ p * p ∣ fib (wssIndex p)` |
 | `TM.Sierpinski.halts_iff`, `M60` | `∀ k, k % 2 = 1 → k < 78557 → ∃ n, 1 ≤ n ∧ Prime (k * 2 ^ n + 1)` (Σ₁: the machine halts iff it is true) |
 | `TM.Riesel.halts_iff`, `M76` | `∀ k, k % 2 = 1 → k < 509203 → ∃ n, 1 ≤ n ∧ Prime (k * 2 ^ n - 1)` (Σ₁ likewise) |
@@ -201,6 +202,11 @@ advancing the T counter by `d` (saturating at `n + 1`: `add_unit`); `shift` move
 separator. `dloop`: over `d = 1 .. n−1` the counter becomes `min (properDivSum n) (n + 1)`.
 `round_end` (`re_fill`, `check`, `reset`): halt iff the counter is `n`; otherwise the round for
 `n + 2` starts. `seed_reach`: a pseudo-round `n = −1` reaches `RN 1`.
+
+**Legendre** (`TinyCryptids/Legendre`). `CS q k f m` is the configuration before testing
+`m`, the `k`-th number of an interval with flag `f`. `test`: trial division reaches
+the Q hole with the flag set iff `m` is prime. `ival`/`interval`: over the `2n+1`
+numbers of interval `n` the machine halts iff none is prime, else reaches `IS (n+1)`.
 
 **Wall–Sun–Sun, no primality test** (`TinyCryptids/WallSunSun2`). Every `m ≥ 2` runs the
 odometer and the counter (`Odo`, `Round`: `WallSunSun`'s routines on `B 00 E 00 D`, the round end
