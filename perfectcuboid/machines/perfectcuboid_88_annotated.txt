@@ -1,0 +1,490 @@
+; ============================================================================
+; A 88-state, 2-symbol Turing machine that HALTS IFF A PERFECT CUBOID EXISTS:
+; positive integers a, b, c with a^2+b^2, a^2+c^2, b^2+c^2 and a^2+b^2+c^2 all
+; perfect squares (a box whose edges, face diagonals and space diagonal are all
+; integers). Started on a blank tape in the first state.
+; Lean proof: lean/TinyCryptids/PerfectCuboid/M88.lean,
+; theorem TM.PerfectCuboid.M88.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 154-state design of build.py / perfectcuboid.txt with
+;   states merged (only states whose defined transitions agree). Each state
+;   below plays one or more ROLES of the design (its name joins them); each
+;   transition line is tagged [role] with the role(s) that use it. A '-' line is
+;   never used.
+;
+; TAPE LAYOUT (blank on both sides)
+;
+;      A 00 B 00 C 00 Z  G  S
+;
+;   A, B, C: blocks of L >= 4 ones, standing for the edges v(L) = L/2 - 1.
+;   Z = 111: a block worth 0 that closes the queue A B C Z.
+;   G: eight cells, the window counter W: 00000000 (W = 0), 00001100 (W = 1),
+;      00110000 (W = 2).
+;   S: a counter: a leading 1, 2k+1 cycle cells with one hole, a terminator 1.
+;      The hole on cycle cell j means N = k^2 + j units; N is a square iff j = 0.
+;
+; ALGORITHM
+;   A block X of L cells, set up, has its hole h on its last cell and a mark m
+;   on cell L-3: the region m+2 .. L-1 (of 1, 3, 5, ... cells, as m moves two
+;   cells left after each full cycle of h). One unit = h one cell further in
+;   its region (cyclically), then S one step (a full cycle of S grows it by
+;   two). So X adds v(L)^2 units to S (1 + 3 + ... + (2v - 1)).
+;   The blocks run cyclically (A B C Z A ...). After each block the next one is
+;   set up and S is checked: not a square -> the next tuple. A square: W ticks;
+;   when it wraps, S is reset. The windows between resets are
+;   [A B C] [Z A B] [C Z A] [B C Z], so the checks test a^2+b^2, a^2+b^2+c^2,
+;   c^2+a^2 and b^2+c^2. At the end of the queue with W = 2 (the fourth
+;   window passed): HALT.
+;   The next tuple: S's hole home, W := 2, the holes of the block in hand
+;   filled, then NEXCOM on (A, B, C) (compositions of every total, parts at
+;   least 4 cells, A with the free end on the left).
+;   Start: S's leading 1; the abort routine writes the rest of S and G, finds no
+;   queue, and a chain writes Z and (4, 4, 4).
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START: the seed writes S ------------------------------------
+
+; seed0  seed: S's leading 1
+; n6     next block: cell 1
+start_seed0_n6
+    0 1 R seed1_ab3_ca3            ; [seed0]
+    1 1 R n7                       ; [n6]
+; seed1  seed: S's hole
+; ab3    abort: left to G
+; ca3    NEXCOM |A| > 4: over the separator
+seed1_ab3_ca3
+    0 0 R seed2_ab4_zc21_ca4       ; [seed1, ab3, ca3]
+    1 1 L seed1_ab3_ca3            ; [ab3]
+; seed2  seed: S's terminator
+; ab4    abort: over S's leading 1
+; zc21   start: write Z and the first tuple (4, 4, 4), right to left; home (wa)
+; ca4    NEXCOM |A| > 4: B's new first cell; home (wa)
+seed2_ab4_zc21_ca4
+    0 1 L seed3_wa                 ; [seed2, zc21, ca4]
+    1 1 R ab5_zc18                 ; [ab4]
+; seed3  seed: back to the leading 1 (ab9)
+; wa     home: left over blocks and separators
+seed3_wa
+    0 0 L ab9_wb                   ; [seed3, wa]
+    1 1 L seed3_wa                 ; [wa]
+
+; ---------- A UNIT: h in its region, the trip to S and back -------------
+
+; PL1    from S, left to the block's hole h (a left parser: skips 00)
+PL1
+    0 0 L PL2_r3                   ; [PL1]
+    1 1 L PL1                      ; [PL1]
+; PL2    parser: one 0 seen; on a 1: found, h is to the right: hA
+; r3     reset: S = 101; back to the block (PL1)
+PL2_r3
+    0 0 L PL1                      ; [PL2, r3]
+    1 1 R hA_i3                    ; [PL2]
+; hA     at h: fill it, step right
+; i3     set up: m on cell L-3
+hA_i3
+    0 1 R hB_hW3                   ; [hA]
+    1 0 R hG1_i4_cb6               ; [i3]
+; hB     1: h was not home: the new h here (hC); 0: h was home: wrap (hW)
+; hW3    wrap: h on the region's first cell
+hB_hW3
+    0 0 L hW                       ; [hB]
+    1 0 R hC_cb5                   ; [hB, hW3]
+; hC     1: not home, to S (PS1); 0: the new h is home: the cycle is done, grow (hG1)
+; cb5    NEXCOM |B| > 4: back over the separator
+hC_cb5
+    0 0 L hG1_i4_cb6               ; [hC, cb5]
+    1 1 R PS1                      ; [hC]
+; hW     wrap: left to m (or to the separator: no m left)
+hW
+    0 0 L hX                       ; [hW]
+    1 1 L hW                       ; [hW]
+; hX     1: it was m: the region starts two cells right (hY); 0: no m: the block is done (d1)
+hX
+    0 0 R d1_wc                    ; [hX]
+    1 1 R hY_s2_te                 ; [hX]
+; hY     wrap: over m
+; s2     S: the new hole
+; te     tick: G's cell 4; 0: W = 0 -> 1 (tf); 1: W = 2 -> 0 (tw)
+hY_s2_te
+    0 0 R hW2_tf                   ; [hY, te]
+    1 0 L s3_tc3_tg_tw             ; [s2, te]
+; hW2    wrap: over the spacer
+; tf     tick 0 -> 1: the marker
+hW2_tf
+    0 1 R s3_tc3_tg_tw             ; [tf]
+    1 1 R hB_hW3                   ; [hW2]
+; hG1    grow: from h, left
+; i4     set up: back over the spacer
+; cb6    NEXCOM |B| > 4: back over the separator
+hG1_i4_cb6
+    0 0 L hG2_cb7                  ; [hG1, cb6]
+    1 1 R PK2_i5                   ; [i4]
+; hG2    grow: left to m, fill it
+; cb7    NEXCOM |B| > 4: left over B; fill the separator after A
+hG2_cb7
+    0 1 L hG3_cb8                  ; [hG2, cb7]
+    1 1 L hG2_cb7                  ; [hG2, cb7]
+; hG3    grow: cell m-1
+; cb8    NEXCOM |B| > 4: fill the separator after A (A and B merged)
+hG3_cb8
+    0 1 R zc5_cb9                  ; [cb8]
+    1 1 L hG4                      ; [hG3]
+; hG4    grow: cell m-2; 0: m was on cell 1: no further region
+hG4
+    0 0 R hR                       ; [hG4]
+    1 1 L hG5                      ; [hG4]
+; hG5    grow: cell m-3; 0: m was on cell 2: no further region; 1: m moves to m-2
+hG5
+    0 0 R hR                       ; [hG5]
+    1 1 R hG6_na4_eb0              ; [hG5]
+; hG6    grow: the new m on cell m-2
+; na4    scan: back right
+; eb0    NEXCOM: the separator after A
+hG6_na4_eb0
+    0 0 R na5_eb1                  ; [na4, eb0]
+    1 0 R hR                       ; [hG6]
+; hR     right to h, then to S (PS1)
+hR
+    0 0 R PS1                      ; [hR]
+    1 1 R hR                       ; [hR]
+
+; ---------- S: one step of the counter ----------------------------------
+
+; PS1    right to S's hole (a right parser)
+PS1
+    0 0 R PS2                      ; [PS1]
+    1 1 R PS1                      ; [PS1]
+; PS2    parser: one 0 seen; on a 1: found: S's step (s1)
+PS2
+    0 0 R PS1                      ; [PS2]
+    1 1 R s1                       ; [PS2]
+; s1     S: 1: the hole moves one cell right (s2); 0: past the terminator: grow S by two (s4)
+s1
+    0 1 R s4_eb2                   ; [s1]
+    1 1 L hY_s2_te                 ; [s1]
+; s3     S: fill the old hole, back to the block (PL1)
+; tc3    tick 1 -> 2: done, back to the block (PL1)
+; tg     tick 0 -> 1: done, back to the block (PL1)
+; tw     tick 2 -> 0: erase the marker, then S := 101 (PR2)
+s3_tc3_tg_tw
+    0 1 L PL1                      ; [s3, tc3, tg]
+    1 0 R PR2                      ; [tw]
+; s4     S grows: the new terminator
+; eb2    NEXCOM: B's cell 1
+s4_eb2
+    0 1 L s5                       ; [s4]
+    1 1 R q5_eb3                   ; [eb2]
+; s5     S grows: left to the old hole, fill it
+s5
+    0 1 L s6_cb3                   ; [s5]
+    1 1 L s5                       ; [s5]
+; s6     S grows: left to G
+; cb3    NEXCOM |B| > 4: over the separator
+s6_cb3
+    0 0 R s7_cb4                   ; [s6, cb3]
+    1 1 L s6_cb3                   ; [s6]
+; s7     S grows: over S's leading 1
+; cb4    NEXCOM |B| > 4: C's new first cell
+s7_cb4
+    0 1 L hC_cb5                   ; [cb4]
+    1 1 R s8_ta                    ; [s7]
+; s8     S grows: the hole on cycle cell 0 (N is a square), back to the block (PL1)
+; ta     tick: G's cell 7
+s8_ta
+    0 0 L k1_tb                    ; [ta]
+    1 0 L PL1                      ; [s8]
+
+; ---------- NEXT BLOCK: set it up; the end of the queue; HALT; home -----
+
+; PK2    check parser: found: look at the cells left of the hole
+; i5     set up: over h, to S for the check (PK1)
+PK2_i5
+    0 0 R PK1                      ; [PK2, i5]
+    1 1 L k1_tb                    ; [PK2]
+; ab9    abort: back over S's leading 1 (the seed enters here)
+; wb     home: a second 0
+ab9_wb
+    0 0 L d1_wc                    ; [wb]
+    1 1 L ab10_cc5                 ; [ab9]
+; d1     block done: over the separator
+; wc     home: 1: it was a separator; 0: three 0s: the left end
+d1_wc
+    0 0 R d2_wd                    ; [d1, wc]
+    1 1 L seed3_wa                 ; [wc]
+; d2     block done: right over the block to the next one
+; wd     home: back right
+d2_wd
+    0 0 R n4_we_k4c                ; [d2, wd]
+    1 1 R d2_wd                    ; [d2]
+; n4     next block: the separator
+; we     home: back right, to A's first cell (n5)
+; k4c    cut B: over its four cells
+n4_we_k4c
+    0 0 R n5                       ; [n4, we]
+    1 1 L zc4_k5c                  ; [k4c]
+; n5     next block: its first cell; 0: G: the end of the queue, home to A (wa)
+n5
+    0 0 L seed3_wa                 ; [n5]
+    1 1 R start_seed0_n6           ; [n5]
+; n7     next block: cell 2; 0: W's marker in G (W = 2): the fourth window passed: HALT
+n7
+    0 0 L halt                     ; [n7]
+    1 1 R n8_zc11                  ; [n7]
+; n8     next block: cell 3; 0: it is Z (nz)
+; zc11   start: write Z and the first tuple (4, 4, 4), right to left
+n8_zc11
+    0 0 L nz_zc12                  ; [n8, zc11]
+    1 1 R n9                       ; [n8]
+; nz     Z: only h, on its last cell; to S for the check (PK1)
+; zc12   start: write Z and the first tuple (4, 4, 4), right to left
+nz_zc12
+    0 1 L zc13_j3c                 ; [zc12]
+    1 0 R PK1                      ; [nz]
+; n9     next block: right to its end
+n9
+    0 0 L i1_zc15                  ; [n9]
+    1 1 R n9                       ; [n9]
+; i1     set up: h on the last cell
+; zc15   start: write Z and the first tuple (4, 4, 4), right to left
+i1_zc15
+    0 1 L zc16_cb1                 ; [zc15]
+    1 0 L i2_zc8                   ; [i1]
+; i2     set up: the spacer
+; zc8    start: write Z and the first tuple (4, 4, 4), right to left
+i2_zc8
+    0 1 L zc9_j5c                  ; [zc8]
+    1 1 L hA_i3                    ; [i2]
+
+; ---------- CHECK: is S a square? W ticks, S reset when it wraps --------
+
+; PK1    check: right to S's hole
+PK1
+    0 0 R PK2_i5                   ; [PK1]
+    1 1 R PK1                      ; [PK1]
+; k1     check: S's hole
+; tb     tick: G's cell 6; 1: W = 1 -> 2 (tc1)
+k1_tb
+    0 0 L k2_td                    ; [k1, tb]
+    1 0 L tc1_zc3                  ; [tb]
+; k2     check: the cell left of it
+; td     tick: G's cell 5
+k2_td
+    0 0 L hY_s2_te                 ; [td]
+    1 1 L k3                       ; [k2]
+; k3     check: 0 (G): the hole is home, a square: tick (ta); 1: not a square: abort (ab1)
+k3
+    0 0 L s8_ta                    ; [k3]
+    1 1 R ab1_ea2_cc3              ; [k3]
+; tc1    tick 1 -> 2: erase the marker
+; zc3    start: write Z and the first tuple (4, 4, 4), right to left
+tc1_zc3
+    0 1 L zc4_k5c                  ; [zc3]
+    1 0 L tc2_ea1                  ; [tc1]
+; tc2    tick 1 -> 2: the marker two cells left
+; ea1    NEXCOM: A's cell 1
+tc2_ea1
+    0 1 L s3_tc3_tg_tw             ; [tc2]
+    1 1 R ab1_ea2_cc3              ; [ea1]
+; PR1    reset: right to S's hole (home)
+PR1
+    0 0 R PR2                      ; [PR1]
+    1 1 R PR1                      ; [PR1]
+; PR2    reset parser: found
+PR2
+    0 0 R PR1                      ; [PR2]
+    1 1 R r1                       ; [PR2]
+; r1     reset: erase S after its cell 2
+r1
+    0 0 L r2                       ; [r1]
+    1 0 R r1                       ; [r1]
+; r2     reset: back left over the erased cells
+r2
+    0 0 L r2                       ; [r2]
+    1 1 L PL2_r3                   ; [r2]
+
+; ---------- ABORT: S's hole home, W := 2, scan home filling holes -------
+
+; ab1    abort: right to S's hole
+; ea2    NEXCOM: A's cell 2
+; cc3    NEXCOM |A| = |B| = 4: fill it
+ab1_ea2_cc3
+    0 1 L cc4                      ; [cc3]
+    1 1 R ab2_ea3                  ; [ab1, ea2]
+; ab2    abort: fill S's hole
+; ea3    NEXCOM: A's cell 3
+ab2_ea3
+    0 1 L seed1_ab3_ca3            ; [ab2]
+    1 1 R q6_ea4                   ; [ea3]
+; ab5    abort: S's hole home (the next tuple's first check resets S)
+; zc18   start: write Z and the first tuple (4, 4, 4), right to left
+ab5_zc18
+    0 1 L zc19                     ; [zc18]
+    1 0 L ab9_wb                   ; [ab5]
+; ab10   abort: G's cell 8 (W := 2)
+; cc5    NEXCOM |A| = |B| = 4: right to the merged block's end, then cut C (j1c)
+ab10_cc5
+    0 0 L ab11_j1c                 ; [ab10, cc5]
+    1 1 R ab10_cc5                 ; [cc5]
+; ab11   abort: G's cell 7 (W := 2)
+; j1c    cut C: over its four cells
+ab11_j1c
+    0 0 L ab12                     ; [ab11]
+    1 1 L zc14_j2c                 ; [j1c]
+; ab12   abort: G's cell 6 (W := 2)
+ab12
+    0 0 L ab13                     ; [ab12]
+    1 0 L ab13                     ; [ab12]
+; ab13   abort: G's cell 5 (W := 2)
+ab13
+    0 0 L ab14                     ; [ab13]
+    1 0 L ab14                     ; [ab13]
+; ab14   abort: G's cell 4 (W := 2)
+ab14
+    0 1 L ab15                     ; [ab14]
+    1 1 L ab15                     ; [ab14]
+; ab15   abort: G's cell 3 (W := 2)
+ab15
+    0 1 L ab16_ca1                 ; [ab15]
+    1 1 L ab16_ca1                 ; [ab15]
+; ab16   abort: G's cell 2 (W := 2)
+; ca1    NEXCOM |A| > 4: right to A's end
+ab16_ca1
+    0 0 L ab17_ca2                 ; [ab16, ca1]
+    1 1 R ab16_ca1                 ; [ca1]
+; ab17   abort: G's cell 1 (W := 2); then the scan home (q1)
+; ca2    NEXCOM |A| > 4: A's last cell becomes the separator
+ab17_ca2
+    0 0 L q1                       ; [ab17]
+    1 0 R seed1_ab3_ca3            ; [ca2]
+; q1     scan home, filling holes: over 1s
+q1
+    0 0 L q2                       ; [q1]
+    1 1 L q1                       ; [q1]
+; q2     scan: a second 0; 1: the 0 passed was a hole (q3)
+q2
+    0 0 L q4                       ; [q2]
+    1 1 R q3_eb4                   ; [q2]
+; q3     scan: fill the hole
+; eb4    NEXCOM: B's cell 3
+q3_eb4
+    0 1 L q1                       ; [q3]
+    1 1 R eb5                      ; [eb4]
+; q4     scan: a third 0; 1: it was a separator
+q4
+    0 0 L q5_eb3                   ; [q4]
+    1 1 L q1                       ; [q4]
+; q5     scan: a fourth 0: the left end (q6); 1: the third 0 was a hole (q3)
+; eb3    NEXCOM: B's cell 2
+q5_eb3
+    0 0 R q6_ea4                   ; [q5]
+    1 1 R q3_eb4                   ; [q5, eb3]
+; q6     scan: back right
+; ea4    NEXCOM: A's cell 4; 1: |A| > 4: one cell from A to B (ca1); 0: |A| = 4 (eb0)
+q6_ea4
+    0 0 R hG6_na4_eb0              ; [q6, ea4]
+    1 1 R ab16_ca1                 ; [ea4]
+; na5    scan: back right, to A's first cell: NEXCOM (ea0)
+; eb1    NEXCOM: B's cell 0
+na5_eb1
+    0 0 R ea0                      ; [na5]
+    1 1 R s4_eb2                   ; [eb1]
+
+; ---------- NEXCOM: the next tuple --------------------------------------
+
+; ea0    NEXCOM: A's cell 0; 0: no queue yet (the start): write Z and (4, 4, 4) (zc1)
+ea0
+    0 0 L zc1_j4c                  ; [ea0]
+    1 1 R tc2_ea1                  ; [ea0]
+; zc1    start: write Z and the first tuple (4, 4, 4), right to left
+; j4c    cut C: over its four cells
+zc1_j4c
+    0 1 L zc2_k2c                  ; [zc1]
+    1 1 L zc9_j5c                  ; [j4c]
+; zc2    start: write Z and the first tuple (4, 4, 4), right to left
+; k2c    cut B: over its four cells
+zc2_k2c
+    0 1 L tc1_zc3                  ; [zc2]
+    1 1 L zc10_k3c                 ; [k2c]
+; zc4    start: write Z and the first tuple (4, 4, 4), right to left
+; k5c    cut B: the separator before it
+zc4_k5c
+    0 0 L zc5_cb9                  ; [zc4]
+    1 0 L zc20_k6c                 ; [k5c]
+; zc5    start: write Z and the first tuple (4, 4, 4), right to left
+; cb9    NEXCOM |B| > 4: right to the merged block's end, then cut B (k1c)
+zc5_cb9
+    0 0 L zc6_k1c                  ; [zc5, cb9]
+    1 1 R zc5_cb9                  ; [cb9]
+; zc6    start: write Z and the first tuple (4, 4, 4), right to left
+; k1c    cut B: over its four cells
+zc6_k1c
+    0 1 L zc7                      ; [zc6]
+    1 1 L zc2_k2c                  ; [k1c]
+; zc9    start: write Z and the first tuple (4, 4, 4), right to left
+; j5c    cut C: the separator before it
+zc9_j5c
+    0 1 L zc10_k3c                 ; [zc9]
+    1 0 L cc1_j6c                  ; [j5c]
+; zc10   start: write Z and the first tuple (4, 4, 4), right to left
+; k3c    cut B: over its four cells
+zc10_k3c
+    0 0 L n8_zc11                  ; [zc10]
+    1 1 L n4_we_k4c                ; [k3c]
+; zc13   start: write Z and the first tuple (4, 4, 4), right to left
+; j3c    cut C: over its four cells
+zc13_j3c
+    0 1 L zc14_j2c                 ; [zc13]
+    1 1 L zc1_j4c                  ; [j3c]
+; zc14   start: write Z and the first tuple (4, 4, 4), right to left
+; j2c    cut C: over its four cells
+zc14_j2c
+    0 1 L i1_zc15                  ; [zc14]
+    1 1 L zc13_j3c                 ; [j2c]
+; zc16   start: write Z and the first tuple (4, 4, 4), right to left
+; cb1    NEXCOM |B| > 4: right to B's end
+zc16_cb1
+    0 0 L zc17_cb2                 ; [zc16, cb1]
+    1 1 R zc16_cb1                 ; [cb1]
+; zc17   start: write Z and the first tuple (4, 4, 4), right to left
+; cb2    NEXCOM |B| > 4: B's last cell becomes the separator
+zc17_cb2
+    0 0 L ab5_zc18                 ; [zc17]
+    1 0 R s6_cb3                   ; [cb2]
+; zc20   start: write Z and the first tuple (4, 4, 4), right to left
+; k6c    cut B: the separator before it; home (wa)
+zc20_k6c
+    0 1 L seed2_ab4_zc21_ca4       ; [zc20]
+    1 0 L seed3_wa                 ; [k6c]
+; eb5    NEXCOM: B's cell 4; 1: |B| > 4 (cb1); 0: |B| = 4: fill the separator (cc1)
+eb5
+    0 1 R cc1_j6c                  ; [eb5]
+    1 1 R zc16_cb1                 ; [eb5]
+; cc1    NEXCOM |A| = |B| = 4: fill the separator after B
+; j6c    cut C: the separator before it
+cc1_j6c
+    0 1 L cc2                      ; [cc1]
+    1 0 L zc6_k1c                  ; [j6c]
+; cc2    NEXCOM |A| = |B| = 4: left over B; fill the separator after A
+cc2
+    0 1 L ab1_ea2_cc3              ; [cc2]
+    1 1 L cc2                      ; [cc2]
+; cc4    NEXCOM |A| = |B| = 4: left over A; one more cell on the left
+cc4
+    0 1 R ab10_cc5                 ; [cc4]
+    1 1 L cc4                      ; [cc4]
+
+; ---------- START: Z and (4, 4, 4) --------------------------------------
+
+; zc7    start: write Z and the first tuple (4, 4, 4), right to left
+zc7
+    0 1 L i2_zc8                   ; [zc7]
+    -
+; zc19   start: write Z and the first tuple (4, 4, 4), right to left
+zc19
+    0 1 L zc20_k6c                 ; [zc19]
+    -

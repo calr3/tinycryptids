@@ -1,0 +1,245 @@
+; Minimised from carmichael.txt by minimize.py
+; 80 states, 2 symbols
+
+blank_symbol: 0
+
+seed0
+    0 1 R seed1
+    1 0 L SH4
+seed1
+    0 1 R seed2
+    1 1 R RN
+seed2
+    0 1 R VG4
+    1 1 R KW2
+KA
+    0 1 R KN
+    1 1 L KA
+KN
+    0 0 L KW
+    1 0 R TR1
+KW
+    0 0 R seed2
+    1 1 L KW
+KW2
+    0 1 L CV6
+    1 0 R TR2
+TR1
+    0 0 R TR2
+    1 1 R TR1
+TR2
+    0 0 R TR3
+    1 1 R TR2
+TR3
+    0 0 R TC3
+    1 1 R TR4
+TC3
+    0 0 R GX
+    1 1 R TC4
+TR4
+    0 1 R RN
+    1 1 R TR4
+RN
+    0 0 L RW
+    1 0 L GK1
+TC4
+    0 0 R CV1
+    1 1 R TC5
+TC5
+    0 1 R CN
+    1 1 R TC5
+CN
+    0 0 L CW
+    1 0 L GK1
+RW
+    0 0 R seed1
+    1 1 L RW
+CW
+    0 0 R CW1
+    1 1 L CW
+CW1
+    0 0 R CV3
+    1 1 R CW2
+CW2
+    0 0 L BK3
+    1 0 R EC1
+GK1
+    0 0 L GK2
+    1 1 L GK1
+GK2
+    0 0 L KA
+    1 0 L RS5
+CV1
+    0 0 R CW1
+    1 1 R CV1
+CV3
+    0 0 R CV4
+    1 1 R CV3
+CV4
+    0 0 L CVS
+    1 1 L KW2
+CV6
+    0 0 L CW2
+    1 0 L BK1
+CVS
+    0 0 L BK1
+    -
+BK1
+    0 0 L CW2
+    1 1 L BK1
+BK3
+    0 0 R EC1
+    1 1 L BK3
+EC1
+    0 0 R RE1
+    1 0 L SH2
+SH2
+    0 1 L seed0
+    -
+SH4
+    0 0 L SH5
+    -
+SH5
+    0 1 L KA
+    -
+RE1
+    0 0 R RE2
+    -
+RE2
+    0 1 R MV1
+    1 1 R NV1
+MV1
+    0 0 R MV2
+    1 1 R MV1
+MV2
+    0 0 R MF
+    -
+MF
+    0 1 R F1c
+    1 0 R RS11
+NV1
+    0 0 R NV2
+    1 1 R NV1
+NV2
+    0 0 R NF
+    1 1 L NV3
+NV3
+    0 1 R NV1
+    1 0 L RT7
+NF
+    0 0 R F0c
+    1 1 R F1c
+F0c
+    0 0 R F0s
+    -
+F1c
+    0 0 R F1s
+    -
+F0s
+    0 0 L RT5
+    1 1 R BA1
+F1s
+    0 0 L halt
+    1 1 R BA1
+BA1
+    0 1 L BA2
+    1 1 R BA1
+BA2
+    0 0 L RT4
+    1 0 L RT1
+RT1
+    0 0 L RT2
+    1 1 L RT1
+RT2
+    0 0 L BA2
+    1 1 L BA2
+RT4
+    0 0 L RT5
+    1 1 L RT4
+RT5
+    0 0 L VG2
+    1 1 L NV3
+RT7
+    0 0 L RT8
+    1 1 L RT7
+RT8
+    0 0 L RS1
+    -
+RS1
+    0 1 L RS2
+    1 1 L RS2
+RS2
+    0 0 L EI4
+    1 1 L RS3
+RS3
+    0 1 L RS4
+    -
+RS4
+    0 1 L RS5
+    -
+RS5
+    0 0 L RS6
+    1 1 L RS5
+RS6
+    0 0 L RT8
+    1 0 L RE2
+RS11
+    0 0 R VGc
+    1 1 R RN
+VGc
+    0 0 L RT5
+    1 0 L RT5
+VG2
+    0 0 L VG3
+    1 1 R VG2
+VG3
+    0 0 L VG4
+    1 1 L GK2
+VG4
+    0 1 L VG5
+    1 1 L VG4
+VG5
+    0 0 R VG2
+    1 0 R GR1
+GR1
+    0 0 R TR2
+    1 1 R GR1
+GX
+    0 0 R GY
+    1 1 R GX
+GY
+    0 0 L A1
+    1 1 L GF
+GF
+    0 1 R GX
+    -
+A1
+    0 1 R A2
+    -
+A2
+    0 1 R A3
+    -
+A3
+    0 0 R BA1
+    -
+EI4
+    0 0 L EI5
+    -
+EI5
+    0 0 L EI6
+    1 0 L EI6
+EI6
+    0 1 L E1
+    1 1 L E1
+E1
+    0 0 L E2
+    1 0 L E1
+E2
+    0 0 L E3
+    1 0 L E1
+E3
+    0 0 R Z
+    1 0 L E1
+Z
+    0 0 R Z
+    1 1 R KA

@@ -1,0 +1,236 @@
+; Minimised from singmaster/singmaster.txt by minimize.py
+; 77 states, 2 symbols
+
+blank_symbol: 0
+
+seed0
+    0 1 R seed1
+    1 0 L K
+seed1
+    0 0 R seed2
+    -
+seed2
+    0 1 R seed3
+    -
+seed3
+    0 1 R seed4
+    -
+seed4
+    0 1 R seed5
+    -
+seed5
+    0 1 R seed6
+    -
+seed6
+    0 1 R seed7
+    -
+seed7
+    0 1 R seed8
+    -
+seed8
+    0 1 R seed9
+    -
+seed9
+    0 0 R seed10
+    1 0 R fP
+seed10
+    0 1 R seed11
+    -
+seed11
+    0 0 R seed12
+    1 0 R B3
+seed12
+    0 1 R seed13
+    1 0 L R8
+seed13
+    0 0 R seed14
+    -
+seed14
+    0 0 R seed15
+    -
+seed15
+    0 0 R seed16
+    1 1 L CW2
+seed16
+    0 1 R seed17
+    1 1 R R8
+seed17
+    0 1 R seed18
+    1 1 L seed17
+seed18
+    0 1 R seed19
+    1 1 R CI2
+seed19
+    0 0 R seed20
+    1 1 R seed19
+seed20
+    0 0 R seed21
+    1 1 R seed11
+seed21
+    0 0 R X4
+    1 1 R T0
+eP
+    0 0 R eZ1
+    1 1 R eP
+eZ1
+    0 0 R eZ2
+    1 1 R I
+eZ2
+    0 0 R eZ2
+    1 1 R eP
+I
+    0 0 L I2
+    1 1 L seed0
+K
+    0 1 L nP
+    -
+I2
+    0 0 L gP
+    1 1 L I3
+I3
+    0 0 L dP
+    1 0 R WT1
+nP
+    0 0 L nZ1
+    1 1 L nP
+nZ1
+    0 0 L nZ2
+    1 1 L seed20
+nZ2
+    0 0 L nZ2
+    1 1 L nP
+B3
+    0 1 R eP
+    1 0 R CR
+dP
+    0 0 L dZ1
+    1 1 L dP
+dZ1
+    0 0 L dZ2
+    1 1 L Bd
+dZ2
+    0 0 L dZ2
+    1 1 L dP
+Bd
+    0 0 L seed17
+    1 1 R seed21
+CI2
+    0 0 R halt
+    1 1 L B3
+CR
+    0 0 R seed21
+    1 1 R CR
+T0
+    0 1 R T1
+    1 0 R eZ1
+T1
+    0 0 L T2
+    1 1 R T1
+T2
+    0 1 L sP
+    1 1 L seed9
+fP
+    0 0 R fZ1
+    1 1 R fP
+fZ1
+    0 0 R fZ2
+    1 1 L seed18
+fZ2
+    0 0 R fZ2
+    1 1 R fP
+X4
+    0 1 R G1
+    1 1 R T0
+G1
+    0 1 L G2
+    -
+G2
+    0 1 R AT2
+    1 1 L G3
+G3
+    0 0 L G3
+    1 1 L I3
+WT1
+    0 0 R WT2
+    1 1 R WT1
+WT2
+    0 0 R WT3
+    1 1 R WT1
+WT3
+    0 0 R WT4
+    1 1 R WT1
+WT4
+    0 1 R G2
+    1 1 R WT1
+AT2
+    0 1 L AT3
+    1 1 L U3
+AT3
+    0 0 L T1
+    1 1 L AT3
+sP
+    0 0 L sZ1
+    1 1 L sP
+sZ1
+    0 0 L sZ2
+    1 1 R U1
+sZ2
+    0 0 L sZ2
+    1 1 L sP
+U1
+    0 1 L AT2
+    1 0 R W1
+U3
+    0 0 L I
+    1 1 R U1
+W1
+    0 0 R W2
+    1 1 R W1
+W2
+    0 0 R W3
+    1 1 R W1
+W3
+    0 0 R W4
+    1 1 R W1
+W4
+    0 0 L R1
+    1 1 R W1
+R1
+    0 0 L R2
+    1 0 L CW2
+R2
+    0 1 L R2
+    1 1 L R4
+R4
+    0 0 L seed10
+    1 1 L R4
+R8
+    0 0 L sP
+    1 0 R CQ
+gP
+    0 0 L gZ1
+    1 1 L gP
+gZ1
+    0 0 L gZ2
+    1 1 L GN1
+gZ2
+    0 0 L gZ2
+    1 1 L gP
+GN1
+    0 1 L R1
+    1 1 L GN1
+CW2
+    0 1 L seed15
+    1 1 L CW2
+CQ
+    0 0 R rP
+    1 1 R CQ
+rP
+    0 0 R rZ1
+    1 1 R rP
+rZ1
+    0 0 R rZ2
+    1 1 R seed19
+rZ2
+    0 0 R rZ2
+    1 1 R rP

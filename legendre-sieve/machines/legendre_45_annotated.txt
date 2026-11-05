@@ -1,0 +1,270 @@
+; ============================================================================
+; A 45-state, 2-symbol Turing machine that HALTS IFF LEGENDRE'S CONJECTURE
+; IS FALSE, i.e. iff for some n >= 1 no prime p satisfies n^2 < p < (n+1)^2.
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/LegendreSieve/M45.lean, theorem TM.LegendreSieve.M45.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 68-state design of build.py / legendre.txt with
+;   states merged. States are merged only when their defined transitions
+;   agree, so each state below plays one or more ROLES of the design (its name
+;   joins them). Each transition line is tagged [role] with the role(s) that
+;   use it. A '-' line is never used. The seed roles run once at the start and
+;   only ever read 0, so most states double as a seed step.
+;
+; TAPE LAYOUT at checkpoint m (after deciding m; blocks of 1s):
+;
+;      M 00 P_k 00 ... 00 P_1 000 S 0 F
+;
+;   M     1^(m+2), a plain counter (the only block without a hole).
+;   P_i   one block per prime p <= m, largest first: a 1, a region of p
+;         cells holding one HOLE (a single 0), a 1. The hole sits at region
+;         index p-1-(m mod p): it moves one cell LEFT per step and wraps from
+;         index 0 to index p-1 exactly when p divides the new m.
+;   S     the square counter, same shape with a region of 2n+1 cells
+;         (n = isqrt m), hole at index 2n-(m-n^2). It wraps exactly when the
+;         new m is a square, (n+1)^2.
+;   F     one cell: 1 iff a prime was seen since the last square n^2.
+;   The 000 in front of S is the only run of exactly three 0s; the left end
+;   of the tape is the only run of four or more.
+;
+; ALGORITHM (one round per m, starting from m = 1)
+;   home      go left to the left end (four 0s) and add a 1 to M.
+;   sweep     scan right; at every hole move it one cell left (or wrap it).
+;             Two copies: "prime so far" and "composite" (some block wrapped,
+;             so a prime <= m divides m+1). The 000 ends the sweep.
+;   S, composite   move S's hole; if it wraps, m+1 = (n+1)^2: if F = 0 no
+;             prime was seen in (n^2, (n+1)^2): HALT. Otherwise the F cell
+;             becomes S's new right guard (region += 2, F cleared). Go home.
+;   S, prime  move S's hole (it cannot wrap), set F, go home and copy M to
+;             its left: old M (length m+3 = p+2) becomes the block of the new
+;             prime p = m+1, with its hole at the last index (p | p).
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0  seed: write 1 (cell 0 of the seed, the tape at m = 1)
+; sD     S (prime mode): new hole one cell left
+start_sD
+    0 1 R hc4                      ; [seed0]
+    1 0 R sE                       ; [sD]
+
+; ---------- HOME and grow M ---------------------------------------------
+
+; hg1    home: scan left over 1s
+hg1
+    0 0 L hg2                      ; [hg1]
+    1 1 L hg1                      ; [hg1]
+; hg2    home: one 0 seen
+hg2
+    0 0 L hg3                      ; [hg2]
+    1 1 L hg1                      ; [hg2]
+; hg3    home: two 0s seen
+hg3
+    0 0 L hg4                      ; [hg3]
+    1 1 L hg1                      ; [hg3]
+; hg4    home: three 0s seen; a fourth 0 is the left end
+hg4
+    0 0 R hg5_p3                   ; [hg4]
+    1 1 L hg1                      ; [hg4]
+; hg5    home: turn round (this is the checkpoint)
+; p3     sweep (prime so far): two 0s seen; a third 0 ends the sweep (S follows)
+hg5_p3
+    0 0 R hg6_sp1                  ; [hg5, p3]
+    1 1 R p1                       ; [p3]
+; hg6    home: step right
+; sp1    S (prime mode): find the hole
+hg6_sp1
+    0 0 R hg7_sp2                  ; [hg6, sp1]
+    1 1 R hg6_sp1                  ; [sp1]
+; hg7    home: write a 1 left of M (M += 1), start the sweep
+; sp2    S (prime mode): parser, found
+hg7_sp2
+    0 1 R p1                       ; [hg7]
+    1 1 L sA                       ; [sp2]
+
+; ---------- SWEEP, prime so far -----------------------------------------
+
+; p1     sweep (prime so far): scan right over 1s
+p1
+    0 0 R p2                       ; [p1]
+    1 1 R p1                       ; [p1]
+; p2     sweep (prime so far): one 0 seen; 1 = a hole
+p2
+    0 0 R hg5_p3                   ; [p2]
+    1 1 L pA_pB                    ; [p2]
+; pA     sweep (prime so far): fill the hole
+; pB     sweep (prime so far): step left
+pA_pB
+    0 1 L pA_pB                    ; [pA]
+    1 1 L pC                       ; [pB]
+; pC     sweep (prime so far): look two left; 0 = hole was at index 0: wrap
+pC
+    0 0 R W2                       ; [pC]
+    1 1 R pD_hc6                   ; [pC]
+; seed3  seed: write 0 (cell 3 of the seed, the tape at m = 1)
+; pD     sweep (prime so far): new hole one cell left
+; hc6    copy setup: separator
+pD_hc6
+    0 0 R sB_hc7                   ; [seed3, hc6]
+    1 0 R p1                       ; [pD]
+
+; ---------- SWEEP, composite --------------------------------------------
+
+; q1     sweep (composite): scan right over 1s
+q1
+    0 0 R q2_W3                    ; [q1]
+    1 1 R q1                       ; [q1]
+; q2     sweep (composite): one 0 seen; 1 = a hole
+; W3     wrap: right guard
+q2_W3
+    0 0 R q3                       ; [q2]
+    1 1 L qA_qD_W4                 ; [q2, W3]
+; q3     sweep (composite): two 0s seen; a third 0 ends the sweep (S follows)
+q3
+    0 0 R sq1                      ; [q3]
+    1 1 R q1                       ; [q3]
+; qA     sweep (composite): fill the hole
+; qD     sweep (composite): new hole one cell left
+; W4     wrap: hole at the last index; continue in composite mode
+qA_qD_W4
+    0 1 L qB                       ; [qA]
+    1 0 R q1                       ; [qD, W4]
+; seed8  seed: write 1 (cell 8 of the seed, the tape at m = 1)
+; qB     sweep (composite): step left
+qB
+    0 1 R sq1                      ; [seed8]
+    1 1 L qC                       ; [qB]
+; qC     sweep (composite): look two left; 0 = hole was at index 0: wrap
+qC
+    0 0 R W2                       ; [qC]
+    1 1 R qA_qD_W4                 ; [qC]
+; W2     wrap: to the separator after the block
+W2
+    0 0 L q2_W3                    ; [W2]
+    1 1 R W2                       ; [W2]
+
+; ---------- S after a prime-mode sweep ----------------------------------
+
+; sA     S (prime mode): fill the hole
+sA
+    0 1 L sB_hc7                   ; [sA]
+    -
+; seed4  seed: write 0 (cell 4 of the seed, the tape at m = 1)
+; sB     S (prime mode): step left
+; hc7    copy setup: separator
+sB_hc7
+    0 0 R hc8                      ; [seed4, hc7]
+    1 1 L sC_hc5                   ; [sB]
+; seed2  seed: write 1 (cell 2 of the seed, the tape at m = 1)
+; sC     S (prime mode): look two left
+; hc5    copy setup: new M's second 1
+sC_hc5
+    0 1 R pD_hc6                   ; [seed2, hc5]
+    1 1 R start_sD                 ; [sC]
+; sE     S (prime mode): to the right end
+sE
+    0 0 R sG                       ; [sE]
+    1 1 R sE                       ; [sE]
+; sG     S (prime mode): F := 1, go home and copy
+sG
+    0 1 L hc1                      ; [sG]
+    1 1 L hc1                      ; [sG]
+
+; ---------- S after a composite-mode sweep; HALT ------------------------
+
+; seed9  seed: write 0 (cell 9 of the seed, the tape at m = 1)
+; sq1    S (composite): find the hole
+sq1
+    0 0 R sq2                      ; [seed9, sq1]
+    1 1 R sq1                      ; [sq1]
+; seed10 seed: write 1 (cell 10 of the seed, the tape at m = 1)
+; sq2    S (composite): parser, found
+sq2
+    0 1 L hg1                      ; [seed10]
+    1 1 L tA_hc9                   ; [sq2]
+; tA     S (composite): fill the hole
+; hc9    copy setup: cursor at old M index 0
+tA_hc9
+    0 1 L tB                       ; [tA]
+    1 0 L cL1                      ; [hc9]
+; seed6  seed: write 1 (cell 6 of the seed, the tape at m = 1)
+; tB     S (composite): step left
+tB
+    0 1 R tD                       ; [seed6]
+    1 1 L tC                       ; [tB]
+; tC     S (composite): look two left; 0 = hole was at index 0: square
+tC
+    0 0 R tW                       ; [tC]
+    1 1 R tD                       ; [tC]
+; seed7  seed: write 1 (cell 7 of the seed, the tape at m = 1)
+; tD     S (composite): new hole one cell left, go home
+tD
+    0 1 R qB                       ; [seed7]
+    1 0 L hg1                      ; [tD]
+; tW     square: to the cell after S's right guard
+tW
+    0 0 R tF                       ; [tW]
+    1 1 R tW                       ; [tW]
+; tF     square: F = 0 -> HALT; F = 1 -> it becomes the new guard, go home
+tF
+    0 0 R halt                     ; [tF]
+    1 1 L hg1                      ; [tF]
+
+; ---------- COPY M (new prime) ------------------------------------------
+
+; hc1    home before copying: scan left over 1s
+hc1
+    0 0 L hc2                      ; [hc1]
+    1 1 L hc1                      ; [hc1]
+; hc2    home before copying: one 0 seen
+hc2
+    0 0 L hc3                      ; [hc2]
+    1 1 L hc1                      ; [hc2]
+; hc3    home before copying: two 0s seen
+hc3
+    0 0 L hc4                      ; [hc3]
+    1 1 L hc1                      ; [hc3]
+; seed1  seed: write 1 (cell 1 of the seed, the tape at m = 1)
+; hc4    home before copying: three 0s seen; at the fourth write the new M's first 1
+hc4
+    0 1 R sC_hc5                   ; [seed1, hc4]
+    1 1 L hc1                      ; [hc4]
+; seed5  seed: write 0 (cell 5 of the seed, the tape at m = 1)
+; hc8    copy setup: step over old M's left guard
+hc8
+    0 0 R tB                       ; [seed5]
+    1 1 R tA_hc9                   ; [hc8]
+; cL1    copy: left over old M
+cL1
+    0 0 L cL2                      ; [cL1]
+    1 1 L cL1                      ; [cL1]
+; cL2    copy: separator
+cL2
+    0 0 L cL3                      ; [cL2]
+    -
+; cL3    copy: left over the new M, add a 1
+cL3
+    0 1 R cR1                      ; [cL3]
+    1 1 L cL3                      ; [cL3]
+; cR1    copy: back right to the cursor (parser)
+cR1
+    0 0 R cR2                      ; [cR1]
+    1 1 R cR1                      ; [cR1]
+; cR2    copy: parser, 1 = one past the cursor
+cR2
+    0 0 R cR1                      ; [cR2]
+    1 1 R cQ2                      ; [cR2]
+; cQ2    copy: 0 = cursor was at the last index (done, go home); 1 = move it right
+cQ2
+    0 0 L hg1                      ; [cQ2]
+    1 1 L cQ3_cQ4                  ; [cQ2]
+; cQ3    copy: new cursor
+; cQ4    copy: fill the old cursor
+cQ3_cQ4
+    0 1 L cL1                      ; [cQ4]
+    1 0 L cQ3_cQ4                  ; [cQ3]

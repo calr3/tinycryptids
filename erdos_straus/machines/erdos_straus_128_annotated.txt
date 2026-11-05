@@ -1,0 +1,650 @@
+; ============================================================================
+; A 128-state, 2-symbol Turing machine that HALTS IFF THE ERDOS-STRAUS
+; CONJECTURE IS FALSE, i.e. iff some n >= 2 has no solution of
+; 4/n = 1/x + 1/y + 1/z in positive integers.
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/ErdosStraus/M128.lean, theorem TM.ErdosStraus.M128.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 187-state design of build.py / erdos_straus.txt with
+;   states merged. States are merged only when their defined transitions
+;   agree, so each state below plays one or more ROLES of the design (its name
+;   joins them). Each transition line is tagged [role] with the role(s) that
+;   use it. A '-' line is never used. The seed roles run once at the start and
+;   only ever read 0, so each of them doubles as a step of some other routine.
+;
+; THE SEARCH: a solution sorted x <= y <= z has n < 4x <= 3n; with a = 4x - n,
+;   m = nx and D = ay - m = 4xy - n(x+y): D >= 1, D | my (z = my/D) and
+;   D <= m (z >= y). Any D >= 1 with D | my is a solution. So for each n the
+;   machine tries x = 1, 2, ... (U = 4x), skips x while U <= n, halts when
+;   U > 3n, and tries y = 1, 2, ... while W = ay <= 2m + 2, testing D = W - m
+;   when W > m. A hit moves on to n + 1.
+;
+; TAPE LAYOUT (blocks of 1s separated by 00, a hole is a single 0):
+;
+;      A 00 R 00 N 00 M 00 K [00 D 00 P]
+;
+;   A  a+1 cells (a = 0 in the debt phase U <= n); the consume cursor
+;   R  2n+3-a cells. Debt phase: its hole on cell 2n+1-2U, two cells per unit
+;      of U. Afterwards every unit of U moves the separator A|R right: A grows,
+;      R shrinks; HALT when R would keep fewer than 3 cells (a > 2n)
+;   N  n+1 cells (its cursor copies n onto M and K)
+;   M  m+1 cells (its cursor copies m onto P)
+;   K  the y counter: m+4 cells, hole moving left from cell m+2 (W = 0) to
+;      cell 1 (W = m+1); then the hole stays and each unit moves the separator
+;      K|D left (D grows) until K = 1 0 1
+;   D  d+1 cells, d = max(1, W - m);  P  p+1 cells, p = m y
+;
+; ALGORITHM
+;   x step   M += n and K += n (N loop); the 4 units of U: the debt hole walks
+;            8 cells left, or (crossing / after it) separator moves A|R; the
+;            check of R; set up K's hole, D = 11, P = 1
+;   y step   P += M; W += a (one unit of K per cell of A); in the second lap
+;            the mod walk on D 00 P (../oddperfect): d | p is a hit (n step),
+;            otherwise D's hole is filled; K = 1 0 1 ends the y loop (x step)
+;   n step   erase M, K, D, P; N += 1; R absorbs A (R += a + 2), A := 1 two
+;            cells further left; R's hole; M = 1, K = 1111
+;   seed     write 11 00 1111 00 11, the end of a solved n = 1
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0  seed: write 1 and step right
+; w7     debt: the hole walks left, offset 7
+start_w7
+    0 1 R x9                   ; [seed0]
+    1 1 L w8                   ; [w7]
+
+; ---------- X STEP: M += n, K += n --------------------------------------
+
+; g1     to the N loop: left over K
+g1
+    0 0 L g2_w3                ; [g1]
+    1 1 L g1                   ; [g1]
+; g2     to the N loop: separator
+; w3     debt: the hole walks left, offset 3
+g2_w3
+    0 0 L g3                   ; [g2]
+    1 1 L w4                   ; [w3]
+; g3     to the N loop: left over M
+g3
+    0 0 L g4                   ; [g3]
+    1 1 L g3                   ; [g3]
+; g4     to the N loop: separator
+g4
+    0 0 L g5                   ; [g4]
+    -
+; g5     to the N loop: left over N, to its cell 0
+g5
+    0 0 R g6_sa8               ; [g5]
+    1 1 L g5                   ; [g5]
+; g6     N loop: step over N's cell 0
+; sa8    set up: D = 11
+g6_sa8
+    0 1 R sa9_ra4              ; [sa8]
+    1 1 R g7_mc1               ; [g6]
+; g7     N loop: the N cursor on cell 1
+; mc1    M cursor: fill it
+g7_mc1
+    0 1 R mc2                  ; [mc1]
+    1 0 R cb1                  ; [g7]
+; gd1    (after a debt x) right over R
+; sa6    set up: separator
+; ms6    test setup: separator
+gd1_sa6_ms6
+    0 0 R gd2_sa7_ms7          ; [gd1, sa6, ms6]
+    1 1 R gd1_sa6_ms6          ; [gd1]
+; gd2    (after a debt x) the separator, to N's cell 0
+; sa7    set up: separator
+; ms7    test setup: P's cell 0 (its hole there and filled: the walk's first step)
+gd2_sa7_ms7
+    0 0 R g6_sa8               ; [gd2, sa7]
+    1 1 R ra2_nw6              ; [ms7]
+; cb1    copy: right over the rest of N
+cb1
+    0 0 R cb2                  ; [cb1]
+    1 1 R cb1                  ; [cb1]
+; cb2    copy: separator
+cb2
+    0 0 R cb3_ac1              ; [cb2]
+    -
+; cb3    copy: over M; its separator's first cell becomes M's
+; ac1    A cursor: fill it
+cb3_ac1
+    0 1 R cb4_ac2              ; [cb3, ac1]
+    1 1 R cb3_ac1              ; [cb3]
+; cb4    copy: separator
+; ac2    A cursor: next cell; 0: all units done (af1)
+cb4_ac2
+    0 0 R cb5_af1              ; [cb4, ac2]
+    1 0 R f1                   ; [ac2]
+; cb5    copy: K's first cell becomes the separator
+; af1    all units done: separator
+cb5_af1
+    0 0 R F1                   ; [af1]
+    1 0 R cb6                  ; [cb5]
+; cb6    copy: over K, append a cell
+cb6
+    0 1 R cb7                  ; [cb6]
+    1 1 R cb6                  ; [cb6]
+; cb7    copy: append a second cell to K, back (CL)
+cb7
+    0 1 L CL1                  ; [cb7]
+    -
+; CL1    scan left to the next hole, then advance the N cursor (ca1)
+CL1
+    0 0 L CL2                  ; [CL1]
+    1 1 L CL1                  ; [CL1]
+; CL2    scan left to the next hole, then advance the N cursor (ca1)
+CL2
+    0 0 L CL1                  ; [CL2]
+    1 1 R ca1                  ; [CL2]
+; ca1    N cursor: fill it
+ca1
+    0 1 R ca2                  ; [ca1]
+    -
+; ca2    N cursor: next cell; 0: N is done, the units of U (q1)
+ca2
+    0 0 L q1                   ; [ca2]
+    1 0 R cb1                  ; [ca2]
+
+; ---------- X STEP: the four units of U; HALT when a > 2n ---------------
+
+; q1     units: left over N
+q1
+    0 0 L q2                   ; [q1]
+    1 1 L q1                   ; [q1]
+; q2     units: separator
+q2
+    0 0 L q3                   ; [q2]
+    -
+; q3     units: left over R, to its hole or its end
+q3
+    0 0 L q4                   ; [q3]
+    1 1 L q3                   ; [q3]
+; q4     units: 1: R's hole is right of here (debt); 0: the separator A|R: four separator moves
+q4
+    0 1 R S3                   ; [q4]
+    1 1 R w0_w5                ; [q4]
+; w0     debt: fill R's hole
+; w5     debt: the hole walks left, offset 5
+w0_w5
+    0 1 L w1_nc3               ; [w0]
+    1 1 L w6                   ; [w5]
+; w1     debt: the hole walks left, offset 1
+; nc3    n step: separator
+w1_nc3
+    0 0 L k1_nr2               ; [nc3]
+    1 1 L w2                   ; [w1]
+; w2     debt: the hole walks left, offset 2; 0: the separator: the hole crosses at unit 1, 4 separator move(s) left
+w2
+    0 0 L S4                   ; [w2]
+    1 1 L g2_w3                ; [w2]
+; w4     debt: the hole walks left, offset 4; 0: the separator: the hole crosses at unit 2, 3 separator move(s) left
+w4
+    0 0 L S3                   ; [w4]
+    1 1 L w0_w5                ; [w4]
+; w6     debt: the hole walks left, offset 6; 0: the separator: the hole crosses at unit 3, 2 separator move(s) left
+w6
+    0 0 L S2                   ; [w6]
+    1 1 L start_w7             ; [w6]
+; w8     debt: the hole walks left, offset 8; 0: the separator: the hole crosses at unit 4, 1 separator move(s) left; 1: the new hole
+w8
+    0 0 L S1                   ; [w8]
+    1 0 R gd1_sa6_ms6          ; [w8]
+; S4     separator move 1 of 4: fill
+S4
+    0 1 R S3                   ; [S4]
+    1 1 R S3                   ; [S4]
+; S3     separator move: fill
+S3
+    0 1 R S2                   ; [S3]
+    1 1 R S2                   ; [S3]
+; S2     separator move: fill
+S2
+    0 1 R S1                   ; [S2]
+    1 1 R S1                   ; [S2]
+; S1     separator move: fill (the last)
+S1
+    0 1 R Z1                   ; [S1]
+    1 1 R Z1                   ; [S1]
+; Z1     separator moves: zero the next cell
+Z1
+    0 0 R Z2                   ; [Z1]
+    1 0 R Z2                   ; [Z1]
+; Z2     separator moves: zero the next cell; 0: R had 3 cells: HALT
+Z2
+    0 0 R halt                 ; [Z2]
+    1 0 R H1                   ; [Z2]
+; H1     check R: 0: fewer than 3 cells left: HALT
+H1
+    0 0 R halt                 ; [H1]
+    1 1 R H2                   ; [H1]
+; H2     check R: 0: HALT
+H2
+    0 0 R halt                 ; [H2]
+    1 1 R H3                   ; [H2]
+; H3     check R: 0: HALT; else set up the y loop
+H3
+    0 0 R halt                 ; [H3]
+    1 1 R su1                  ; [H3]
+
+; ---------- X STEP: set up the y loop -----------------------------------
+
+; su1    scan right to three 0s (the tape end), then set up the y loop
+su1
+    0 0 R su2                  ; [su1]
+    1 1 R su1                  ; [su1]
+; su2    scan right to three 0s (the tape end), then set up the y loop
+su2
+    0 0 R su3_e2               ; [su2]
+    1 1 R su1                  ; [su2]
+; su3    scan right to three 0s (the tape end), then set up the y loop
+; e2     walk over: separator
+su3_e2
+    0 0 L sa1_e3               ; [su3, e2]
+    1 1 R su1                  ; [su3]
+; sa1    set up: back
+; e3     walk over: D's last cell: 0: home, d | p: a hit (n step)
+sa1_e3
+    0 0 L sa2_NK1              ; [sa1, e3]
+    1 1 L sa12_nf1             ; [e3]
+; sa2    set up: back
+; NK1    scan left to the next hole, then cross the K hole (n2)
+sa2_NK1
+    0 0 L sa3_NK2              ; [sa2, NK1]
+    1 1 L sa2_NK1              ; [NK1]
+; sa3    set up: K's last cell
+; NK2    scan left to the next hole, then cross the K hole (n2)
+sa3_NK2
+    0 0 L sa2_NK1              ; [NK2]
+    1 1 L sa4_n2               ; [sa3, NK2]
+; sa4    set up: K's hole on its last-but-one cell
+; n2     n step: separator
+sa4_n2
+    0 0 L l2_n3                ; [n2]
+    1 0 R sa5                  ; [sa4]
+; seed5  seed: write 1 and step right
+; sa5    set up: right
+sa5
+    0 1 R ym5                  ; [seed5]
+    1 1 R gd1_sa6_ms6          ; [sa5]
+; sa9    set up: D = 11
+; ra4    advance the P hole: the new hole, back (PM)
+sa9_ra4
+    0 1 R sa10_ym3             ; [sa9]
+    1 0 L PM1                  ; [ra4]
+; sa10   set up: separator
+; ym3    to M: left over M
+sa10_ym3
+    0 0 R sa11_ym4             ; [sa10, ym3]
+    1 1 L sa10_ym3             ; [ym3]
+; sa11   set up: separator
+; ym4    to M: step over M's cell 0
+sa11_ym4
+    0 0 R sa12_nf1             ; [sa11]
+    1 1 R ym5                  ; [ym4]
+; sa12   set up: P = 1, then P += M (YK)
+; nf1    no hit: fill D's hole, then the next y step (YK)
+sa12_nf1
+    0 1 L YK1                  ; [sa12, nf1]
+    1 1 L sa12_nf1             ; [nf1]
+
+; ---------- Y STEP: P += M ----------------------------------------------
+
+; YK1    scan left to the next hole, then go to M's start (ym1)
+YK1
+    0 0 L YK2                  ; [YK1]
+    1 1 L YK1                  ; [YK1]
+; YK2    scan left to the next hole, then go to M's start (ym1)
+YK2
+    0 0 L YK1                  ; [YK2]
+    1 1 L ym1                  ; [YK2]
+; ym1    to M: left over K's first cells
+ym1
+    0 0 L ym2                  ; [ym1]
+    1 1 L ym1                  ; [ym1]
+; ym2    to M: separator
+ym2
+    0 0 L sa10_ym3             ; [ym2]
+    -
+; seed6  seed: write 1 and step right
+; ym5    the M cursor on cell 1
+ym5
+    0 1 R x10                  ; [seed6]
+    1 0 R ce1                  ; [ym5]
+; ce1    scan right to three 0s (the tape end), then append a cell to P
+ce1
+    0 0 R ce2                  ; [ce1]
+    1 1 R ce1                  ; [ce1]
+; ce2    scan right to three 0s (the tape end), then append a cell to P
+ce2
+    0 0 R ce3                  ; [ce2]
+    1 1 R ce1                  ; [ce2]
+; ce3    scan right to three 0s (the tape end), then append a cell to P
+ce3
+    0 0 L ce4_nh1              ; [ce3]
+    1 1 R ce1                  ; [ce3]
+; ce4    append: back
+; nh1    n step: right over R
+ce4_nh1
+    0 0 L ce5_nh2              ; [ce4, nh1]
+    1 1 R ce4_nh1              ; [nh1]
+; ce5    append: a cell onto P's end, back (MK)
+; nh2    n step: R's last cell
+ce5_nh2
+    0 1 L MK1                  ; [ce5]
+    1 1 L nh3                  ; [nh2]
+; MK1    scan left to the next hole, then cross the K hole (MM)
+MK1
+    0 0 L MK2                  ; [MK1]
+    1 1 L MK1                  ; [MK1]
+; MK2    scan left to the next hole, then cross the K hole (MM)
+MK2
+    0 0 L MK1                  ; [MK2]
+    1 1 L MM1                  ; [MK2]
+; MM1    scan left to the next hole, then advance the M cursor (mc1)
+MM1
+    0 0 L MM2                  ; [MM1]
+    1 1 L MM1                  ; [MM1]
+; MM2    scan left to the next hole, then advance the M cursor (mc1)
+MM2
+    0 0 L MM1                  ; [MM2]
+    1 1 R g7_mc1               ; [MM2]
+; mc2    M cursor: next cell; 0: M is done, W += a (u1)
+mc2
+    0 0 L u1                   ; [mc2]
+    1 0 R ce1                  ; [mc2]
+
+; ---------- Y STEP: W += a ----------------------------------------------
+
+; u1     scan left to three 0s (the tape end), then the A cursor
+u1
+    0 0 L u2                   ; [u1]
+    1 1 L u1                   ; [u1]
+; u2     scan left to three 0s (the tape end), then the A cursor
+u2
+    0 0 L u3                   ; [u2]
+    1 1 L u1                   ; [u2]
+; u3     scan left to three 0s (the tape end), then the A cursor
+u3
+    0 0 R ul4_F4               ; [u3]
+    1 1 L u1                   ; [u3]
+; ul4    to A: blank
+; F4     after the units: 0: the K hole on cell 1: the test (ms1)
+ul4_F4
+    0 0 R ul5_ms1_nw1          ; [ul4, F4]
+    1 1 R F1                   ; [F4]
+; ul5    to A: blank
+; ms1    test setup: right over K
+; nw1    n step: separator
+ul5_ms1_nw1
+    0 0 R ul6_ms2_nw2          ; [ul5, ms1, nw1]
+    1 1 R ul5_ms1_nw1          ; [ms1]
+; ul6    to A: step over A's cell 0
+; ms2    test setup: separator
+; nw2    n step: separator
+ul6_ms2_nw2
+    0 0 R ms3_nw3              ; [ms2, nw2]
+    1 1 R ul7_x3_nr5           ; [ul6]
+; ul7    the A cursor on cell 1
+; x3     y loop over: fill the separator
+; nr5    n step: A := 1 two cells further left
+ul7_x3_nr5
+    0 1 R x4_nr6               ; [x3, nr5]
+    1 0 R f1                   ; [ul7]
+; seed8  seed: write 0 and step right
+; f1     one unit: right to the K hole
+f1
+    0 0 R f2                   ; [seed8, f1]
+    1 1 R f1                   ; [f1]
+; seed9  seed: write 0 and step right
+; f2     one unit: after a single 0: 1: the K hole (first lap)
+f2
+    0 0 R f3                   ; [seed9, f2]
+    1 1 L k1_nr2               ; [f2]
+; seed10 seed: write 1 and step right
+; f3     one unit: after a separator
+f3
+    0 1 R nh3                  ; [seed10]
+    1 1 R f4                   ; [f3]
+; f4     one unit: a block's cell 1; 0: the K hole on cell 1 (second lap)
+f4
+    0 0 R l1                   ; [f4]
+    1 1 R f1                   ; [f4]
+; k1     first lap: fill the K hole
+; nr2    n step: left over R; fill the separator A|R
+k1_nr2
+    0 1 L k2_nr3               ; [k1, nr2]
+    1 1 L k1_nr2               ; [nr2]
+; k2     first lap: the K hole one cell left, back to the A cursor (AC)
+; nr3    n step: fill the separator
+k2_nr3
+    0 1 L nr4                  ; [nr3]
+    1 0 L AC1                  ; [k2]
+; l1     second lap: right over K
+l1
+    0 0 L l2_n3                ; [l1]
+    1 1 R l1                   ; [l1]
+; l2     second lap: K's last cell
+; n3     n step: separator
+l2_n3
+    0 0 L n4                   ; [n3]
+    1 1 L l3_nw4               ; [l2]
+; l3     second lap: 0: K = 1 0 1: the y loop is over
+; nw4    n step: K = 1111
+l3_nw4
+    0 1 R x1_ra1_nw5           ; [l3, nw4]
+    1 1 R l4_x2                ; [l3]
+; l4     second lap: K's last cell becomes the separator
+; x2     y loop over: fill the separator K|D
+l4_x2
+    0 1 R ul7_x3_nr5           ; [x2]
+    1 0 R l5_mw1               ; [l4]
+; l5     second lap: separator
+; mw1    wrap: left to the start of D
+l5_mw1
+    0 0 R l6_mw2               ; [l5, mw1]
+    1 1 L l5_mw1               ; [mw1]
+; l6     second lap: D's new first cell, back (AK)
+; mw2    wrap: step over D's cell 0
+l6_mw2
+    0 1 L AK1                  ; [l6]
+    1 1 R mw3_nc1              ; [mw2]
+; AK1    scan left to the next hole, then cross the K hole (AC)
+AK1
+    0 0 L AK2                  ; [AK1]
+    1 1 L AK1                  ; [AK1]
+; AK2    scan left to the next hole, then cross the K hole (AC)
+AK2
+    0 0 L AK1                  ; [AK2]
+    1 1 L AC1                  ; [AK2]
+; AC1    scan left to the next hole, then advance the A cursor (ac1)
+AC1
+    0 0 L AC2                  ; [AC1]
+    1 1 L AC1                  ; [AC1]
+; AC2    scan left to the next hole, then advance the A cursor (ac1)
+AC2
+    0 0 L AC1                  ; [AC2]
+    1 1 R cb3_ac1              ; [AC2]
+; seed2  seed: write 0 and step right
+; F1     after the units: right to the K hole
+F1
+    0 0 R F2                   ; [seed2, F1]
+    1 1 R F1                   ; [F1]
+; seed3  seed: write 0 and step right
+; F2     after the units: 1: the K hole (first lap): the next y step (YK)
+F2
+    0 0 R F3                   ; [seed3, F2]
+    1 1 L YK1                  ; [F2]
+; seed4  seed: write 1 and step right
+; F3     after the units: after a separator
+F3
+    0 1 R sa5                  ; [seed4]
+    1 1 R ul4_F4               ; [F3]
+
+; ---------- Y STEP: the test d | p (mod walk) ---------------------------
+
+; ms3    test setup: D's cell 0
+; nw3    n step: K = 1111
+ms3_nw3
+    0 1 R l3_nw4               ; [nw3]
+    1 1 R ms4_ma1              ; [ms3]
+; ms4    test setup: D's hole on cell 1 (the walk's first step)
+; ma1    advance the D hole: fill it
+ms4_ma1
+    0 1 R ma2                  ; [ma1]
+    1 0 R ms5_xa3              ; [ms4]
+; ms5    test setup: right over D
+; xa3    separator, then over R to N (gd1): the next x
+ms5_xa3
+    0 0 R gd1_sa6_ms6          ; [ms5, xa3]
+    1 1 R ms5_xa3              ; [ms5]
+; ma2    advance the D hole: 0: it was home (last cell), wrap; 1: the new hole
+ma2
+    0 0 L l5_mw1               ; [ma2]
+    1 0 R PR1                  ; [ma2]
+; mw3    wrap: the new hole on cell 1
+; nc1    n step: N += 1
+mw3_nc1
+    0 1 L nc2                  ; [nc1]
+    1 0 R PR1                  ; [mw3]
+; PR1    scan right to the next hole, then advance the P hole (ra1)
+PR1
+    0 0 R PR2                  ; [PR1]
+    1 1 R PR1                  ; [PR1]
+; PR2    scan right to the next hole, then advance the P hole (ra1)
+PR2
+    0 0 R PR1                  ; [PR2]
+    1 1 L x1_ra1_nw5           ; [PR2]
+; ra2    advance the P hole: step
+; nw6    n step: K = 1111, then the N loop (g1)
+ra2_nw6
+    0 1 L g1                   ; [nw6]
+    1 1 R ra3                  ; [ra2]
+; ra3    advance the P hole: 0: P is done (e1)
+ra3
+    0 0 L e1                   ; [ra3]
+    1 1 L sa9_ra4              ; [ra3]
+; PM1    scan left to the next hole, then advance the D hole (ma1)
+PM1
+    0 0 L PM2                  ; [PM1]
+    1 1 L PM1                  ; [PM1]
+; PM2    scan left to the next hole, then advance the D hole (ma1)
+PM2
+    0 0 L PM1                  ; [PM2]
+    1 1 R ms4_ma1              ; [PM2]
+; e1     walk over: left over P
+e1
+    0 0 L su3_e2               ; [e1]
+    1 1 L e1                   ; [e1]
+
+; ---------- END OF THE Y LOOP: the next x -------------------------------
+
+; x1     y loop over: K = 1 0 1, fill its hole
+; ra1    advance the P hole: fill it
+; nw5    n step: K = 1111
+x1_ra1_nw5
+    0 1 R ra2_nw6              ; [ra1, nw5]
+    1 1 R l4_x2                ; [x1]
+; x4     y loop over: right over D
+; nr6    n step: blank
+x4_nr6
+    0 0 R x5_nr7               ; [x4, nr6]
+    1 1 R x4_nr6               ; [x4]
+; x5     y loop over: separator
+; nr7    n step: A's old cell 0 becomes a separator cell
+x5_nr7
+    0 0 R x6                   ; [x5]
+    1 0 R ce4_nh1              ; [nr7]
+; x6     y loop over: erase P
+x6
+    0 0 L x7                   ; [x6]
+    1 0 R x6                   ; [x6]
+; x7     y loop over: back over 0s; erase D's last cell
+x7
+    0 0 L x7                   ; [x7]
+    1 0 L x8_xa1               ; [x7]
+; x8     y loop over: erase D's last cells
+; xa1    fill the A cursor
+x8_xa1
+    0 1 R xa2                  ; [xa1]
+    1 0 L x9                   ; [x8]
+; seed1  seed: write 1 and step right
+; x9     y loop over: erase D's last cells
+x9
+    0 1 R F1                   ; [seed1]
+    1 0 L x10                  ; [x9]
+; seed7  seed: write 1 and step right
+; x10    y loop over: erase D's last cells (K = m + 4)
+x10
+    0 1 R f1                   ; [seed7]
+    1 0 L XA1                  ; [x10]
+; XA1    scan left to the next hole, then fill the A cursor (xa1)
+XA1
+    0 0 L XA2                  ; [XA1]
+    1 1 L XA1                  ; [XA1]
+; XA2    scan left to the next hole, then fill the A cursor (xa1)
+XA2
+    0 0 L XA1                  ; [XA2]
+    1 1 R x8_xa1               ; [XA2]
+; xa2    right over A
+xa2
+    0 0 R ms5_xa3              ; [xa2]
+    1 1 R xa2                  ; [xa2]
+
+; ---------- N STEP ------------------------------------------------------
+
+; n4     n step: left over M
+n4
+    0 0 R er1                  ; [n4]
+    1 1 L n4                   ; [n4]
+; er1    n step: erase to four 0s
+er1
+    0 0 R er2                  ; [er1]
+    1 0 R er1                  ; [er1]
+; er2    n step: erase to four 0s
+er2
+    0 0 R er3                  ; [er2]
+    1 0 R er1                  ; [er2]
+; er3    n step: erase to four 0s
+er3
+    0 0 R er4                  ; [er3]
+    1 0 R er1                  ; [er3]
+; er4    n step: erase to four 0s
+er4
+    0 0 L er5                  ; [er4]
+    1 0 R er1                  ; [er4]
+; er5    n step: back over 0s to N's last cell
+er5
+    0 0 L er5                  ; [er5]
+    1 1 R mw3_nc1              ; [er5]
+; nc2    n step: left over N
+nc2
+    0 0 L w1_nc3               ; [nc2]
+    1 1 L nc2                  ; [nc2]
+; nr4    n step: left over A
+nr4
+    0 0 L ul7_x3_nr5           ; [nr4]
+    1 1 L nr4                  ; [nr4]
+; seed11 seed: write 1 and step right (then er5)
+; nh3    n step: R's hole on its last-but-one cell (U = 0)
+nh3
+    0 1 R er5                  ; [seed11]
+    1 0 R NE1                  ; [nh3]
+; NE1    scan right to three 0s (the tape end), then write M and K
+NE1
+    0 0 R NE2                  ; [NE1]
+    1 1 R NE1                  ; [NE1]
+; NE2    scan right to three 0s (the tape end), then write M and K
+NE2
+    0 0 R NE3                  ; [NE2]
+    1 1 R NE1                  ; [NE2]
+; NE3    scan right to three 0s (the tape end), then write M = 1
+NE3
+    0 1 R ul5_ms1_nw1          ; [NE3]
+    1 1 R NE1                  ; [NE3]

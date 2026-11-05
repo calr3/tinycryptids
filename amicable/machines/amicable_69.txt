@@ -1,0 +1,211 @@
+; amicable prototype
+
+blank_symbol: 0
+
+k0
+    0 1 R k1
+    1 1 R k0
+k1
+    0 1 R k2
+    -
+k2
+    0 1 R k3
+    -
+k3
+    0 0 R k4
+    -
+k4
+    0 0 R k5
+    -
+k5
+    0 1 L k6
+    -
+k6
+    0 0 L k7
+    -
+k7
+    0 1 L a2
+    -
+x1
+    0 0 L er
+    1 1 R x1
+er
+    0 0 R bk
+    1 0 L er
+bk
+    0 0 R bk
+    1 1 R k0
+CE1
+    0 1 L V1
+    -
+V1
+    0 0 L V2
+    1 1 L V1
+V2
+    0 0 L V3
+    -
+V3
+    -
+    1 0 R V4
+V4
+    0 0 R V4
+    1 1 R C1
+C1
+    -
+    1 0 R C2
+C2
+    -
+    1 0 L f2
+ma1
+    0 1 R ma2
+    -
+ma2
+    0 0 L mw1
+    1 0 R PR1
+mw1
+    0 0 R mw2
+    1 1 L mw1
+mw2
+    -
+    1 1 R mw3
+mw3
+    -
+    1 0 R PR1
+PR1
+    0 0 R PR2
+    1 1 R PR1
+PR2
+    0 0 R PR1
+    1 1 L ra1
+ra1
+    0 1 R ra2
+    -
+ra2
+    -
+    1 1 R ra3
+ra3
+    0 0 L e1
+    1 1 L ra4
+ra4
+    -
+    1 0 L PM1
+PM1
+    0 0 L PM2
+    1 1 L PM1
+PM2
+    0 0 L PM1
+    1 1 R ma1
+e1
+    0 0 L e2
+    1 1 L e1
+e2
+    0 0 L e3
+    -
+e3
+    0 1 L a2
+    1 1 L f1
+f1
+    0 1 R f2
+    1 1 L f1
+f2
+    0 0 R f3
+    1 1 R f2
+f3
+    0 0 R f4
+    1 0 L CE1
+f4
+    0 0 L H0
+    1 0 R f5
+f5
+    -
+    1 0 R f6
+f6
+    0 0 R PE1
+    1 1 L PM2
+a1
+    0 1 L a2
+    -
+a2
+    0 0 R f2
+    1 0 L Z1
+Z1
+    0 0 L Z2
+    1 1 L Z1
+Z2
+    0 0 L Z3
+    -
+Z3
+    0 1 L W
+    1 1 L Z3
+W
+    0 0 R PA1
+    1 0 R PA1
+PA1
+    0 0 R PA2
+    1 1 R PA1
+PA2
+    0 0 R PA1
+    1 1 L a1
+PE1
+    0 0 R PE2
+    -
+PE2
+    0 0 L G0
+    1 1 L R1
+G0
+    0 0 L G0
+    1 1 L G1
+G1
+    0 0 L G2
+    1 1 L G1
+G2
+    0 0 L G3
+    -
+G3
+    0 1 L G4
+    1 1 L G3
+G4
+    0 1 L g1
+    1 1 R x1
+g1
+    0 1 L g2
+    -
+g2
+    0 1 L V4
+    -
+R1
+    0 0 L R2
+    -
+R2
+    0 0 L FL2
+    -
+FL2
+    0 1 L FL2
+    1 1 R T1
+T1
+    0 0 R T2
+    1 1 R T1
+T2
+    0 0 R T3
+    -
+T3
+    0 1 L a2
+    1 1 R T3
+H0
+    0 0 L H0
+    1 0 L H1
+H1
+    0 0 L H2
+    1 1 L H1
+H2
+    0 0 L H3
+    -
+H3
+    0 1 L H4
+    1 1 L H3
+H4
+    0 0 R x1
+    1 1 L H5
+H5
+    0 0 R x1
+    1 1 R x1

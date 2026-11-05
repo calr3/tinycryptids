@@ -1,0 +1,323 @@
+; Minimised from /tmp/claude-0/-home-user-tinycryptids-dev/f20efdcd-298f-51a0-9382-69496c3e01bf/scratchpad/v4/ft4.txt by minimize.py
+; 106 states, 2 symbols
+
+blank_symbol: 0
+
+seed0
+    0 1 R seed1
+    1 1 L seed0
+seed1
+    0 0 R seed2
+    1 1 R a3
+seed2
+    0 1 R seed3
+    1 0 L PC1
+seed3
+    0 1 R seed4
+    1 1 L seed3
+seed4
+    0 0 R seed5
+    1 1 R ca3
+seed5
+    0 0 R seed6
+    1 1 L seed5
+seed6
+    0 1 R seed7
+    1 1 R seed2
+seed7
+    0 0 R seed8
+    1 1 L seed7
+seed8
+    0 1 R seed9
+    1 1 R cy7
+seed9
+    0 0 R seed10
+    1 1 R seed9
+seed10
+    0 0 R seed11
+    1 1 L k3
+seed11
+    0 1 R seed12
+    1 1 R pp2
+seed12
+    0 0 R seed13
+    1 1 L seed12
+seed13
+    0 1 R seed14
+    1 1 R d3
+seed14
+    0 1 R pw1
+    1 1 R cy3
+ca3
+    0 0 L seed5
+    1 1 L seed2
+PC1
+    0 0 L PC2
+    1 1 L PC1
+PC2
+    0 0 L PC1
+    1 1 R seed13
+cy3
+    0 0 L seed7
+    1 1 L cy4
+cy4
+    0 1 L seed10
+    1 0 R PN1
+cy7
+    0 0 R kn5
+    1 0 R PK1
+PN1
+    0 0 R PN2
+    1 1 R PN1
+PN2
+    0 0 R PN1
+    1 1 L seed3
+PK1
+    0 0 R PK2
+    1 1 R PK1
+PK2
+    0 0 R PK1
+    1 1 L cy4
+k3
+    0 0 R kd3
+    1 1 R kn3
+kd3
+    0 0 R kd4
+    1 1 R kd3
+kd4
+    0 0 R kd5
+    1 0 R MC1
+kd5
+    0 0 R halt
+    1 1 R PM1
+kn3
+    0 0 R cy7
+    1 1 R kn3
+kn5
+    0 0 L cl1
+    1 1 R kn6
+kn6
+    0 0 L rt1
+    1 1 R seed4
+PM1
+    0 0 R PM2
+    1 1 R PM1
+PM2
+    0 0 R PM1
+    1 1 R ms
+ms
+    0 1 L PX1
+    1 1 R ms
+PX1
+    0 0 L PX2
+    1 1 L PX1
+PX2
+    0 0 L PX1
+    1 1 L PY1
+PY1
+    0 0 L PY2
+    1 1 L PY1
+PY2
+    0 0 L PY1
+    1 1 R lp1
+lp1
+    0 1 L lp2
+    1 0 R pw1
+lp2
+    0 0 R kn3
+    1 0 L lp3
+lp3
+    0 1 R lp4
+    1 0 R seed9
+lp4
+    0 0 R u1
+    1 1 R ea3
+u1
+    0 0 R lp2
+    1 1 R u1
+rt1
+    0 0 L rt2
+    1 1 L rt1
+rt2
+    0 0 L rt3
+    1 0 R MB1
+rt3
+    0 0 R PY2
+    1 1 L rt3
+pw1
+    0 0 R pw2
+    1 1 R pw1
+pw2
+    0 0 R pw3
+    1 1 R pw1
+pw3
+    0 1 R pp2
+    1 1 R pw1
+pp2
+    0 0 R pp3
+    1 1 R c2
+pp3
+    0 1 L HE1
+    1 1 R hz6
+HE1
+    0 0 L HE2
+    1 1 L HE1
+HE2
+    0 0 L HE1
+    1 1 L HF1
+HF1
+    0 0 L HF2
+    1 1 L HF1
+HF2
+    0 0 L HF1
+    1 1 L HG1
+HG1
+    0 0 L HG2
+    1 1 L HG1
+HG2
+    0 0 L HG1
+    1 1 L HH1
+HH1
+    0 0 L HH2
+    1 1 L HH1
+HH2
+    0 0 L HH1
+    1 1 R lp3
+ea3
+    0 0 L ea5
+    1 1 L rt2
+ea5
+    0 0 R HH2
+    1 1 L ea5
+MB1
+    0 0 R MB2
+    1 1 R MB1
+MB2
+    0 0 R MB1
+    1 1 L ba1
+ba1
+    0 1 R ba2
+    1 1 R ba1
+ba2
+    0 1 R m3
+    1 1 R ba3
+ba3
+    0 0 L ba5
+    1 1 L kd4
+ba5
+    0 0 R ba6
+    1 1 L ba5
+ba6
+    0 0 L RB1
+    1 1 R ba7
+ba7
+    0 1 L rt1
+    1 0 R MM1
+MC1
+    0 0 R MC2
+    1 1 R MC1
+MC2
+    0 0 R MC1
+    1 1 R MD1
+MD1
+    0 0 R MD2
+    1 1 R MD1
+MD2
+    0 0 R MD1
+    1 1 R c1
+MM1
+    0 0 R MM2
+    1 1 R MM1
+MM2
+    0 0 R MM1
+    1 1 R MN1
+MN1
+    0 0 R MN2
+    1 1 R MN1
+MN2
+    0 0 R MN1
+    1 1 R ba1
+c1
+    0 0 R c2
+    1 1 R c1
+c2
+    0 0 R c3
+    1 1 R hn6
+c3
+    0 1 L c4
+    1 1 R c3
+c4
+    0 0 L c5
+    1 1 L c4
+c5
+    0 0 L seed0
+    1 0 L HE1
+a3
+    0 0 L seed12
+    1 1 L a4
+a4
+    0 1 R PO1
+    1 0 R c1
+d3
+    0 1 R PM1
+    1 0 L NB1
+NB1
+    0 0 L NB2
+    1 1 L NB1
+NB2
+    0 0 L NB1
+    1 1 L NC1
+NC1
+    0 0 L NC2
+    1 1 L NC1
+NC2
+    0 0 L NC1
+    1 1 R ba1
+m3
+    0 0 L c5
+    1 1 R m3
+hn6
+    0 0 R pw2
+    1 1 R tw1
+hz6
+    0 0 L a3
+    1 1 R tw1
+tw1
+    0 0 R tw2
+    1 1 R tw1
+tw2
+    0 0 R tw3
+    1 1 R tw1
+tw3
+    0 0 L t1
+    1 1 R tw1
+t1
+    0 0 L t1
+    1 1 L seed3
+cl1
+    0 0 L cl1
+    1 0 L cl3
+cl3
+    0 0 L cl4
+    1 0 L cl3
+cl4
+    0 0 L cl3
+    1 0 L cl7
+cl7
+    0 0 L cl7
+    1 1 L RA1
+RA1
+    0 0 L RA2
+    1 1 L RA1
+RA2
+    0 0 L RA1
+    1 1 L RB1
+RB1
+    0 0 L ba6
+    1 1 L RB1
+PO1
+    0 0 R PO2
+    1 1 R PO1
+PO2
+    0 0 R PO1
+    1 1 L d3

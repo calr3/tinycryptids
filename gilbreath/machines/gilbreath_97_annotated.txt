@@ -1,0 +1,499 @@
+; ============================================================================
+; A 97-state, 2-symbol Turing machine that HALTS IFF GILBREATH'S CONJECTURE
+; FAILS: iff for some k >= 1 the first entry of row k of the triangle of
+; absolute differences of the primes 2, 3, 5, 7, ... is not 1.
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/Gilbreath/M97.lean, theorem TM.Gilbreath.M97.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 151-state design of build.py / gilbreath.txt with states
+;   merged. States are merged only when their defined transitions agree, so
+;   each state below plays one or more ROLES of the design (its name joins
+;   them). Each transition line is tagged [role] with the role(s) that use it.
+;   A '-' line is never used.
+;
+; THE IDEA
+;   The last diagonal of the triangle on the primes so far is D0, D1, ..., with
+;   D0 = p the last prime. A new prime m makes it m, |m - D0|, ||m - D0| - D1|, ...
+;   and its last entry is the first entry of the new bottom row: it must be 1.
+;   D0 is not stored: with g = m - p the stored S = D1, D2, ... becomes
+;   g, |g - D1|, ||g - D1| - D2|, ...
+;
+; TAPE (unary; separators 00 or 000; a hole is a single 0):
+;      G 00 M 00 S(n-1) 000 ... 000 S1 000 [zeros] 00 D 00 R
+;   G = 1 0 1^(g+1) (hole at cell 1).  M: one cell.  S(i): S(i) + 2 cells.
+;   D 00 R: trial division of m = d + r (as in ../legendre): D (d + 2 cells,
+;   hole at cell c + 1), R (r + 2 cells, a hole during the mod walk).
+;
+; ONE CANDIDATE m:  trial division by d = 2, 3, ...;
+;   composite: G += 1 (its hole moves left, a cell is added); rebuild D 00 R.
+;   prime: the update, a queue: the old values are taken from the right end (B),
+;   the new ones are made at the left end (Z, made as 1 0 1).  L is the newest
+;   value (first G); one step Z := |L - B|: L's cursor hole advances L times,
+;   each time B -= 1, or Z += 1 if B = 0; then while B > 0: B -= 1, Z += 1;
+;   B is erased and L loses its hole and last cell.  Z is the next L.
+;   When the next block is M: M is erased; Z must be 1 (else HALT); a new M and
+;   G = 1 0 1 1 are written on the left; rebuild D 00 R.
+;   seed: the tape after the primes 2, 3 (S = [1], g = 1), m = 4.
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0  seed: write the first tape
+; maw3   wrap: the hole on cell 1, to R's hole
+start_maw3
+    0 1 R rs1                      ; [seed0]
+    1 0 R PR1                      ; [maw3]
+
+; ---------- TRIAL DIVISION (../legendre) --------------------------------
+
+; seed19 seed: write the first tape
+; ma1    mod walk: fill D's hole
+; s4     erase M, to L (Y)
+ma1__s4
+    0 1 R ma2                      ; [seed19, ma1]
+    1 0 L YZ1                      ; [s4]
+; seed20 seed: write the first tape
+; ma2    mod walk: next cell
+ma2
+    0 1 R sh4__a1                  ; [seed20]
+    1 1 R ma3                      ; [ma2]
+; ma3    mod walk: 0: D's end, wrap
+ma3
+    0 0 L maw1                     ; [ma3]
+    1 1 L ma4                      ; [ma3]
+; seed11 seed: write the first tape
+; ma4    mod walk: the new hole, to R's hole
+ma4
+    0 1 R c4                       ; [seed11]
+    1 0 R PR1                      ; [ma4]
+; seed7  seed: write the first tape
+; maw1   wrap: left across D
+maw1
+    0 0 R maw2                     ; [seed7, maw1]
+    1 1 L maw1                     ; [maw1]
+; seed8  seed: write the first tape
+; maw2   wrap: D's cell 0
+maw2
+    0 0 R ra1__e1                  ; [seed8]
+    1 1 R start_maw3               ; [maw2]
+; PR1    finder: right to R's hole
+PR1
+    0 0 R PR2                      ; [PR1]
+    1 1 R PR1                      ; [PR1]
+; PR2    finder: right to R's hole
+PR2
+    0 0 R PR1                      ; [PR2]
+    1 1 L ra1__e1                  ; [PR2]
+; seed9  seed: write the first tape
+; ra1    advance R's hole: fill it
+; e1     B: its next cell
+ra1__e1
+    0 1 R ra2                      ; [seed9, ra1]
+    1 1 L e2                       ; [e1]
+; seed10 seed: write the first tape
+; ra2    advance R's hole: next cell
+ra2
+    0 1 R ma4                      ; [seed10]
+    1 1 R ra3                      ; [ra2]
+; ra3    advance R's hole: 0: R exhausted, test the residue
+ra3
+    0 0 L PK1                      ; [ra3]
+    1 1 L ra4                      ; [ra3]
+; seed6  seed: write the first tape
+; ra4    advance R's hole: the new hole, to D's hole
+ra4
+    0 1 R maw1                     ; [seed6]
+    1 0 L PM1                      ; [ra4]
+; PM1    finder: left to D's hole
+PM1
+    0 0 L PM2                      ; [PM1]
+    1 1 L PM1                      ; [PM1]
+; PM2    finder: left to D's hole
+PM2
+    0 0 L PM1                      ; [PM2]
+    1 1 R ma1__s4                  ; [PM2]
+; PK1    finder: left to D's hole (R exhausted)
+PK1
+    0 0 L PK2                      ; [PK1]
+    1 1 L PK1                      ; [PK1]
+; PK2    finder: left to D's hole (R exhausted)
+PK2
+    0 0 L PK1                      ; [PK2]
+    1 1 L k1                       ; [PK2]
+; k1     residue: 0: D's hole on cell 1, d | m: composite
+k1
+    0 0 L gZ1                      ; [k1]
+    1 1 R k2__rs2                  ; [k1]
+; seed2  seed: write the first tape
+; k2     residue not 0: fill the hole
+; rs2    reset: D's cell 0
+k2__rs2
+    0 1 R sh1__t1                  ; [seed2]
+    1 1 R k3__rs3                  ; [k2, rs2]
+; k3     fill the hole
+; rs3    reset: the hole on cell 1
+k3__rs3
+    0 1 L rs1                      ; [k3]
+    1 0 R sh1__t1                  ; [rs3]
+; seed1  seed: write the first tape
+; rs1    reset D's hole: left across D
+rs1
+    0 0 R k2__rs2                  ; [seed1, rs1]
+    1 1 L rs1                      ; [rs1]
+; seed3  seed: write the first tape
+; sh1    shift d += 1, r -= 1: right across D
+; t1     end of step: fill L's hole
+sh1__t1
+    0 1 R sh2__t2                  ; [seed3, sh1, t1]
+    1 1 R sh1__t1                  ; [sh1]
+; seed4  seed: write the first tape
+; sh2    shift: fill the separator
+; t2     end of step: erase L's last cell, to Z (n)
+sh2__t2
+    0 0 R sh3                      ; [seed4, sh2]
+    1 0 L nP                       ; [t2]
+; seed5  seed: write the first tape
+; sh3    shift: R's cell 0 erased
+sh3
+    0 0 R ra4                      ; [seed5]
+    1 0 R sh4__a1                  ; [sh3]
+; seed21 seed: write the first tape
+; sh4    next candidate starts here: R's cell 0
+; a1     advance L's cursor: fill the hole
+sh4__a1
+    0 1 R a2__y1                   ; [seed21, a1]
+    1 1 R sh5__z4__i2              ; [sh4]
+; sh5    R's cell 1
+; z4     make Z: its hole
+; i2     Z += 1: the new hole
+sh5__z4__i2
+    0 0 L z5__i3                   ; [z4, i2]
+    1 1 R sh6                      ; [sh5]
+; sh6    0: r = 0, m is prime; 1: R has a cell more
+sh6
+    0 0 L PC1                      ; [sh6]
+    1 1 L sh7__gi2__f13            ; [sh6]
+; sh7    the R hole on cell 1, mod walk
+; gi2    G += 1: the new hole
+; f13    G's hole
+sh7__gi2__f13
+    0 0 L gi3__a6__f14             ; [gi2, f13]
+    1 0 L PM1                      ; [sh7]
+; PC1    finder: left past D's hole (m prime)
+PC1
+    0 0 L PC2                      ; [PC1]
+    1 1 L PC1                      ; [PC1]
+; PC2    finder: left past D's hole (m prime)
+PC2
+    0 0 L PC1                      ; [PC2]
+    1 1 L nP                       ; [PC2]
+; rbP    finder: right to D's hole, rebuild
+rbP
+    0 0 R rbZ1                     ; [rbP]
+    1 1 R rbP                      ; [rbP]
+; rbZ1   finder: right to D's hole, rebuild
+rbZ1
+    0 0 R rbZ2                     ; [rbZ1]
+    1 1 R c1__f1                   ; [rbZ1]
+; rbZ2   finder: right to D's hole, rebuild
+rbZ2
+    0 0 R rbZ2                     ; [rbZ2]
+    1 1 R rbP                      ; [rbZ2]
+; seed24 seed: write the first tape
+; c1     rebuild D := 2, R := m - 1: right across D
+; f1     check Z = 1: fill its hole
+c1__f1
+    0 1 R c2__f2                   ; [seed24, c1, f1]
+    1 1 R c1__f1                   ; [c1]
+; seed25 seed: write the first tape
+; c2     rebuild: fill the separator
+; f2     check: Z cell 2
+c2__f2
+    0 1 R c3                       ; [seed25, c2]
+    1 1 R f3                       ; [f2]
+; c3     rebuild: append to R
+c3
+    0 1 L c4                       ; [c3]
+    1 1 R c3                       ; [c3]
+; seed12 seed: write the first tape
+; c4     rebuild: back to D's hole
+c4
+    0 0 R c5                       ; [seed12, c4]
+    1 1 L c4                       ; [c4]
+; seed13 seed: write the first tape
+; c5     rebuild: D cell 2
+c5
+    0 0 R u2                       ; [seed13]
+    1 1 R c6__f11                  ; [c5]
+; c6     rebuild: D cell 3
+; f11    write G = 1 0 1 1
+c6__f11
+    0 1 L gi1__a4__f12             ; [f11]
+    1 1 R c7__r2                   ; [c6]
+; c7     rebuild: the new separator
+; r2     B = 0: put the cell back, to Z via L (X)
+c7__r2
+    0 1 L XP                       ; [r2]
+    1 0 R c8__z3__i1               ; [c7]
+; c8     rebuild: the new separator
+; z3     make Z: its cell 2
+; i1     Z += 1: fill the hole
+c8__z3__i1
+    0 1 L sh5__z4__i2              ; [z3, i1]
+    1 0 R sh4__a1                  ; [c8]
+
+; ---------- COMPOSITE: G += 1 -------------------------------------------
+
+; gP     finder: left to G's hole, G += 1
+gP
+    0 0 L gZ1                      ; [gP]
+    1 1 L gP                       ; [gP]
+; gZ1    finder: left to G's hole, G += 1
+gZ1
+    0 0 L gZ2                      ; [gZ1]
+    1 0 R gi1__a4__f12             ; [gZ1]
+; gZ2    finder: left to G's hole, G += 1
+gZ2
+    0 0 L gZ2                      ; [gZ2]
+    1 1 L gP                       ; [gZ2]
+; gi1    G += 1: fill the hole
+; a4     advance: the new hole, to B (w)
+; f12    write G
+gi1__a4__f12
+    0 1 L sh7__gi2__f13            ; [gi1, f12]
+    1 0 R w1                       ; [a4]
+; gi3    G += 1: a new cell 0, back to D (rb)
+; a6     L exhausted: the hole back, to B (v)
+; f14    G's cell 0, to D (rb)
+gi3__a6__f14
+    0 1 R rbZ2                     ; [gi3, f14]
+    1 0 R v1                       ; [a6]
+
+; ---------- UPDATE: ONE STEP Z := |L - B| -------------------------------
+
+; nP     finder: left to the leftmost hole (G or Z), make Z
+nP
+    0 0 L nZ1                      ; [nP]
+    1 1 L nP                       ; [nP]
+; nZ1    finder: left to the leftmost hole (G or Z), make Z
+nZ1
+    0 0 L nZ2                      ; [nZ1]
+    1 1 L z1__a3                   ; [nZ1]
+; nZ2    finder: left to the leftmost hole (G or Z), make Z
+nZ2
+    0 0 L nZ2                      ; [nZ2]
+    1 1 L nP                       ; [nZ2]
+; z1     make Z: gap
+; a3     advance: 0: L's last cell, L exhausted
+z1__a3
+    0 0 L z2__a5                   ; [z1, a3]
+    1 1 L gi1__a4__f12             ; [a3]
+; z2     make Z: gap
+; a5     L exhausted: keep the last cell
+z2__a5
+    0 0 L c8__z3__i1               ; [z2]
+    1 1 L gi3__a6__f14             ; [a5]
+; z5     make Z: its cell 0, to L's hole (a)
+; i3     Z += 1: a new cell 0, back to L (a)
+z5__i3
+    0 1 R aZ2                      ; [z5, i3]
+    -
+; aP     finder: right to L's hole, advance it
+aP
+    0 0 R aZ1                      ; [aP]
+    1 1 R aP                       ; [aP]
+; aZ1    finder: right to L's hole, advance it
+aZ1
+    0 0 R aZ2                      ; [aZ1]
+    1 1 L sh4__a1                  ; [aZ1]
+; aZ2    finder: right to L's hole, advance it
+aZ2
+    0 0 R aZ2                      ; [aZ2]
+    1 1 R aP                       ; [aZ2]
+; seed22 seed: write the first tape
+; a2     advance: next cell
+; y1     end of update: fill L's hole
+a2__y1
+    0 1 R y2                       ; [seed22, y1]
+    1 1 R z1__a3                   ; [a2]
+; w1     walk right to B (cursor advanced)
+w1
+    0 0 R w2                       ; [w1]
+    1 1 R w1                       ; [w1]
+; w2     walk right to B (cursor advanced)
+w2
+    0 0 R w3                       ; [w2]
+    1 1 R w1                       ; [w2]
+; w3     walk right to B (cursor advanced)
+w3
+    0 0 R w4                       ; [w3]
+    1 1 R w1                       ; [w3]
+; w4     walk right to B (cursor advanced)
+w4
+    0 0 L wz                       ; [w4]
+    1 1 R w1                       ; [w4]
+; wz     walk: back to B's last cell, erase it (cursor advanced)
+wz
+    0 0 L wz                       ; [wz]
+    1 0 L ra1__e1                  ; [wz]
+; seed16 seed: write the first tape
+; e2     B: 1: B > 0, one cell less, back to L (A); 0: B = 0
+e2
+    0 0 R r1                       ; [seed16, e2]
+    1 1 L AP                       ; [e2]
+; seed17 seed: write the first tape
+; r1     B = 0: right
+r1
+    0 1 R s3                       ; [seed17]
+    1 1 R c7__r2                   ; [r1]
+; AP     finder: left to L's hole, advance it
+AP
+    0 0 L AZ1                      ; [AP]
+    1 1 L AP                       ; [AP]
+; AZ1    finder: left to L's hole, advance it
+AZ1
+    0 0 L AZ2                      ; [AZ1]
+    1 1 R sh4__a1                  ; [AZ1]
+; AZ2    finder: left to L's hole, advance it
+AZ2
+    0 0 L AZ2                      ; [AZ2]
+    1 1 L AP                       ; [AZ2]
+; XP     finder: left to L's hole, then on to Z
+XP
+    0 0 L XZ1                      ; [XP]
+    1 1 L XP                       ; [XP]
+; XZ1    finder: left to L's hole, then on to Z
+XZ1
+    0 0 L XZ2                      ; [XZ1]
+    1 1 L ZP                       ; [XZ1]
+; XZ2    finder: left to L's hole, then on to Z
+XZ2
+    0 0 L XZ2                      ; [XZ2]
+    1 1 L XP                       ; [XZ2]
+; ZP     finder: left to Z's hole, Z += 1
+ZP
+    0 0 L ZZ1                      ; [ZP]
+    1 1 L ZP                       ; [ZP]
+; ZZ1    finder: left to Z's hole, Z += 1
+ZZ1
+    0 0 L ZZ2                      ; [ZZ1]
+    1 0 R c8__z3__i1               ; [ZZ1]
+; ZZ2    finder: left to Z's hole, Z += 1
+ZZ2
+    0 0 L ZZ2                      ; [ZZ2]
+    1 1 L ZP                       ; [ZZ2]
+; v1     walk right to B (L exhausted)
+v1
+    0 0 R v2                       ; [v1]
+    1 1 R v1                       ; [v1]
+; v2     walk right to B (L exhausted)
+v2
+    0 0 R v3                       ; [v2]
+    1 1 R v1                       ; [v2]
+; v3     walk right to B (L exhausted)
+v3
+    0 0 R v4                       ; [v3]
+    1 1 R v1                       ; [v3]
+; v4     walk right to B (L exhausted)
+v4
+    0 0 L vz                       ; [v4]
+    1 1 R v1                       ; [v4]
+; vz     walk: back to B's last cell, erase it (L exhausted)
+vz
+    0 0 L vz                       ; [vz]
+    1 0 L u1__f9                   ; [vz]
+; u1     B: its next cell
+; f9     gap
+u1__f9
+    0 0 L f10                      ; [f9]
+    1 1 L u2                       ; [u1]
+; seed14 seed: write the first tape
+; u2     B: 1: B > 0, one cell less, to Z via L (X); 0: B = 0, the step is over
+u2
+    0 0 R s1                       ; [seed14, u2]
+    1 1 L XP                       ; [u2]
+
+; ---------- UPDATE: END OF A STEP, END OF THE UPDATE --------------------
+
+; seed15 seed: write the first tape
+; s1     erase B
+s1
+    0 0 R e2                       ; [seed15]
+    1 0 L s2                       ; [s1]
+; s2     left to the next block
+s2
+    0 0 L s2                       ; [s2]
+    1 1 L s3                       ; [s2]
+; seed18 seed: write the first tape
+; s3     1: an old value: next step (E); 0: it is M, the update is over
+s3
+    0 0 R ma1__s4                  ; [seed18, s3]
+    1 1 L EP                       ; [s3]
+; EP     finder: left to L's hole, end of step
+EP
+    0 0 L EZ1                      ; [EP]
+    1 1 L EP                       ; [EP]
+; EZ1    finder: left to L's hole, end of step
+EZ1
+    0 0 L EZ2                      ; [EZ1]
+    1 1 R sh1__t1                  ; [EZ1]
+; EZ2    finder: left to L's hole, end of step
+EZ2
+    0 0 L EZ2                      ; [EZ2]
+    1 1 L EP                       ; [EZ2]
+; YP     finder: left to L's hole, end of update
+YP
+    0 0 L YZ1                      ; [YP]
+    1 1 L YP                       ; [YP]
+; YZ1    finder: left to L's hole, end of update
+YZ1
+    0 0 L YZ2                      ; [YZ1]
+    1 1 R a2__y1                   ; [YZ1]
+; YZ2    finder: left to L's hole, end of update
+YZ2
+    0 0 L YZ2                      ; [YZ2]
+    1 1 L YP                       ; [YZ2]
+; seed23 seed: write the first tape
+; y2     end of update: erase L's last cell, to Z (F)
+y2
+    0 1 R c1__f1                   ; [seed23]
+    1 0 L FP                       ; [y2]
+; FP     finder: left to Z's hole, check Z
+FP
+    0 0 L FZ1                      ; [FP]
+    1 1 L FP                       ; [FP]
+; FZ1    finder: left to Z's hole, check Z
+FZ1
+    0 0 L FZ2                      ; [FZ1]
+    1 1 R c1__f1                   ; [FZ1]
+; FZ2    finder: left to Z's hole, check Z
+FZ2
+    0 0 L FZ2                      ; [FZ2]
+    1 1 L FP                       ; [FZ2]
+; f3     check: 0: Z = 0, HALT
+f3
+    0 0 R halt                     ; [f3]
+    1 1 R f4__f7                   ; [f3]
+; f4     check: 1: Z >= 2, HALT
+; f7     gap
+f4__f7
+    0 0 L f5__f8                   ; [f4, f7]
+    1 1 R halt                     ; [f4]
+; f5     Z = 1: erase its last cell
+; f8     write M
+f5__f8
+    0 1 L u1__f9                   ; [f8]
+    1 0 L f6                       ; [f5]
+; f6     left across Z
+f6
+    0 0 L f4__f7                   ; [f6]
+    1 1 L f6                       ; [f6]
+; f10    gap
+f10
+    0 0 L c6__f11                  ; [f10]
+    -

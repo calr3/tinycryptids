@@ -1,0 +1,317 @@
+; ============================================================================
+; A 54-state, 2-symbol Turing machine that HALTS IFF LEMOINE'S CONJECTURE IS
+; FALSE, i.e. iff some odd n >= 7 is not p + 2q with p, q prime.
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/Lemoine/M54.lean, theorem TM.Lemoine.M54.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 84-state design of build.py / lemoine.txt with states
+;   merged. States are merged only when their defined transitions agree, so
+;   each state below plays one or more ROLES of the design (its name joins
+;   them). Each transition line is tagged [role] with the role(s) that use it.
+;   A '-' line is never used. The seed roles run once at the start and only
+;   ever read 0, so most of them double as a step of some other routine.
+;
+; TAPE LAYOUT
+;
+;      1 0 [Dp 00 Rp] 0^G [Dq 00 Rq] 0 1
+;
+;   A PAIR D 00 R holds a number m = d + r under trial division by d (as in
+;   ../legendre): D has d+2 cells, its HOLE (a single 0) at cell c+1 is a
+;   cyclic counter c in [0, d); R has r+2 cells. The pair is NORMALIZED when
+;   d = 2 (D = 1011). P holds p = n - 2q, Q holds q.
+;   The SENTINELS 1 0 (left) and 0 1 (right) tell the two pairs apart.
+;   The GAP G = 2q (even, so the hole parsers cross it): every q += 1 erases
+;   two cells at the end of Rp.
+;
+; ALGORITHM (n = 7, 9, 11, ...; q = 2, 3, ... while p = n - 2q >= 3)
+;   test p    normalize P (d := 2), then trial division: mod walk (r times
+;             advance the D hole cyclically, then the R hole; d | m iff the D
+;             hole is back at cell 1), shift (d+1, r-1), until a divisor or
+;             r = 0. If R has a single cell, p = 1: no q is left: HALT.
+;   test q    after p prime: normalize Q, the same trial division.
+;   q += 1    after a composite: a cell after Rq (the sentinel moves), two
+;             cells off Rp, then test p.
+;   next n    after q prime: erase Q, fill the gap into Rp (p' = p + 2q - 2
+;             after the two cells), write a new gap 00, Q = 1011 00 1, the
+;             sentinel, then as q += 1.
+;   seed      write 1 0 1011 00 11111 00 1011 00 1 0 1, then as q += 1:
+;             n = 7, q = 2.
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0  seed: write 1 and step right
+; ma4    advance the D hole: make the new hole, then go to the R hole (PR)
+; maw3   wrap around: new hole at cell 1, then go to the R hole (PR)
+start_ma4_maw3
+    0 1 R ra4_v1               ; [seed0]
+    1 0 R PR1                  ; [ma4, maw3]
+
+; ---------- MOD WALK: does d divide m? ----------------------------------
+
+; seed4  seed: write 1 and step right
+; ma1    advance the D hole: fill it
+; maw2   wrap around: step over cell 0
+ma1_maw2
+    0 1 R ma2                  ; [seed4, ma1]
+    1 1 R start_ma4_maw3       ; [maw2]
+; seed5  seed: write 1 and step right
+; ma2    advance the D hole: step over the next cell
+ma2
+    0 1 R r3                   ; [seed5]
+    1 1 R ma3                  ; [ma2]
+; ma3    advance the D hole: is that cell the last one of D? 0: yes, wrap around
+ma3
+    0 0 L maw1                 ; [ma3]
+    1 1 L start_ma4_maw3       ; [ma3]
+; seed3  seed: write 0 and step right
+; maw1   wrap around: run left to the start of D
+maw1
+    0 0 R ma1_maw2             ; [seed3, maw1]
+    1 1 L maw1                 ; [maw1]
+; PR1    scan right to the next hole, then advance the R hole (ra1)
+PR1
+    0 0 R PR2                  ; [PR1]
+    1 1 R PR1                  ; [PR1]
+; PR2    scan right to the next hole, then advance the R hole (ra1)
+PR2
+    0 0 R PR1                  ; [PR2]
+    1 1 L ra1_k2_c6            ; [PR2]
+; seed8  seed: write 1 and step right
+; ra1    advance the R hole: fill it
+; k2     not a divisor: step right
+; c6     normalize: step over cell 3 (D := 2)
+ra1_k2_c6
+    0 1 R ra2                  ; [seed8, ra1]
+    1 1 R k3_c7                ; [k2, c6]
+; seed9  seed: write 1 and step right
+; ra2    advance the R hole: step over the next cell
+ra2
+    0 1 R rs3                  ; [seed9]
+    1 1 R ra3                  ; [ra2]
+; ra3    advance the R hole: last cell of R? 0: yes, the walk is over: test the D hole (PK)
+ra3
+    0 0 L PK1                  ; [ra3]
+    1 1 L ra4_v1               ; [ra3]
+; seed1  seed: write 0 and step right
+; ra4    advance the R hole: make the new hole, then back to the D hole (PM)
+; v1     P composite: step over cell -1 of Dp
+ra4_v1
+    0 0 R v2                   ; [seed1, v1]
+    1 0 L PM1                  ; [ra4]
+; PM1    scan left to the next hole, then advance the D hole (ma1)
+PM1
+    0 0 L PM2                  ; [PM1]
+    1 1 L PM1                  ; [PM1]
+; PM2    scan left to the next hole, then advance the D hole (ma1)
+PM2
+    0 0 L PM1                  ; [PM2]
+    1 1 R ma1_maw2             ; [PM2]
+; PK1    scan left to the next hole, then test whether the hole is at cell 1 (k1)
+PK1
+    0 0 L PK2                  ; [PK1]
+    1 1 L PK1                  ; [PK1]
+; PK2    scan left to the next hole, then test whether the hole is at cell 1 (k1)
+PK2
+    0 0 L PK1                  ; [PK2]
+    1 1 L k1                   ; [PK2]
+; k1     divisor test: 0: the D hole is at cell 1, d | m: composite (k1b); 1: no
+k1
+    0 0 L k1b                  ; [k1]
+    1 1 R ra1_k2_c6            ; [k1]
+; k3     not a divisor: fill the D hole
+; c7     normalize: separator after D
+k3_c7
+    0 1 L rs1                  ; [k3]
+    1 0 R c8                   ; [c7]
+; seed14 seed: write 0 and step right (the new gap at the next n)
+; rs1    not a divisor: run left to the start of D
+rs1
+    0 0 R rs2                  ; [seed14, rs1]
+    1 1 L rs1                  ; [rs1]
+; seed15 seed: write 1 and step right
+; rs2    not a divisor: step over cell 0
+rs2
+    0 1 R c8                   ; [seed15]
+    1 1 R rs3                  ; [rs2]
+; seed10 seed: write 1 and step right
+; rs3    not a divisor: hole back at cell 1, then shift
+rs3
+    0 1 R e2                   ; [seed10]
+    1 0 R sh1                  ; [rs3]
+
+; ---------- SHIFT: d+1, r-1; HALT when P holds 1 ------------------------
+
+; seed18 seed: write 1 and step right
+; sh1    shift: run right to the end of D
+sh1
+    0 1 R sh2_sh4              ; [seed18, sh1]
+    1 1 R sh1                  ; [sh1]
+; seed19 seed: write 0 and step right
+; sh2    shift: d+1 (fill the first separator cell)
+; sh4    step over cell 0 of R
+sh2_sh4
+    0 0 R sh3                  ; [seed19, sh2]
+    1 1 R sh5                  ; [sh4]
+; seed20 seed: write 0 and step right
+; sh3    shift: r-1 (erase the first cell of R)
+sh3
+    0 0 R seed21               ; [seed20]
+    1 0 R sh2_sh4              ; [sh3]
+; sh5    does R have a cell 1? 0: no, P holds 1: HALT; 1: yes
+sh5
+    0 0 R halt                 ; [sh5]
+    1 1 R sh6                  ; [sh5]
+; sh6    does R have a cell 2? 0: no, r = 0: m is prime (pd); 1: yes
+sh6
+    0 0 R pd                   ; [sh6]
+    1 1 L sh7_u3               ; [sh6]
+; sh7    make the R hole at cell 1, then start the mod walk (PM)
+; u3     to the end of Q: step back over the 0, then normalize Q (r1)
+sh7_u3
+    0 0 L r1                   ; [u3]
+    1 0 L PM1                  ; [sh7]
+
+; ---------- WHICH PAIR WAS TESTED ---------------------------------------
+
+; k1b    composite: 1: the left sentinel, P (v1); 0: the gap, Q: to the Q hole (PN2)
+k1b
+    0 0 R v3_PN2               ; [k1b]
+    1 1 R ra4_v1               ; [k1b]
+; seed2  seed: write 1 and step right
+; v2     P composite: step over cell 0 of Dp
+v2
+    0 1 R maw1                 ; [seed2]
+    1 1 R v3_PN2               ; [v2]
+; v3     P composite: step over the Dp hole, then to the Q hole (PN)
+; PN2    scan right to the next hole, then w (q += 1)
+v3_PN2
+    0 0 R PN1                  ; [v3, PN2]
+    1 1 R w                    ; [PN2]
+; pd     prime: two cells right of R: 0: the gap, P: normalize Q (PS); 1: the right sentinel, Q: next n (U)
+pd
+    0 0 R PS1                  ; [pd]
+    1 0 L U                    ; [pd]
+
+; ---------- q += 1, p -= 2 ----------------------------------------------
+
+; PN1    scan right to the next hole, then w (q += 1)
+PN1
+    0 0 R v3_PN2               ; [PN1]
+    1 1 R PN1                  ; [PN1]
+; w      q += 1: 1: on Dq, scan on (PN); 0: past the right sentinel: new sentinel
+w
+    0 1 L w2                   ; [w]
+    1 1 R PN1                  ; [w]
+; seed17 seed: write 1 and step right
+; w2     q += 1: erase the old sentinel
+w2
+    0 1 R sh1                  ; [seed17]
+    1 0 L w3                   ; [w2]
+; w3     q += 1: one more cell of Rq, then back to the Q hole (PQ)
+w3
+    0 1 L PQ1                  ; [w3]
+    -
+; PQ1    scan left to the next hole, then cross the gap (z)
+PQ1
+    0 0 L PQ2                  ; [PQ1]
+    1 1 L PQ1                  ; [PQ1]
+; PQ2    scan left to the next hole, then cross the gap (z)
+PQ2
+    0 0 L PQ1                  ; [PQ2]
+    1 1 L z                    ; [PQ2]
+; z      p -= 2: run left over the gap, erase the last cell of Rp
+z
+    0 0 L z                    ; [z]
+    1 0 L e2                   ; [z]
+; seed11 seed: write 1 and step right
+; e2     p -= 2: erase the next one, then normalize P (r1)
+e2
+    0 1 R u2                   ; [seed11]
+    1 0 L r1                   ; [e2]
+
+; ---------- NORMALIZE a pair (d := 2), from the end of R ----------------
+
+; r1     normalize: run left over R, fill the separator cell next to it
+r1
+    0 1 L r2                   ; [r1]
+    1 1 L r1                   ; [r1]
+; r2     normalize: fill the other separator cell
+r2
+    0 1 L r3                   ; [r2]
+    -
+; seed6  seed: write 0 and step right
+; r3     normalize: run left to the D hole
+r3
+    0 0 R c5                   ; [seed6, r3]
+    1 1 L r3                   ; [r3]
+; seed7  seed: write 0 and step right
+; c5     normalize: step over cell 2
+c5
+    0 0 R ra1_k2_c6            ; [seed7]
+    1 1 R ra1_k2_c6            ; [c5]
+; seed16 seed: write 0 and step right
+; c8     normalize: separator after D, then start the test (sh4)
+c8
+    0 0 R w2                   ; [seed16]
+    1 0 R sh2_sh4              ; [c8]
+
+; ---------- p PRIME: on to the end of Q ---------------------------------
+
+; PS1    scan right to the next hole, then u1
+PS1
+    0 0 R PS2                  ; [PS1]
+    1 1 R PS1                  ; [PS1]
+; PS2    scan right to the next hole, then u1
+PS2
+    0 0 R PS1                  ; [PS2]
+    1 1 R u1                   ; [PS2]
+; u1     to the end of Q: 1: on Dq, scan on (PS); 0: past the right sentinel, back
+u1
+    0 0 L u2                   ; [u1]
+    1 1 R PS1                  ; [u1]
+; seed12 seed: write 1 and step right
+; u2     to the end of Q: step back over the sentinel
+u2
+    0 1 R x8                   ; [seed12]
+    1 1 L sh7_u3               ; [u2]
+
+; ---------- q PRIME: the next n -----------------------------------------
+
+; U      next n: 0: step left (erase Q); 1: Dq cell 0: erase it, then fill the gap (x7)
+U
+    0 0 L X                    ; [U]
+    1 0 L x7                   ; [U]
+; X      next n: erase Rq, then Dq
+X
+    0 0 L U                    ; [X]
+    1 0 L X                    ; [X]
+; x7     next n: fill the gap into Rp, then back right (x8)
+x7
+    0 1 L x7                   ; [x7]
+    1 1 R x8                   ; [x7]
+; seed13 seed: write 0 and step right (the new gap at the next n; x8 plays it)
+; x8     next n: run right over Rp, then the new gap (seed13, seed14 ...)
+x8
+    0 0 R rs1                  ; [seed13, x8]
+    1 1 R x8                   ; [x8]
+
+; ---------- SEED only ---------------------------------------------------
+
+; seed21 seed: write 1 and step right
+seed21
+    0 1 R seed22               ; [seed21]
+    -
+; seed22 seed: write 0 and step right
+seed22
+    0 0 R seed23               ; [seed22]
+    -
+; seed23 seed: write 1 and step right
+seed23
+    0 1 R w                    ; [seed23]
+    -

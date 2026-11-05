@@ -1,0 +1,410 @@
+; Minimised from beal225.txt by minimize.py
+; 135 states, 2 symbols
+
+blank_symbol: 0
+
+seed0
+    0 1 R seed1
+    1 0 L t1
+seed1
+    0 0 R seed2
+    1 1 R f6
+seed2
+    0 1 R seed3
+    1 1 R seed2
+seed3
+    0 1 R seed4
+    1 1 R WB5
+seed4
+    0 1 R seed5
+    1 1 R seed4
+seed5
+    0 0 R seed6
+    1 1 R seed5
+seed6
+    0 0 R seed7
+    1 0 R u4
+seed7
+    0 1 R seed8
+    1 1 R k4
+seed8
+    0 1 R seed9
+    1 0 R zK1
+seed9
+    0 1 R seed10
+    1 0 R WB1
+seed10
+    0 1 R seed11
+    1 0 R e8
+seed11
+    0 0 R seed12
+    1 1 R seed11
+seed12
+    0 0 R seed13
+    1 1 R seed23
+seed13
+    0 1 R seed14
+    1 1 R nb4
+seed14
+    0 1 R seed15
+    1 0 R gB1
+seed15
+    0 1 R seed16
+    1 0 L seed0
+seed16
+    0 1 R seed17
+    1 0 R c1
+seed17
+    0 0 R seed18
+    1 0 R zG1
+seed18
+    0 0 R seed19
+    1 1 L seed18
+seed19
+    0 1 R seed20
+    1 1 R GK2
+seed20
+    0 1 R seed21
+    1 0 L cz2
+seed21
+    0 1 R seed22
+    1 1 R seed21
+seed22
+    0 1 R seed23
+    1 1 R TC8
+seed23
+    0 0 R seed24
+    1 1 R e6
+seed24
+    0 0 R seed25
+    1 0 R MQ1
+seed25
+    0 1 R seed26
+    1 1 R HS2
+seed26
+    0 1 R seed27
+    1 0 L k4
+seed27
+    0 1 R seed28
+    1 0 R g3
+seed28
+    0 1 R seed29
+    1 1 L n10
+seed29
+    0 0 R seed30
+    1 1 R gA8
+seed30
+    0 0 R seed31
+    1 1 L seed30
+seed31
+    0 1 R seed32
+    1 1 R bD3
+seed32
+    0 1 R seed33
+    1 1 L seed32
+seed33
+    0 1 R seed34
+    1 1 R a3
+seed34
+    0 1 R seed35
+    1 1 L seed34
+seed35
+    0 0 R seed36
+    1 1 R WA3
+seed36
+    0 0 R seed37
+    1 0 R seed37
+seed37
+    0 1 R WW1
+    1 1 R seed12
+e6
+    0 0 L seed10
+    1 1 R e6
+e8
+    0 0 R e9
+    1 1 L e8
+e9
+    0 1 L HS1
+    1 1 R HU2
+HS1
+    0 0 L HS2
+    1 1 L HS1
+HS2
+    0 0 L HS1
+    1 1 R f4
+f4
+    0 0 R gA1
+    1 1 R seed1
+f6
+    0 0 R seed24
+    1 1 R seed5
+k4
+    0 0 L HL1
+    1 1 L n2
+n2
+    0 1 R seed27
+    1 1 L n3
+n3
+    0 1 L n4
+    1 1 L seed28
+n4
+    0 0 L seed26
+    1 1 R u7
+n10
+    0 0 L HS2
+    1 1 L HU1
+HL1
+    0 0 L k4
+    1 1 L HL1
+g3
+    0 1 L uh
+    1 0 R MC1
+HU1
+    0 0 L HU2
+    1 1 L HU1
+HU2
+    0 0 L HU1
+    1 1 R uh
+uh
+    0 0 R seed4
+    1 0 L GK1
+u4
+    0 0 L HE1
+    1 1 R u5
+u5
+    0 1 L H1
+    1 1 R n4
+u7
+    0 1 R seed5
+    1 1 R u8
+u8
+    0 0 L HS1
+    1 1 L HU1
+gA1
+    0 0 R gA2
+    1 1 R gA1
+gA2
+    0 0 R gA3
+    1 1 R gA2
+gA3
+    0 0 R gA4
+    1 1 R gA3
+gA4
+    0 0 R gA5
+    1 1 R gA6
+gA5
+    0 0 R gA6
+    1 1 R gA5
+gA6
+    0 0 R seed29
+    1 1 R TC5
+gA8
+    0 0 R c3
+    1 1 R seed14
+gB1
+    0 0 R e8
+    1 1 R gB1
+GK1
+    0 0 L GK2
+    1 1 L GK1
+GK2
+    0 0 L seed34
+    1 0 L NB1
+WA3
+    0 0 L WW1
+    1 1 L seed9
+WB1
+    0 0 R seed1
+    1 1 R WB1
+WB5
+    0 0 L e8
+    1 1 L uh
+WW1
+    0 0 R WW2
+    1 1 L WW1
+WW2
+    0 0 R WW4
+    1 1 R WW3
+WW3
+    0 0 L NB1
+    1 1 R WW4
+WW4
+    0 1 R bA2
+    1 0 R gA2
+TC5
+    0 1 R t1
+    1 1 R seed21
+TC8
+    0 0 L HE1
+    1 1 L uh
+bA2
+    0 1 L HE1
+    1 1 R bA3
+bA3
+    0 0 L seed30
+    1 1 L g3
+MC1
+    0 0 R MC2
+    1 1 R MC1
+MC2
+    0 0 R MC1
+    1 1 R c1
+bD3
+    0 0 R bD4
+    1 1 R bD4
+bD4
+    0 1 L WW3
+    1 0 R MM1
+MM1
+    0 0 R MM2
+    1 1 R MM1
+MM2
+    0 0 R MM1
+    1 1 R mR
+c1
+    0 0 R gA8
+    1 1 R c1
+c3
+    0 1 L c4
+    1 1 R c3
+c4
+    0 0 L c5
+    1 1 L c4
+c5
+    0 0 L seed32
+    1 0 L seed15
+a3
+    0 0 L seed18
+    1 1 L seed16
+NB1
+    0 0 L WW3
+    1 1 L NB1
+mR
+    0 1 R m2
+    1 1 R mR
+m2
+    0 1 R m3
+    1 0 L c5
+m3
+    0 0 L m4
+    1 1 R m3
+m4
+    0 0 R LG2
+    1 0 L m5
+m5
+    0 1 L q1
+    1 0 L LE1
+LE1
+    0 0 L LE2
+    1 1 L LE1
+LE2
+    0 0 L LE1
+    1 1 L LF1
+LF1
+    0 0 L LF2
+    1 1 L LF1
+LF2
+    0 0 L LF1
+    1 1 L LG1
+LG1
+    0 0 L LG2
+    1 1 L LG1
+LG2
+    0 0 L LG1
+    1 1 R eAt
+eAt
+    0 1 R eA2
+    1 0 R MN1
+eA2
+    0 0 R m4
+    1 0 R MB1
+MB1
+    0 0 R MB2
+    1 1 R MB1
+MB2
+    0 0 R MB1
+    1 1 L WW4
+MN1
+    0 0 R MN2
+    1 1 R MN1
+MN2
+    0 0 R MN1
+    1 1 L seed10
+nb4
+    0 0 R q1
+    1 1 R seed24
+MQ1
+    0 0 R MQ2
+    1 1 R MQ1
+MQ2
+    0 0 R MQ1
+    1 1 L m5
+q1
+    0 0 R CP1
+    1 1 L q2
+q2
+    0 1 L q3
+    1 0 L zH1
+q3
+    0 1 R q4
+    1 1 L zH1
+q4
+    0 0 L m2
+    1 1 R q4
+t1
+    0 0 R t2
+    1 1 R t1
+t2
+    0 0 R t3
+    1 1 R t1
+t3
+    0 1 R bD3
+    1 1 R t1
+CP1
+    0 0 R q1
+    1 1 R CP1
+zH1
+    0 0 L zH1
+    1 1 L zA1
+zA1
+    0 0 R seed8
+    1 1 R seed17
+zG1
+    0 0 R zG1
+    1 1 R zZ1
+zZ1
+    0 0 L seed20
+    1 1 L q2
+zK1
+    0 0 R zK1
+    1 0 R zK2
+zK2
+    0 0 R halt
+    1 0 R cr1
+cr1
+    0 0 L cr3
+    1 0 R cr1
+cz2
+    0 0 L cz2
+    1 0 L cz3
+cz3
+    0 0 L cr3
+    1 0 L cz3
+cr3
+    0 0 L cr3
+    1 1 R WW1
+HE1
+    0 0 L u4
+    1 1 L HE1
+H1
+    0 0 L H2
+    1 1 L H1
+H2
+    0 0 L H3
+    1 1 L H1
+H3
+    0 0 R H4
+    1 1 L H1
+H4
+    0 0 R H4
+    1 1 R seed36

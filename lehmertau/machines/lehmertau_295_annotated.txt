@@ -1,0 +1,1452 @@
+; ============================================================================
+; A 295-state, 2-symbol Turing machine that HALTS IFF LEHMER'S CONJECTURE ON
+; RAMANUJAN'S TAU FUNCTION IS FALSE, i.e. iff tau(n) = 0 for some n >= 1.
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/LehmerTau/M295.lean,
+; theorem TM.LehmerTau.M295.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 481-state design of build.py / lehmertau.txt with
+;   states merged. States are merged only when their defined transitions agree,
+;   so each state below plays one or more ROLES of the design (its name joins
+;   them). Each transition line is tagged [role] with the role(s) that use it.
+;   A '-' line is never used. The seed roles run once at the start and only
+;   ever read 0, so most of them double as a step of some other routine.
+;
+; THE SEARCH
+;   756 tau(n) = 65 s11(n) + 691 s5(n) - 174132 sum_{i<n} s5(i) s5(n-i), with
+;   s_k the divisor power sums. For n = 2, 3, ... the machine builds
+;       P = sum_{i=1}^{n-1} sum_{d|i} sum_{e|n-i} 252 * 691 * d^5 e^5
+;       M = sum_{d|n} (691 d^5 + 65 d^11)
+;   and HALTS iff P = M (tau(1) = 1 is skipped).
+;
+; TAPE LAYOUT (blocks of 1s separated by 00; a hole is a single 0 in a block):
+;
+;      [M] 00 P 00 K65 00 K252 00 K691 00 X 00 Z 00 D 00 Rd 00 E 00 Re 00 S0 00 V..
+;
+;   P, M  accumulators (v + 1 cells); M exists only in the L phase (i = n)
+;   K65, K252, K691  the constants (f + 2 cells); an ACTIVE one has a hole
+;      (at rest at cell 1) and is a digit of the run
+;   X  copy counter (13 cells); Z one cell (tells D from E)
+;   D, Rd  frame for d + rd = i;  E, Re  frame for e + re = n - i (the mod
+;      walk of legendre/: the hole of D or E is the residue). In the L phase
+;      E and Re are a dummy: E' 4 cells, Re' 1 cell
+;   S0  two cells; V..  the copies, the var digits of the run
+;
+; ALGORITHM
+;   frames    the mod walk visits the divisors d of i (frame D), and inside
+;             each the divisors e of n - i (frame E)
+;   copy      a block (cursor at cell 1) is copied to the right end; X counts
+;             the copies (5 for d, e; 11 for d^11)
+;   run       an odometer over the var digits and the active K digits; every
+;             count adds a cell to the leftmost block (P, or M)
+;   R phase   for e | n-i: copy E x5, D x5, run with K252 and K691
+;   L phase   for d | n: copy D x5, run with K691; flip; D x11 with K65; flip
+;   end of n  E', Re' -> E, Re; Rd's cells move to Re; compare M and P one
+;             cell at a time (HALT if equal); M erased, P = 0, K252 on
+;   seed      writes the frames and the constants as binary counters, drains
+;             each counter into a unary block at the far left
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; sd0    seed: write 1 and step right
+; PD2    Re's last cell
+start_PD2
+    0 1 R wr1_Uw               ; [sd0]
+    1 1 L PD3_HK1              ; [PD2]
+
+; ---------- MOD WALK: the next divisor of a frame -----------------------
+
+; sd64   seed: write 1 and step right
+; wa1    advance the X hole: fill it
+wa1
+    0 1 R wa2                  ; [sd64, wa1]
+    -
+; sd65   seed: write 1 and step right
+; wa2    advance the X hole: step over the next cell
+wa2
+    0 1 R sd66                 ; [sd65]
+    1 1 R wa3                  ; [wa2]
+; wa3    advance the X hole: last cell of X? 0: yes, wrap around
+wa3
+    0 0 L waw1                 ; [wa3]
+    1 1 L wa4_waw3             ; [wa3]
+; sd19   seed: write 0 and step right
+; wa4    advance the X hole: new hole, then the R cursor (PRw)
+; waw3   wrap around: hole at cell 1, then the R cursor (PRw)
+wa4_waw3
+    0 0 R CM1                  ; [sd19]
+    1 0 R PRw1                 ; [wa4, waw3]
+; sd43   seed: write 0 and step right
+; waw1   wrap around: run left to the start of X
+waw1
+    0 0 R waw2                 ; [sd43, waw1]
+    1 1 L waw1                 ; [waw1]
+; sd44   seed: write 1 and step right
+; waw2   wrap around: step over cell 0
+waw2
+    0 1 R CD5                  ; [sd44]
+    1 1 R wa4_waw3             ; [waw2]
+; PRw1   scan right to the next hole, then the R cursor (wr1)
+PRw1
+    0 0 R PRw2                 ; [PRw1]
+    1 1 R PRw1                 ; [PRw1]
+; PRw2   scan right to the next hole, then the R cursor (wr1)
+PRw2
+    0 0 R PRw1                 ; [PRw2]
+    1 1 L wr1_Uw               ; [PRw2]
+; sd1    seed: write 1 and step right
+; wr1    advance the R cursor: fill it
+; Uw     unshift done: step left
+wr1_Uw
+    0 1 R wr2                  ; [sd1, wr1]
+    1 1 L Uv                   ; [Uw]
+; sd2    seed: write 1 and step right
+; wr2    advance the R cursor: step over the next cell
+wr2
+    0 1 R CA1                  ; [sd2]
+    1 1 R wr3_sh6              ; [wr2]
+; wr3    advance the R cursor: last cell? 0: the walk is over: test the X hole (PKw)
+; sh6    shift: R has a cell 2? 0: no, r = 0: x divides (PDz); 1: yes
+wr3_sh6
+    0 0 L PKw1_PDz1            ; [wr3, sh6]
+    1 1 L wr4_sh7              ; [wr3, sh6]
+; sd96   seed: write 1 and step right (then the counters, DN1)
+; wr4    advance the R cursor: new hole, then back to X (PMw)
+; sh7    shift: the R cursor, then the walk (PMw)
+wr4_sh7
+    0 1 R DN1                  ; [sd96]
+    1 0 L PMw1                 ; [wr4, sh7]
+; PMw1   scan left to the next hole, then the X hole (wa1)
+PMw1
+    0 0 L PMw2                 ; [PMw1]
+    1 1 L PMw1                 ; [PMw1]
+; PMw2   scan left to the next hole, then the X hole (wa1)
+PMw2
+    0 0 L PMw1                 ; [PMw2]
+    1 1 R wa1                  ; [PMw2]
+; PKw1   scan left to the next hole, then the X hole: the divisor test (k1)
+; PDz1   scan left to the next hole, then the frame's hole: the divisor test (k1)
+PKw1_PDz1
+    0 0 L PKw2_PDz2            ; [PKw1, PDz1]
+    1 1 L PKw1_PDz1            ; [PKw1, PDz1]
+; PKw2   scan left to the next hole, then the X hole: the divisor test (k1)
+; PDz2   scan left to the next hole, then the frame's hole: the divisor test (k1)
+PKw2_PDz2
+    0 0 L PKw1_PDz1            ; [PKw2, PDz2]
+    1 1 L k1                   ; [PKw2, PDz2]
+; k1     divisor test: 0: X's hole at cell 1, a divisor (fz1); 1: no
+k1
+    0 0 L fz1_X51              ; [k1]
+    1 1 R k2_UF2               ; [k1]
+; sd73   seed: write 1 and step right
+; k2     not a divisor: step right
+; UF2    step over cell 0 of D
+k2_UF2
+    0 1 R CD_KA1               ; [sd73]
+    1 1 R k3_UF3               ; [k2, UF2]
+; k3     not a divisor: fill the hole
+; UF3    D's hole back at cell 1, resume the walk on D (rsm)
+k3_UF3
+    0 1 L rs1                  ; [k3]
+    1 0 R rsm                  ; [UF3]
+; sd49   seed: write 0 and step right
+; rs1    not a divisor: run left to the start of X
+rs1
+    0 0 R rs2_CE               ; [sd49, rs1]
+    1 1 L rs1                  ; [rs1]
+; sd50   seed: write 1 and step right
+; rs2    not a divisor: step over cell 0
+; CE     run: fill the hole
+rs2_CE
+    0 1 R CF                   ; [sd50, CE]
+    1 1 R rs3                  ; [rs2]
+; sd11   seed: write 1 and step right
+; rs3    not a divisor: hole at cell 1, then shift
+rs3
+    0 1 R TL9                  ; [sd11]
+    1 0 R sh1                  ; [rs3]
+; sd88   seed: write 1 and step right
+; sh1    shift: run right to the end of X
+sh1
+    0 1 R sh2_TL5              ; [sd88, sh1]
+    1 1 R sh1                  ; [sh1]
+; sd89   seed: write 0 and step right
+; sh2    shift: x+1 (fill the separator cell)
+; TL5    erase Rd's last cell
+sh2_TL5
+    0 0 R sh3                  ; [sd89, sh2]
+    1 0 R LA2_TL6              ; [TL5]
+; sd90   seed: write 1 and step right
+; sh3    shift: r-1
+sh3
+    0 1 R AV4_XA1              ; [sd90]
+    1 0 R sh4                  ; [sh3]
+; sd53   seed: write 1 and step right
+; sh4    shift: step over cell 0 of R
+sh4
+    0 1 R TL4                  ; [sd53]
+    1 1 R sh5                  ; [sh4]
+; sd81   seed: write 1 and step right
+; sh5    shift: step over cell 1 of R
+sh5
+    0 1 R sd82                 ; [sd81]
+    1 1 R wr3_sh6              ; [sh5]
+; sd55   seed: write 0 and step right
+; rsm    resume after a divisor: run right over X
+rsm
+    0 0 R rc1_X54              ; [sd55, rsm]
+    1 1 R rsm                  ; [rsm]
+; sd56   seed: write 0 and step right
+; rc1    resume: step over the separator
+; X54    X: step left
+rc1_X54
+    0 0 R rc2                  ; [sd56, rc1]
+    1 1 L X55_AA2_LB2          ; [X54]
+; sd57   seed: write 1 and step right
+; rc2    resume: step over R cell 0
+rc2
+    0 1 R TL2                  ; [sd57]
+    1 1 R rc3                  ; [rc2]
+; sd85   seed: write 1 and step right
+; rc3    resume: step over R cell 1
+rc3
+    0 1 R LT3                  ; [sd85]
+    1 1 R rc4_IB8              ; [rc3]
+; rc4    resume: R cell 2? 0: no, r = 0: the loop is over (F2a); 1: shift
+; IB8    next i: separator
+rc4_IB8
+    0 0 L F2a_IB9              ; [rc4, IB8]
+    1 1 L PSx1                 ; [rc4]
+; PSx1   scan left to the next hole, then back to the frame's X block (rc6)
+PSx1
+    0 0 L PSx2                 ; [PSx1]
+    1 1 L PSx1                 ; [PSx1]
+; PSx2   scan left to the next hole, then back to the frame's X block (rc6)
+PSx2
+    0 0 L PSx1                 ; [PSx2]
+    1 1 R rc6_PRg              ; [PSx2]
+; rc6    resume: then shift (sh1)
+; PRg    E's hole back at cell 1, resume the walk on E (rsm)
+rc6_PRg
+    0 0 R sh1                  ; [rc6]
+    1 0 R rsm                  ; [PRg]
+
+; ---------- LOOP END: unshift the frame ---------------------------------
+
+; F2a    loop over: step left
+; IB9    next i: Rd gains a cell, then D's hole (PDz1)
+F2a_IB9
+    0 1 L PKw1_PDz1            ; [IB9]
+    1 1 L F2b                  ; [F2a]
+; sd95   seed: write 1 and step right
+; F2b    loop over: step left
+F2b
+    0 1 R wr4_sh7              ; [sd95]
+    1 1 L F2c_U6_CM6           ; [F2b]
+; F2c    loop over: separator
+; U6     unshift: new separator
+; CM6    compare: 0: P is down to 0, P < M (CB1); 1: more
+F2c_U6_CM6
+    0 0 L F2d_U7_GB4_CB1       ; [F2c, U6, CM6]
+    1 1 L CM7_CY2              ; [CM6]
+; F2d    loop over: separator
+; U7     unshift: separator
+; GB4    copy: step left
+; CB1    P < M: step left
+F2d_U7_GB4_CB1
+    0 0 L U1_GA5_GB5           ; [F2d, U7, GB4]
+    1 1 L CB2                  ; [CB1]
+; U1     unshift: X's last cell
+; GA5    new copy: its second cell, back to the source (BK1)
+; GB5    copy: one more cell, back (BK1)
+U1_GA5_GB5
+    0 1 L BK1                  ; [GA5, GB5]
+    1 1 L U2                   ; [U1]
+; U2     unshift: 0: the hole, x = 1, fill it (Ux); 1: move a cell from X to R
+U2
+    0 1 L DU0_Ux               ; [U2]
+    1 1 R U3                   ; [U2]
+; sd93   seed: write 1 and step right
+; U3     unshift: erase
+U3
+    0 1 R sd94                 ; [sd93]
+    1 0 R U4_UH2               ; [U3]
+; U4     unshift: separator
+; UH2    cross a block rightwards: over Rd, to E (UK1)
+U4_UH2
+    0 0 R U5_UK1               ; [U4, UH2]
+    1 1 R UH1                  ; [UH2]
+; U5     unshift: a cell for R
+; UK1    E's cell 0
+U5_UK1
+    0 1 L F2c_U6_CM6           ; [U5]
+    1 1 R UK2_IA1              ; [UK1]
+; Uy     unshift done: separator
+; VG2    cross a block leftwards: over Z, to X (X50)
+; EH2    cross a block leftwards: over Z, to X (X50)
+Uy_VG2_EH2
+    0 0 L Uz_X50               ; [Uy, VG2, EH2]
+    1 1 L VG1_EH1              ; [VG2, EH2]
+; Uz     unshift done: separator
+; X50    X: last cell
+Uz_X50
+    0 0 L wr1_Uw               ; [Uz]
+    1 1 L fz1_X51              ; [X50]
+; Uv     unshift done: 0: left of X is Z, X was D (UD1); 1: X was E (UE1)
+Uv
+    0 0 R UD1                  ; [Uv]
+    1 1 L UE1                  ; [Uv]
+
+; ---------- A DIVISOR: which frame, which phase -------------------------
+
+; fz1    a divisor: step left
+; X51    X: step left
+fz1_X51
+    0 0 L fz2                  ; [fz1]
+    1 1 L X52                  ; [X51]
+; sd24   seed: write 1 and step right
+; fz2    a divisor: step left
+fz2
+    0 1 R LA1                  ; [sd24]
+    1 1 L fz3                  ; [fz2]
+; fz3    which frame? 0: Z: D divides i (DD1); 1: E divides j (VE1)
+fz3
+    0 0 R DD1_MKa1             ; [fz3]
+    1 1 L VE1                  ; [fz3]
+; DD1    cross a block rightwards: D divides i: over Z
+; MKa1   cross a block rightwards: over the separator
+DD1_MKa1
+    0 0 R DD2_MKa2             ; [DD1, MKa1]
+    1 1 R DD1_MKa1             ; [DD1, MKa1]
+; DD2    cross a block rightwards: D divides i: over Z
+; MKa2   cross a block rightwards: over the separator
+DD2_MKa2
+    0 0 R DE1_MKb1             ; [DD2, MKa2]
+    1 1 R DD1_MKa1             ; [DD2, MKa2]
+; DE1    cross a block rightwards: over D
+; MKb1   cross a block rightwards: over P
+DE1_MKb1
+    0 0 R DE2_MKb2             ; [DE1, MKb1]
+    1 1 R DE1_MKb1             ; [DE1, MKb1]
+; DE2    cross a block rightwards: over D
+; MKb2   cross a block rightwards: over P
+DE2_MKb2
+    0 0 R DF1_MKc1             ; [DE2, MKb2]
+    1 1 R DE1_MKb1             ; [DE2, MKb2]
+; DF1    cross a block rightwards: over Rd, to E (cE0)
+; MKc1   cross a block rightwards: over K65, to K252 (MK7)
+DF1_MKc1
+    0 0 R DF2_MKc2             ; [DF1, MKc1]
+    1 1 R DF1_MKc1             ; [DF1, MKc1]
+; DF2    cross a block rightwards: over Rd, to E (cE0)
+; MKc2   cross a block rightwards: over K65, to K252 (MK7)
+DF2_MKc2
+    0 0 R cE0_MK7              ; [DF2, MKc2]
+    1 1 R DF1_MKc1             ; [DF2, MKc2]
+; sd36   seed: write 1 and step right
+; cE0    E's cell 0
+; MK7    K252's cell 0
+cE0_MK7
+    0 1 R sd37                 ; [sd36]
+    1 1 R cE1_MK8              ; [cE0, MK7]
+; cE1    E's cell 1
+; MK8    K252 off, then the walk on n (H2a1)
+cE1_MK8
+    0 1 R H2a1                 ; [MK8]
+    1 1 R cE2                  ; [cE1]
+; sd29   seed: write 1 and step right
+; cE2    E's cell 2
+cE2
+    0 1 R UD1                  ; [sd29]
+    1 1 R cE3                  ; [cE2]
+; cE3    E's cell 3? 0: no, |E| = 3, the R phase: start the e-loop (rE2); 1: the L phase (LE1)
+cE3
+    0 0 L rE2_LT4              ; [cE3]
+    1 1 L LE1                  ; [cE3]
+; rE2    e-loop start: step left
+; LT4    L phase: E', Re', S0 rebuilt
+rE2_LT4
+    0 1 L LT5                  ; [LT4]
+    1 1 L rE1_GA4              ; [rE2]
+; rE1    e-loop start: E's hole at cell 1
+; GA4    new copy: its first cell
+rE1_GA4
+    0 1 R U1_GA5_GB5           ; [GA4]
+    1 0 L rE0                  ; [rE1]
+; sd21   seed: write 0 and step right
+; rE0    e-loop start: then the divisor test (k1)
+rE0
+    0 0 R XA4                  ; [sd21]
+    1 1 L k1                   ; [rE0]
+; LE1    cross a block leftwards: L phase: over E'
+LE1
+    0 0 L LE2                  ; [LE1]
+    1 1 L LE1                  ; [LE1]
+; LE2    cross a block leftwards: L phase: over E'
+LE2
+    0 0 L LF1                  ; [LE2]
+    1 1 L LE1                  ; [LE2]
+; LF1    cross a block leftwards: over Rd
+LF1
+    0 0 L LF2                  ; [LF1]
+    1 1 L LF1                  ; [LF1]
+; LF2    cross a block leftwards: over Rd
+LF2
+    0 0 L LG1                  ; [LF2]
+    1 1 L LF1                  ; [LF2]
+; LG1    cross a block leftwards: over D
+LG1
+    0 0 L LG2                  ; [LG1]
+    1 1 L LG1                  ; [LG1]
+; LG2    cross a block leftwards: over D
+LG2
+    0 0 L LH1                  ; [LG2]
+    1 1 L LG1                  ; [LG2]
+; LH1    cross a block leftwards: over Z, to X (X50)
+LH1
+    0 0 L LH2                  ; [LH1]
+    1 1 L LH1                  ; [LH1]
+; LH2    cross a block leftwards: over Z, to X (X50)
+LH2
+    0 0 L Uz_X50               ; [LH2]
+    1 1 L LH1                  ; [LH2]
+; VE1    cross a block leftwards: E divides j: over Rd, to D (VF1)
+VE1
+    0 0 L VE2                  ; [VE1]
+    1 1 L VE1                  ; [VE1]
+; VE2    cross a block leftwards: E divides j: over Rd, to D (VF1)
+VE2
+    0 0 L VF1                  ; [VE2]
+    1 1 L VE1                  ; [VE2]
+; VF1    fill D's hole: run left over D
+VF1
+    0 0 L VF2                  ; [VF1]
+    1 1 L VF1                  ; [VF1]
+; VF2    fill D's hole: 0: the separator, done (VG1); 1: the hole was right
+VF2
+    0 0 L VG1_EH1              ; [VF2]
+    1 1 R VF3_KW5              ; [VF2]
+; VF3    fill D's hole: fill it
+; KW5    K digit wrap: hole at cell 1, then the next digit (KF1)
+VF3_KW5
+    0 1 L VF1                  ; [VF3]
+    1 0 L KF1                  ; [KW5]
+; VG1    cross a block leftwards: over Z, to X (X50)
+; EH1    cross a block leftwards: over Z, to X (X50)
+VG1_EH1
+    0 0 L Uy_VG2_EH2           ; [VG1, EH1]
+    1 1 L VG1_EH1              ; [VG1, EH1]
+; sd52   seed: write 1 and step right
+; X52    X: step left
+X52
+    0 1 R sh4                  ; [sd52]
+    1 1 L X53_XA5              ; [X52]
+; X53    X: step left
+; XA5    X: step
+X53_XA5
+    0 1 R FS2_XA6              ; [XA5]
+    1 1 L rc1_X54              ; [X53]
+; X55    X's hole at cell 7 (five copies), then the source (FS1)
+; AA2    count: a cell at the left end of the leftmost block, back to the right end (RG1)
+; LB2    X's hole at cell 1 (eleven copies), then the source (FS1)
+X55_AA2_LB2
+    0 1 R RG1                  ; [AA2]
+    1 0 R FS1                  ; [X55, LB2]
+
+; ---------- COPY: a block to the right end, X counts --------------------
+
+; FS1    scan right to the next hole, then the cursor of the source block (GA1)
+FS1
+    0 0 R FS2_XA6              ; [FS1]
+    1 1 R FS1                  ; [FS1]
+; FS2    scan right to the next hole, then the cursor of the source block (GA1)
+; XA6    X: next copy (FS1)
+FS2_XA6
+    0 0 R FS1                  ; [FS2, XA6]
+    1 1 R GA1                  ; [FS2]
+; GA1    run right to three 0s, then to the right end: a new copy (GA4)
+GA1
+    0 0 R GA2                  ; [GA1]
+    1 1 R GA1                  ; [GA1]
+; GA2    run right to three 0s, then to the right end: a new copy (GA4)
+GA2
+    0 0 R GA3                  ; [GA2]
+    1 1 R GA1                  ; [GA2]
+; GA3    run right to three 0s, then to the right end: a new copy (GA4)
+GA3
+    0 1 R rE1_GA4              ; [GA3]
+    1 1 R GA1                  ; [GA3]
+; BK1    scan left to the next hole, then back to the source cursor (AV1)
+BK1
+    0 0 L BK2                  ; [BK1]
+    1 1 L BK1                  ; [BK1]
+; BK2    scan left to the next hole, then back to the source cursor (AV1)
+BK2
+    0 0 L BK1                  ; [BK2]
+    1 1 R DA3_AV1              ; [BK2]
+; AV3    copy: last cell of the source? 0: yes, the copy is done (CD1)
+AV3
+    0 0 L CD1                  ; [AV3]
+    1 1 L AV4_XA1              ; [AV3]
+; sd91   seed: write 0 and step right
+; AV4    copy: new cursor
+; XA1    X: fill the hole
+AV4_XA1
+    0 0 R XA2                  ; [sd91, XA1]
+    1 0 L AV5_UK3              ; [AV4]
+; AV5    copy: then a cell for the copy (GB1)
+; UK3    E's cell 2
+AV5_UK3
+    0 1 R GB1                  ; [AV5]
+    1 1 R UK4                  ; [UK3]
+; GB1    run right to three 0s, then to the right end: a cell for the copy (GB4)
+GB1
+    0 0 R GB2                  ; [GB1]
+    1 1 R GB1                  ; [GB1]
+; GB2    run right to three 0s, then to the right end: a cell for the copy (GB4)
+GB2
+    0 0 R GB3                  ; [GB2]
+    1 1 R GB1                  ; [GB2]
+; GB3    run right to three 0s, then to the right end: a cell for the copy (GB4)
+GB3
+    0 0 L F2d_U7_GB4_CB1       ; [GB3]
+    1 1 R GB1                  ; [GB3]
+; sd46   seed: write 1 and step right
+; CD1    copy done: step left
+CD1
+    0 1 R EF1                  ; [sd46]
+    1 1 L CD2_LT14             ; [CD1]
+; CD2    copy done: step left
+; LT14   L phase: E', Re', S0 rebuilt
+CD2_LT14
+    0 1 L CD3                  ; [CD2]
+    1 1 L LT15                 ; [LT14]
+; sd34   seed: write 0 and step right
+; CD3    copy done: run left over the source
+CD3
+    0 0 R CD4                  ; [sd34, CD3]
+    1 1 L CD3                  ; [CD3]
+; sd35   seed: write 0 and step right
+; CD4    copy done: step over cell 0
+CD4
+    0 0 R cE0_MK7              ; [sd35]
+    1 1 R CD5                  ; [CD4]
+; sd45   seed: write 0 and step right
+; CD5    copy done: the cursor at cell 1, then X's hole (FX1)
+CD5
+    0 0 R CD1                  ; [sd45]
+    1 0 L FX1                  ; [CD5]
+; FX1    scan left to the next hole, then X's hole (XA1)
+FX1
+    0 0 L FX2                  ; [FX1]
+    1 1 L FX1                  ; [FX1]
+; FX2    scan left to the next hole, then X's hole (XA1)
+FX2
+    0 0 L FX1                  ; [FX2]
+    1 1 R AV4_XA1              ; [FX2]
+; sd92   seed: write 1 and step right
+; XA2    X: step right
+XA2
+    0 1 R U3                   ; [sd92]
+    1 1 R XA3_LT16             ; [XA2]
+; XA3    X: last cell? 0: yes, all copies made (XW1)
+; LT16   L phase: E', Re', S0 rebuilt
+XA3_LT16
+    0 0 L XW1_LT17             ; [XA3, LT16]
+    1 1 L XA4                  ; [XA3]
+; sd22   seed: write 0 and step right
+; XA4    X: the hole one cell right
+XA4
+    0 0 R DC2                  ; [sd22]
+    1 0 L X53_XA5              ; [XA4]
+; XW1    all copies: step left
+; LT17   L phase: Rd gains a cell, then to the far left (MK1)
+XW1_LT17
+    0 1 L MK1                  ; [LT17]
+    1 1 L XW2_LT13             ; [XW1]
+; XW2    all copies: X hole-free again, then the source cursor (FD1)
+; LT13   L phase: E', Re', S0 rebuilt
+XW2_LT13
+    0 1 R FD1                  ; [XW2]
+    1 1 L CD2_LT14             ; [LT13]
+; FD1    scan right to the next hole, then the source cursor, to fill it (CR1)
+FD1
+    0 0 R FD2                  ; [FD1]
+    1 1 R FD1                  ; [FD1]
+; FD2    scan right to the next hole, then the source cursor, to fill it (CR1)
+FD2
+    0 0 R FD1                  ; [FD2]
+    1 1 L CR1_CL               ; [FD2]
+; CR1    fill the source cursor
+; CL     run: hole at cell 2, then a count (AL1)
+CR1_CL
+    0 1 L CR2                  ; [CR1]
+    1 0 L AL1                  ; [CL]
+; sd7    seed: write 1 and step right
+; CR2    step left
+CR2
+    0 1 R sd8                  ; [sd7]
+    1 1 L CR3_CM2              ; [CR2]
+; CR3    separator
+; CM2    compare: 0: M is down to 0 (CQ1); 1: more
+CR3_CM2
+    0 0 L CR4_CQ1              ; [CR3, CM2]
+    1 1 L CM3                  ; [CM2]
+; CR4    separator
+; CQ1    M = 0: erase M's cell
+CR4_CQ1
+    0 0 L CR5_AA1              ; [CR4]
+    1 0 R CP1                  ; [CQ1]
+; CR5    the block left of the source
+; AA1    count: step right
+CR5_AA1
+    0 0 R X55_AA2_LB2          ; [AA1]
+    1 1 L CR6                  ; [CR5]
+; CR6    its second-last cell: 0: Z, D was copied: run (AL1); 1: E was copied (ED1)
+CR6
+    0 0 L AL1                  ; [CR6]
+    1 1 L ED1                  ; [CR6]
+; ED1    cross a block leftwards: E copied: over Rd
+ED1
+    0 0 L ED2                  ; [ED1]
+    1 1 L ED1                  ; [ED1]
+; ED2    cross a block leftwards: E copied: over Rd
+ED2
+    0 0 L EF1                  ; [ED2]
+    1 1 L ED1                  ; [ED2]
+; sd47   seed: write 0 and step right
+; EF1    E copied: run left over D
+EF1
+    0 0 R EF2                  ; [sd47, EF1]
+    1 1 L EF1                  ; [EF1]
+; sd48   seed: write 1 and step right
+; EF2    step over cell 0 of D
+EF2
+    0 1 R rs1                  ; [sd48]
+    1 1 R EF3_LT1              ; [EF2]
+; sd79   seed: write 0 and step right
+; EF3    D's cursor at cell 1
+; LT1    L phase: E', Re', S0 rebuilt
+EF3_LT1
+    0 0 R LT2                  ; [sd79, LT1]
+    1 0 L EF4                  ; [EF3]
+; sd33   seed: write 1 and step right
+; EF4    then to X (EG1)
+EF4
+    0 1 R CD3                  ; [sd33]
+    1 1 L EG1                  ; [EF4]
+; EG1    cross a block leftwards: over the separator
+EG1
+    0 0 L EG2                  ; [EG1]
+    1 1 L EG1                  ; [EG1]
+; EG2    cross a block leftwards: over the separator
+EG2
+    0 0 L VG1_EH1              ; [EG2]
+    1 1 L EG1                  ; [EG2]
+
+; ---------- RUN: the odometer -------------------------------------------
+
+; RG1    run right to three 0s, then to the right end of the tape (RG4)
+RG1
+    0 0 R RG2                  ; [RG1]
+    1 1 R RG1                  ; [RG1]
+; RG2    run right to three 0s, then to the right end of the tape (RG4)
+RG2
+    0 0 R RG3_RG5_VW2          ; [RG2]
+    1 1 R RG1                  ; [RG2]
+; RG3    run right to three 0s, then to the right end of the tape (RG4)
+; RG5    run: step back
+; VW2    run: wrap: separator
+RG3_RG5_VW2
+    0 0 L RG4_CA               ; [RG3, RG5, VW2]
+    1 1 R RG1                  ; [RG3]
+; RG4    run: step back
+; CA     run: the last cell of a var digit
+RG4_CA
+    0 0 L RG3_RG5_VW2          ; [RG4]
+    1 1 L CB                   ; [CA]
+; CB     run: 0: last position, wrap (VW); 1: look for the hole
+CB
+    0 1 L VW                   ; [CB]
+    1 1 L CC                   ; [CB]
+; CC     run: run left to the hole or the separator
+CC
+    0 0 L CD_KA1               ; [CC]
+    1 1 L CC                   ; [CC]
+; sd74   seed: write 0 and step right
+; CD     run: 0: no hole, position 0 (CG); 1: the hole
+; KA1    K digit: fill the hole
+CD_KA1
+    0 0 R CG_KA2               ; [sd74, CD, KA1]
+    1 1 R rs2_CE               ; [CD]
+; sd51   seed: write 0 and step right
+; CF     run: new hole one cell right, then a count (AL1)
+CF
+    0 0 R X52                  ; [sd51]
+    1 0 L AL1                  ; [CF]
+; sd75   seed: write 0 and step right
+; CG     run: step right
+; KA2    K digit: step over the next cell
+CG_KA2
+    0 0 R CH                   ; [sd75, CG]
+    1 1 R KA3_PE5_LT6_LT8      ; [KA2]
+; sd76   seed: write 1 and step right
+; CH     run: step over cell 0
+CH
+    0 1 R sd77                 ; [sd76]
+    1 1 R CI                   ; [CH]
+; sd59   seed: write 1 and step right
+; CI     run: step over cell 1
+CI
+    0 1 R sd60                 ; [sd59]
+    1 1 R CJ                   ; [CI]
+; CJ     run: 0: two cells, S0: the K digits (KF1); 1: a var digit
+CJ
+    0 0 L KF1                  ; [CJ]
+    1 1 R CK                   ; [CJ]
+; CK     run: 0: factor 1, wrap (VW); 1: hole at cell 2
+CK
+    0 0 L VW                   ; [CK]
+    1 1 L CR1_CL               ; [CK]
+; VW     run: wrap: left to the previous digit
+VW
+    0 0 L RG3_RG5_VW2          ; [VW]
+    1 1 L VW                   ; [VW]
+; KF1    K digits: scan left (holes are digits)
+KF1
+    0 0 L KF2                  ; [KF1]
+    1 1 L KF1                  ; [KF1]
+; KF2    K digits: 1: a hole: an active digit (KA1); 0: separator
+KF2
+    0 0 L KF3                  ; [KF2]
+    1 1 R CD_KA1               ; [KF2]
+; KF3    K digits: 0: three 0s, the far left: the run is over (PE1); 1: next block
+KF3
+    0 0 R PE1                  ; [KF3]
+    1 1 L KF1                  ; [KF3]
+; KA3    K digit: last cell? 0: yes, wrap (KW1)
+; PE5    step back
+; LT6    L phase: E', Re', S0 rebuilt
+; LT8    L phase: E', Re', S0 rebuilt
+KA3_PE5_LT6_LT8
+    0 0 L KW1_PE4_EL1_LT7      ; [KA3, PE5, LT6]
+    1 1 L KA4_PD1_LT9          ; [KA3, LT8]
+; KA4    K digit: new hole
+; PD1    separator
+; LT9    L phase: E', Re', S0 rebuilt
+KA4_PD1_LT9
+    0 0 L start_PD2            ; [PD1]
+    1 0 L KA5_LT10             ; [KA4, LT9]
+; KA5    K digit: then a count (AL1)
+; LT10   L phase: E', Re', S0 rebuilt
+KA5_LT10
+    0 1 L AL1                  ; [KA5]
+    1 0 L PLe_LT11             ; [LT10]
+; KW1    K digit wrap: step left
+; PE4    step back
+; EL1    erase: last cell
+; LT7    L phase: E', Re', S0 rebuilt
+KW1_PE4_EL1_LT7
+    0 0 L KA3_PE5_LT6_LT8      ; [PE4, LT7]
+    1 1 L KW2_EL2              ; [KW1, EL1]
+; KW2    K digit wrap: step left
+; EL2    erase: step left
+KW2_EL2
+    0 1 L KW3_CMb              ; [KW2]
+    1 1 L EL3                  ; [EL2]
+; KW3    K digit wrap: run left over the block
+; CMb    compare: step right
+KW3_CMb
+    0 0 R KW4_CMc              ; [KW3, CMb]
+    1 1 L KW3_CMb              ; [KW3]
+; KW4    K digit wrap: step over cell 0
+; CMc    compare: M's first cell
+KW4_CMc
+    0 0 R CM1                  ; [CMc]
+    1 1 R VF3_KW5              ; [KW4]
+; AL1    run left to three 0s, then to the far left: one count (AA1)
+AL1
+    0 0 L AL2                  ; [AL1]
+    1 1 L AL1                  ; [AL1]
+; AL2    run left to three 0s, then to the far left: one count (AA1)
+AL2
+    0 0 L AL3                  ; [AL2]
+    1 1 L AL1                  ; [AL2]
+; AL3    run left to three 0s, then to the far left: one count (AA1)
+AL3
+    0 0 R CR5_AA1              ; [AL3]
+    1 1 L AL1                  ; [AL3]
+
+; ---------- AFTER A RUN: erase, flips -----------------------------------
+
+; PE1    run right to three 0s, then run over: to the right end (PE4)
+PE1
+    0 0 R PE2                  ; [PE1]
+    1 1 R PE1                  ; [PE1]
+; PE2    run right to three 0s, then run over: to the right end (PE4)
+PE2
+    0 0 R PE3_EL7              ; [PE2]
+    1 1 R PE1                  ; [PE2]
+; PE3    run right to three 0s, then run over: to the right end (PE4)
+; EL7    erase: separator
+PE3_EL7
+    0 0 L KW1_PE4_EL1_LT7      ; [PE3, EL7]
+    1 1 R PE1                  ; [PE3]
+; EL3    erase: 0: two cells, S0 reached (PD1); 1: a copy
+EL3
+    0 0 L KA4_PD1_LT9          ; [EL3]
+    1 1 R EL4                  ; [EL3]
+; sd15   seed: write 1 and step right
+; EL4    erase: step right
+EL4
+    0 1 R DPb1                 ; [sd15]
+    1 1 R EL5_EL6              ; [EL4]
+; EL5    erase: the last cell
+; EL6    erase the copy
+EL5_EL6
+    0 0 L PE3_EL7              ; [EL6]
+    1 0 L EL5_EL6              ; [EL5, EL6]
+; PD3    0: Re' is one cell, the L phase (PL1); 1: the R phase (PRr1)
+; HK1    D's hole
+PD3_HK1
+    0 0 L PL1_HK2              ; [PD3, HK1]
+    1 1 L PRr1                 ; [PD3]
+; PRr1   cross a block leftwards: over Re, to E (PRe)
+PRr1
+    0 0 L PRr2                 ; [PRr1]
+    1 1 L PRr1                 ; [PRr1]
+; PRr2   cross a block leftwards: over Re, to E (PRe)
+PRr2
+    0 0 L PRe                  ; [PRr2]
+    1 1 L PRr1                 ; [PRr2]
+; PRe    run left over E
+PRe
+    0 0 R PRf                  ; [PRe]
+    1 1 L PRe                  ; [PRe]
+; sd63   seed: write 1 and step right
+; PRf    step over cell 0 of E
+PRf
+    0 1 R wa1                  ; [sd63]
+    1 1 R rc6_PRg              ; [PRf]
+; PL1    separator
+; HK2    then the divisor test (k1)
+PL1_HK2
+    0 0 L PLa1                 ; [PL1]
+    1 1 L k1                   ; [HK2]
+; PLa1   cross a block leftwards: L phase: over E'
+PLa1
+    0 0 L PLa2                 ; [PLa1]
+    1 1 L PLa1                 ; [PLa1]
+; PLa2   cross a block leftwards: L phase: over E'
+PLa2
+    0 0 L PLb1                 ; [PLa2]
+    1 1 L PLa1                 ; [PLa2]
+; PLb1   cross a block leftwards: over Rd, to D (PLc)
+PLb1
+    0 0 L PLb2                 ; [PLb1]
+    1 1 L PLb1                 ; [PLb1]
+; PLb2   cross a block leftwards: over Rd, to D (PLc)
+PLb2
+    0 0 L PLc_TL11             ; [PLb2]
+    1 1 L PLb1                 ; [PLb2]
+; PLc    run left over D
+; TL11   separator
+PLc_TL11
+    0 0 R PLd_TL12             ; [PLc, TL11]
+    1 1 L PLc_TL11             ; [PLc]
+; PLd    step over cell 0 of D
+; TL12   Re gains a cell, then back (TM1)
+PLd_TL12
+    0 1 L TM1                  ; [TL12]
+    1 1 R PLe_LT11             ; [PLd]
+; PLe    D's hole back at cell 1, then the flips (FL1)
+; LT11   L phase: E', Re', S0 rebuilt
+PLe_LT11
+    0 1 L IB1_LT12             ; [LT11]
+    1 0 L FL1                  ; [PLe]
+; FL1    run left to three 0s, then to the far left: the flips (FL4)
+FL1
+    0 0 L FL2                  ; [FL1]
+    1 1 L FL1                  ; [FL1]
+; FL2    run left to three 0s, then to the far left: the flips (FL4)
+FL2
+    0 0 L FL3                  ; [FL2]
+    1 1 L FL1                  ; [FL2]
+; FL3    run left to three 0s, then to the far left: the flips (FL4)
+FL3
+    0 0 R FL4_FN2              ; [FL3]
+    1 1 L FL1                  ; [FL3]
+; FL4    step right
+; FN2    cross a block rightwards: over P, to K65 (FK1)
+FL4_FN2
+    0 0 R FL5_FK1              ; [FL4, FN2]
+    1 1 R FN1                  ; [FN2]
+; FL5    step right
+; FK1    K65's cell 0
+FL5_FK1
+    0 0 R FM1                  ; [FL5]
+    1 1 R FK2                  ; [FK1]
+; FM1    cross a block rightwards: over M
+FM1
+    0 0 R FM2                  ; [FM1]
+    1 1 R FM1                  ; [FM1]
+; FM2    cross a block rightwards: over M
+FM2
+    0 0 R FN1                  ; [FM2]
+    1 1 R FM1                  ; [FM2]
+; FN1    cross a block rightwards: over P, to K65 (FK1)
+FN1
+    0 0 R FL4_FN2              ; [FN1]
+    1 1 R FN1                  ; [FN1]
+; FK2    flip K65 (on/off)
+FK2
+    0 1 R FC1                  ; [FK2]
+    1 0 R FC1                  ; [FK2]
+; FC1    cross a block rightwards: over K65
+FC1
+    0 0 R FC2                  ; [FC1]
+    1 1 R FC1                  ; [FC1]
+; FC2    cross a block rightwards: over K65
+FC2
+    0 0 R FE1                  ; [FC2]
+    1 1 R FC1                  ; [FC2]
+; FE1    cross a block rightwards: over K252, to K691 (FG1)
+FE1
+    0 0 R FE2_EN1              ; [FE1]
+    1 1 R FE1                  ; [FE1]
+; FE2    cross a block rightwards: over K252, to K691 (FG1)
+; EN1    end of n: E' becomes E (3 cells)
+FE2_EN1
+    0 0 R FG1_EN2              ; [FE2, EN1]
+    1 1 R FE1                  ; [FE2]
+; FG1    K691's cell 0
+; EN2    end of n: Re' becomes Re = 0 (2 cells)
+FG1_EN2
+    0 1 L EN3_TN2              ; [EN2]
+    1 1 R FG2                  ; [FG1]
+; FG2    flip K691: 0: it was on, L1 is done: eleven copies of D (LA1); 1: L2 is done (LD1)
+FG2
+    0 1 R LA1                  ; [FG2]
+    1 0 R LD1                  ; [FG2]
+; sd25   seed: write 0 and step right
+; LA1    cross a block rightwards: over K691, to X (LB1)
+LA1
+    0 0 R LA2_TL6              ; [sd25, LA1]
+    1 1 R LA1                  ; [LA1]
+; sd26   seed: write 0 and step right
+; LA2    cross a block rightwards: over K691, to X (LB1)
+; TL6    separator
+LA2_TL6
+    0 0 R LB1_TL7              ; [sd26, LA2, TL6]
+    1 1 R LA1                  ; [LA2]
+; sd27   seed: write 1 and step right
+; LB1    X's cell 0
+; TL7    E moves left
+LB1_TL7
+    0 1 R TL8                  ; [sd27, TL7]
+    1 1 R X55_AA2_LB2          ; [LB1]
+; LD1    scan right to the next hole, then D's hole: resume the walk on D (rsm)
+LD1
+    0 0 R LD2                  ; [LD1]
+    1 1 R LD1                  ; [LD1]
+; LD2    scan right to the next hole, then D's hole: resume the walk on D (rsm)
+LD2
+    0 0 R LD1                  ; [LD2]
+    1 1 R rsm                  ; [LD2]
+
+; ---------- LOOP ENDS, NEXT i, THE L PHASE ------------------------------
+
+; UE1    cross a block leftwards: e-loop over: over Rd, to D (UF1)
+UE1
+    0 0 L UE2                  ; [UE1]
+    1 1 L UE1                  ; [UE1]
+; UE2    cross a block leftwards: e-loop over: over Rd, to D (UF1)
+UE2
+    0 0 L UF1                  ; [UE2]
+    1 1 L UE1                  ; [UE2]
+; sd72   seed: write 0 and step right
+; UF1    run left over D
+UF1
+    0 0 R k2_UF2               ; [sd72, UF1]
+    1 1 L UF1                  ; [UF1]
+; sd30   seed: write 0 and step right
+; UD1    cross a block rightwards: d-loop over: over Z, to D (UDh)
+UD1
+    0 0 R UD2                  ; [sd30, UD1]
+    1 1 R UD1                  ; [UD1]
+; sd31   seed: write 0 and step right
+; UD2    cross a block rightwards: d-loop over: over Z, to D (UDh)
+UD2
+    0 0 R UDh                  ; [sd31, UD2]
+    1 1 R UD1                  ; [UD2]
+; sd32   seed: write 1 and step right
+; UDh    D's cell 0
+UDh
+    0 1 R EF4                  ; [sd32]
+    1 1 R UDi                  ; [UDh]
+; sd42   seed: write 1 and step right
+; UDi    D's hole back at cell 1
+UDi
+    0 1 R waw1                 ; [sd42]
+    1 0 R UG1                  ; [UDi]
+; UG1    cross a block rightwards: over D
+UG1
+    0 0 R UG2                  ; [UG1]
+    1 1 R UG1                  ; [UG1]
+; UG2    cross a block rightwards: over D
+UG2
+    0 0 R UH1                  ; [UG2]
+    1 1 R UG1                  ; [UG2]
+; UH1    cross a block rightwards: over Rd, to E (UK1)
+UH1
+    0 0 R U4_UH2               ; [UH1]
+    1 1 R UH1                  ; [UH1]
+; sd83   seed: write 0 and step right
+; UK2    E's cell 1
+; IA1    next i: separator
+UK2_IA1
+    0 0 R IA2                  ; [sd83, IA1]
+    1 1 R AV5_UK3              ; [UK2]
+; UK4    E's cell 3: 0: |E| = 3, the R phase: next i (IA1); 1: E', the L phase is over: end of n (EN1)
+UK4
+    0 0 R UK2_IA1              ; [UK4]
+    1 0 R FE2_EN1              ; [UK4]
+; sd84   seed: write 1 and step right
+; IA2    Re's cell 0
+IA2
+    0 1 R rc3                  ; [sd84]
+    1 1 R IA3                  ; [IA2]
+; sd10   seed: write 1 and step right
+; IA3    Re's cell 1
+IA3
+    0 1 R rs3                  ; [sd10]
+    1 1 R IA4                  ; [IA3]
+; sd78   seed: write 1 and step right
+; IA4    Re's cell 2: 0: Re had two cells, i + 1 = n: the L phase (LT1); 1: next i (IB1)
+IA4
+    0 1 R EF3_LT1              ; [sd78, IA4]
+    1 1 L IB1_LT12             ; [IA4]
+; IB1    next i: step left
+; LT12   L phase: E', Re', S0 rebuilt
+IB1_LT12
+    0 1 L XW2_LT13             ; [LT12]
+    1 1 L IB2                  ; [IB1]
+; sd41   seed: write 1 and step right
+; IB2    next i: Re loses its cell 0
+IB2
+    0 1 R UDi                  ; [sd41]
+    1 0 L DN2_IB3              ; [IB2]
+; sd13   seed: write 0 and step right
+; IB6    next i: step left
+IB6
+    0 0 R DPc2                 ; [sd13]
+    1 1 L IB7                  ; [IB6]
+; sd5    seed: write 1 and step right
+; IB7    next i: E's old cell 0 becomes a separator
+IB7
+    0 1 R LT15                 ; [sd5]
+    1 0 L rc4_IB8              ; [IB7]
+; sd80   seed: write 1 and step right
+; LT2    L phase: E', Re', S0 rebuilt
+LT2
+    0 1 R sh5                  ; [sd80]
+    1 0 R LT3                  ; [LT2]
+; sd86   seed: write 1 and step right
+; LT3    L phase: E', Re', S0 rebuilt
+LT3
+    0 1 R sd87                 ; [sd86]
+    1 1 R rE2_LT4              ; [LT3]
+; sd61   seed: write 1 and step right
+; LT5    L phase: E', Re', S0 rebuilt
+LT5
+    0 1 R sd62                 ; [sd61]
+    1 1 L KA3_PE5_LT6_LT8      ; [LT5]
+; sd6    seed: write 1 and step right
+; LT15   L phase: E', Re', S0 rebuilt
+LT15
+    0 1 R CR2                  ; [sd6]
+    1 0 L XA3_LT16             ; [LT15]
+; MK1    run left to three 0s, then L phase: to the far left, M is created (MKa1)
+MK1
+    0 0 L MK2                  ; [MK1]
+    1 1 L MK1                  ; [MK1]
+; MK2    run left to three 0s, then L phase: to the far left, M is created (MKa1)
+MK2
+    0 0 L MK3                  ; [MK2]
+    1 1 L MK1                  ; [MK2]
+; MK3    run left to three 0s, then L phase: to the far left, M is created (MKa1)
+MK3
+    0 1 R DD1_MKa1             ; [MK3]
+    1 1 L MK1                  ; [MK3]
+; H2a1   scan right to the next hole, then K691's hole (H2b1)
+H2a1
+    0 0 R H2a2                 ; [H2a1]
+    1 1 R H2a1                 ; [H2a1]
+; H2a2   scan right to the next hole, then K691's hole (H2b1)
+H2a2
+    0 0 R H2a1                 ; [H2a2]
+    1 1 R H2b1                 ; [H2a2]
+; H2b1   scan right to the next hole, then D's hole: the walk starts (HK1)
+H2b1
+    0 0 R H2b2                 ; [H2b1]
+    1 1 R H2b1                 ; [H2b1]
+; H2b2   scan right to the next hole, then D's hole: the walk starts (HK1)
+H2b2
+    0 0 R H2b1                 ; [H2b2]
+    1 1 L PD3_HK1              ; [H2b2]
+
+; ---------- END OF n: reset the frames, compare M and P (HALT) ----------
+
+; EN3    step left
+; TN2    cross a block leftwards: over E, to Rd (TL1)
+EN3_TN2
+    0 0 L EN4_TL1              ; [EN3, TN2]
+    1 1 L TN1                  ; [TN2]
+; EN4    step left, then over E (TN1)
+; TL1    Rd's last cell
+EN4_TL1
+    0 0 L TN1                  ; [EN4]
+    1 1 L TL2                  ; [TL1]
+; TN1    cross a block leftwards: over E, to Rd (TL1)
+TN1
+    0 0 L EN3_TN2              ; [TN1]
+    1 1 L TN1                  ; [TN1]
+; sd58   seed: write 1 and step right
+; TL2    step left
+TL2
+    0 1 R CI                   ; [sd58]
+    1 1 L TL3                  ; [TL2]
+; TL3    0: Rd = 0, done: the compare (CMa1); 1: move a cell from Rd to Re
+TL3
+    0 0 L CMa1                 ; [TL3]
+    1 1 R TL4                  ; [TL3]
+; sd54   seed: write 1 and step right
+; TL4    step right
+TL4
+    0 1 R rsm                  ; [sd54]
+    1 1 R sh2_TL5              ; [TL4]
+; sd28   seed: write 1 and step right
+; TL8    step over E
+TL8
+    0 1 R cE2                  ; [sd28]
+    1 1 R TL9                  ; [TL8]
+; sd12   seed: write 1 and step right
+; TL9    step over E
+TL9
+    0 1 R IB6                  ; [sd12]
+    1 1 R TL10                 ; [TL9]
+; sd9    seed: write 1 and step right
+; TL10   E's old last cell becomes a separator
+TL10
+    0 1 R IA3                  ; [sd9]
+    1 0 R PLc_TL11             ; [TL10]
+; TM1    cross a block leftwards: over the separator
+TM1
+    0 0 L TM2                  ; [TM1]
+    1 1 L TM1                  ; [TM1]
+; TM2    cross a block leftwards: over the separator
+TM2
+    0 0 L TN1                  ; [TM2]
+    1 1 L TM1                  ; [TM2]
+; CMa1   run left to three 0s, then to the far left: the compare (CMb)
+CMa1
+    0 0 L CMa2                 ; [CMa1]
+    1 1 L CMa1                 ; [CMa1]
+; CMa2   run left to three 0s, then to the far left: the compare (CMb)
+CMa2
+    0 0 L CMa3                 ; [CMa2]
+    1 1 L CMa1                 ; [CMa2]
+; CMa3   run left to three 0s, then to the far left: the compare (CMb)
+CMa3
+    0 0 R KW3_CMb              ; [CMa3]
+    1 1 L CMa1                 ; [CMa3]
+; sd20   seed: write 1 and step right
+; CM1    compare: M's first cell
+CM1
+    0 1 R rE0                  ; [sd20]
+    1 1 R CR3_CM2              ; [CM1]
+; sd67   seed: write 1 and step right
+; CM3    compare: erase M's first cell
+CM3
+    0 1 R sd68                 ; [sd67]
+    1 0 R CM4                  ; [CM3]
+; CM4    compare: run right over M
+CM4
+    0 0 R CM5                  ; [CM4]
+    1 1 R CM4                  ; [CM4]
+; CM5    compare: run right over the 0s
+CM5
+    0 0 R CM5                  ; [CM5]
+    1 1 R F2c_U6_CM6           ; [CM5]
+; CM7    compare: erase P's first cell
+; CY2    separator
+CM7_CY2
+    0 0 R CA3_CY3              ; [CY2]
+    1 0 L CM8                  ; [CM7]
+; CM8    compare: run left over the 0s
+CM8
+    0 0 L CM8                  ; [CM8]
+    1 1 L CM9                  ; [CM8]
+; CM9    compare: run left over M
+CM9
+    0 0 R CM1                  ; [CM9]
+    1 1 L CM9                  ; [CM9]
+; CP1    M = 0: run right over the 0s
+CP1
+    0 0 R CP1                  ; [CP1]
+    1 1 R CP2                  ; [CP1]
+; CP2    M = 0: 0: P = 0 too, P = M: HALT; 1: P > M
+CP2
+    0 0 R halt                 ; [CP2]
+    1 1 L CA3_CY3              ; [CP2]
+; CA3    P > M: erase
+; CY3    separator, then over K65 (CK1)
+CA3_CY3
+    0 0 R CK1                  ; [CY3]
+    1 0 R CA1                  ; [CA3]
+; sd3    seed: write 1 and step right
+; CA1    P > M: step right
+CA1
+    0 1 R DPe2                 ; [sd3]
+    1 1 R CA2                  ; [CA1]
+; CA2    P > M: 0: P's last cell is kept (CX); 1: erase more
+CA2
+    0 0 L CX                   ; [CA2]
+    1 1 L CA3_CY3              ; [CA2]
+; CB2    P < M: run left over the 0s
+CB2
+    0 0 L CB2                  ; [CB2]
+    1 0 L CB3                  ; [CB2]
+; CB3    P < M: erase M
+CB3
+    0 0 R CX                   ; [CB3]
+    1 0 L CB3                  ; [CB3]
+; CX     P = 0 (one cell): run right to it
+CX
+    0 0 R CX                   ; [CX]
+    1 1 R CM7_CY2              ; [CX]
+; CK1    cross a block rightwards: over K65, to K252 (CL1)
+CK1
+    0 0 R CK2                  ; [CK1]
+    1 1 R CK1                  ; [CK1]
+; sd70   seed: write 0 and step right
+; CK2    cross a block rightwards: over K65, to K252 (CL1)
+CK2
+    0 0 R CL1                  ; [sd70, CK2]
+    1 1 R CK1                  ; [CK2]
+; sd71   seed: write 1 and step right
+; CL1    K252's cell 0
+CL1
+    0 1 R UF1                  ; [sd71]
+    1 1 R CL2                  ; [CL1]
+; sd69   seed: write 1 and step right
+; CL2    K252 on, then the walk on n + 1 (H2a1)
+CL2
+    0 1 R CK2                  ; [sd69]
+    1 0 R H2a1                 ; [CL2]
+
+; ---------- SEED: the counters ------------------------------------------
+
+; DN1    run left to three 0s, then seed: to the far left, a new block (DN4)
+DN1
+    0 0 L DN2_IB3              ; [DN1]
+    1 1 L DN1                  ; [DN1]
+; DN2    run left to three 0s, then seed: to the far left, a new block (DN4)
+; IB3    next i: separator
+DN2_IB3
+    0 0 L DN3_IB4              ; [DN2, IB3]
+    1 1 L DN1                  ; [DN2]
+; DN3    run left to three 0s, then seed: to the far left, a new block (DN4)
+; IB4    next i: E moves right
+DN3_IB4
+    0 1 L DN4_DA5_IB5          ; [DN3, IB4]
+    1 1 L DN1                  ; [DN3]
+; DN4    seed: the new block's second cell, then to the counter (DB1)
+; DA5    seed: a cell at the left end of the new block
+; IB5    next i: step left
+DN4_DA5_IB5
+    0 1 R DB1                  ; [DN4, DA5]
+    1 1 L IB6                  ; [IB5]
+; DB1    run right to three 0s, then seed: to the right end, the counter (DB4)
+DB1
+    0 0 R DB2                  ; [DB1]
+    1 1 R DB1                  ; [DB1]
+; DB2    run right to three 0s, then seed: to the right end, the counter (DB4)
+DB2
+    0 0 R DB3_DB5              ; [DB2]
+    1 1 R DB1                  ; [DB2]
+; DB3    run right to three 0s, then seed: to the right end, the counter (DB4)
+; DB5    seed: step back
+DB3_DB5
+    0 0 L DB4_DB6              ; [DB3, DB5]
+    1 1 R DB1                  ; [DB3]
+; DB4    seed: step back
+; DB6    seed: the counter's final 1
+DB4_DB6
+    0 0 L DB3_DB5              ; [DB4]
+    1 1 L DC1                  ; [DB6]
+; DC1    decrement: bit 0: 1: make it 0, done (DA1); 0: make it 1, borrow
+DC1
+    0 1 L DC2                  ; [DC1]
+    1 0 L DA1                  ; [DC1]
+; sd23   seed: write 1 and step right
+; DC2    decrement: step over the marker
+DC2
+    0 1 R fz2                  ; [sd23]
+    1 1 L DC3                  ; [DC2]
+; DC3    decrement: next bit: 1: make it 0, done (DA1); 0: borrow
+DC3
+    0 0 L DC4                  ; [DC3]
+    1 0 L DA1                  ; [DC3]
+; DC4    decrement: 1: the marker, back to the bit (DC1); 0: past the top bit, the counter is 0 (DU0)
+DC4
+    0 0 R DU0_Ux               ; [DC4]
+    1 1 R DC1                  ; [DC4]
+; DA1    run left to three 0s, then seed: to the far left, a cell for the block (DA4)
+DA1
+    0 0 L DA2                  ; [DA1]
+    1 1 L DA1                  ; [DA1]
+; DA2    run left to three 0s, then seed: to the far left, a cell for the block (DA4)
+DA2
+    0 0 L DA3_AV1              ; [DA2]
+    1 1 L DA1                  ; [DA2]
+; DA3    run left to three 0s, then seed: to the far left, a cell for the block (DA4)
+; AV1    copy: fill the cursor
+DA3_AV1
+    0 0 R DA4_AV2              ; [DA3, AV1]
+    1 1 L DA1                  ; [DA3]
+; DA4    seed: step right
+; AV2    copy: step over the next cell
+DA4_AV2
+    0 0 R DN4_DA5_IB5          ; [DA4]
+    1 1 R AV3                  ; [AV2]
+; DU0    seed: counter 0: step right
+; Ux     unshift done: step left
+DU0_Ux
+    0 0 R DU1                  ; [DU0]
+    1 1 L Uy_VG2_EH2           ; [Ux]
+; DU1    seed: erase the counter
+DU1
+    0 0 L DU2                  ; [DU1]
+    1 0 R DU1                  ; [DU1]
+; DU2    seed: run left to the previous block
+DU2
+    0 0 L DU2                  ; [DU2]
+    1 1 L DU3                  ; [DU2]
+; DU3    seed: step left
+DU3
+    0 0 L DU4                  ; [DU3]
+    1 1 L DU4                  ; [DU3]
+; DU4    seed: 1: another counter (DN1); 0: S0, all constants built (DP1)
+DU4
+    0 0 L DP1                  ; [DU4]
+    1 1 L DN1                  ; [DU4]
+; DP1    run left to three 0s, then seed: to the far left, P is created (DPa1)
+DP1
+    0 0 L DP2                  ; [DP1]
+    1 1 L DP1                  ; [DP1]
+; DP2    run left to three 0s, then seed: to the far left, P is created (DPa1)
+DP2
+    0 0 L DP3                  ; [DP2]
+    1 1 L DP1                  ; [DP2]
+; DP3    run left to three 0s, then seed: to the far left, P is created (DPa1)
+DP3
+    0 1 R DPa1                 ; [DP3]
+    1 1 L DP1                  ; [DP3]
+; DPa1   cross a block rightwards: seed: over the separator
+DPa1
+    0 0 R DPa2                 ; [DPa1]
+    1 1 R DPa1                 ; [DPa1]
+; DPa2   cross a block rightwards: seed: over the separator
+DPa2
+    0 0 R DPb1                 ; [DPa2]
+    1 1 R DPa1                 ; [DPa2]
+; sd16   seed: write 0 and step right
+; DPb1   cross a block rightwards: seed: over K65, to K252 (DPc1)
+DPb1
+    0 0 R DPb2                 ; [sd16, DPb1]
+    1 1 R DPb1                 ; [DPb1]
+; sd17   seed: write 0 and step right
+; DPb2   cross a block rightwards: seed: over K65, to K252 (DPc1)
+DPb2
+    0 0 R DPc1                 ; [sd17, DPb2]
+    1 1 R DPb1                 ; [DPb2]
+; sd18   seed: write 1 and step right
+; DPc1   seed: K252 cell 0
+DPc1
+    0 1 R wa4_waw3             ; [sd18]
+    1 1 R DPc2                 ; [DPc1]
+; sd14   seed: write 0 and step right
+; DPc2   seed: K252 active (hole at cell 1)
+DPc2
+    0 0 R EL4                  ; [sd14]
+    1 0 R DPd1                 ; [DPc2]
+; sd38   seed: write 0 and step right
+; DPd1   cross a block rightwards: seed: over K252, to K691 (DPe1)
+DPd1
+    0 0 R DPd2                 ; [sd38, DPd1]
+    1 1 R DPd1                 ; [DPd1]
+; sd39   seed: write 0 and step right
+; DPd2   cross a block rightwards: seed: over K252, to K691 (DPe1)
+DPd2
+    0 0 R DPe1                 ; [sd39, DPd2]
+    1 1 R DPd1                 ; [DPd2]
+; sd40   seed: write 1 and step right
+; DPe1   seed: K691 cell 0
+DPe1
+    0 1 R IB2                  ; [sd40]
+    1 1 R DPe2                 ; [DPe1]
+; sd4    seed: write 1 and step right
+; DPe2   seed: K691 active, then to D's hole (H2b1)
+DPe2
+    0 1 R IB7                  ; [sd4]
+    1 0 R H2b1                 ; [DPe2]
+
+; ---------- SEED: the written word --------------------------------------
+
+; sd8    seed: write 1 and step right
+sd8
+    0 1 R TL10                 ; [sd8]
+    -
+; sd37   seed: write 1 and step right
+sd37
+    0 1 R DPd1                 ; [sd37]
+    -
+; sd60   seed: write 1 and step right
+sd60
+    0 1 R LT5                  ; [sd60]
+    -
+; sd62   seed: write 1 and step right
+sd62
+    0 1 R PRf                  ; [sd62]
+    -
+; sd66   seed: write 1 and step right
+sd66
+    0 1 R CM3                  ; [sd66]
+    -
+; sd68   seed: write 1 and step right
+sd68
+    0 1 R CL2                  ; [sd68]
+    -
+; sd77   seed: write 1 and step right
+sd77
+    0 1 R IA4                  ; [sd77]
+    -
+; sd82   seed: write 1 and step right
+sd82
+    0 1 R UK2_IA1              ; [sd82]
+    -
+; sd87   seed: write 1 and step right
+sd87
+    0 1 R sh1                  ; [sd87]
+    -
+; sd94   seed: write 1 and step right
+sd94
+    0 1 R F2b                  ; [sd94]
+    -

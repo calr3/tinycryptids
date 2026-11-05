@@ -1,0 +1,218 @@
+; Minimised from erdosmoser.txt (the 117-state design) by minimize.py (kissat404)
+; 71 states, 2 symbols
+
+blank_symbol: 0
+
+seed0
+    0 1 R seed1
+    1 0 R c1
+seed1
+    0 0 R seed2
+    1 1 L seed1
+seed2
+    0 1 R seed3
+    1 1 R seed4
+seed3
+    0 1 R seed4
+    1 1 R C2
+seed4
+    0 0 R seed5
+    1 0 L NB1
+seed5
+    0 0 R seed6
+    1 1 L seed5
+seed6
+    0 1 R seed7
+    1 1 R MM1
+seed7
+    0 1 R seed8
+    1 0 L m5
+seed8
+    0 1 R seed9
+    1 1 L seed8
+seed9
+    0 1 R eD3
+    1 1 R a3
+bAt
+    0 1 R bA2
+    1 1 R bA2
+bA2
+    0 0 L seed5
+    1 0 R MC1
+MC1
+    0 0 R MC2
+    1 1 R MC1
+MC2
+    0 0 R MC1
+    1 1 R c1
+MM1
+    0 0 R MM2
+    1 1 R MM1
+MM2
+    0 0 R MM1
+    1 1 R mR
+c1
+    0 0 R c2
+    1 1 R c1
+c2
+    0 0 R c3
+    1 0 L LF1
+c3
+    0 1 L c4
+    1 1 R c3
+c4
+    0 0 L c5
+    1 1 L c4
+c5
+    0 0 L seed8
+    1 1 L D3
+a3
+    0 0 L seed1
+    1 1 L seed0
+NB1
+    0 0 L NB2
+    1 1 L NB1
+NB2
+    0 0 L NB1
+    1 1 R bAt
+mR
+    0 1 R m2
+    1 1 R mR
+m2
+    0 1 R m3
+    1 0 L CP2
+m3
+    0 0 L seed7
+    1 1 R m3
+m5
+    0 1 R eA2
+    1 0 L LE1
+LE1
+    0 0 L LE2
+    1 1 L LE1
+LE2
+    0 0 L LE1
+    1 1 L LF1
+LF1
+    0 0 L LF2
+    1 1 L LF1
+LF2
+    0 0 L LF1
+    1 1 L LG1
+LG1
+    0 0 L LG2
+    1 1 L LG1
+LG2
+    0 0 L LG1
+    1 1 R m5
+eA2
+    0 0 L eD1
+    1 0 R MB1
+MB1
+    0 0 R MB2
+    1 1 R MB1
+MB2
+    0 0 R MB1
+    1 1 R bAt
+eD1
+    0 0 R eD2
+    1 1 L eD1
+eD2
+    0 0 L eD2
+    1 1 R eD3
+eD3
+    0 0 R cr5
+    1 0 R MN1
+MN1
+    0 0 R MN2
+    1 1 R MN1
+MN2
+    0 0 R MN1
+    1 1 L N1
+N1
+    0 0 L N2
+    1 1 L N1
+N2
+    0 1 R cr7
+    1 1 L N3
+N3
+    0 0 R seed3
+    1 1 R N4
+N4
+    0 1 R MQ1
+    1 0 R N4
+MQ1
+    0 0 R MQ2
+    1 1 R MQ1
+MQ2
+    0 0 R MQ1
+    1 1 L q0
+q0
+    0 1 L q1
+    1 0 L c2
+q1
+    0 1 R q4
+    1 1 L q0
+q4
+    0 1 L Q1
+    1 1 R q4
+Q1
+    0 1 R c2
+    1 0 L q1
+C2
+    0 1 R CP1
+    1 0 R cr8
+CP1
+    0 0 R CP2
+    1 1 R CP1
+CP2
+    0 0 R CP1
+    1 1 L cp5
+cp5
+    0 1 L cp6
+    1 1 L N1
+cp6
+    0 1 L R2
+    1 0 L zH1
+zH1
+    0 0 L zH1
+    1 0 L zA1
+zA1
+    0 0 R zK1
+    1 1 R zG1
+zG1
+    0 0 R zG1
+    1 0 R zZ1
+zZ1
+    0 0 L X1
+    1 1 L zH1
+zK1
+    0 0 R zK1
+    1 0 R zK2
+zK2
+    0 0 R halt
+    1 0 R cr1
+cr1
+    0 0 L eD2
+    1 0 R cr1
+X1
+    0 0 L X1
+    1 0 L X2
+X2
+    0 0 L eD2
+    1 0 L X2
+cr5
+    0 0 R N2
+    1 1 L R2
+cr7
+    0 0 R cr8
+    1 0 R seed2
+cr8
+    0 0 R Q1
+    1 0 L LG2
+D3
+    0 0 L c4
+    1 1 L m2
+R2
+    0 0 L cr5
+    1 1 L R2

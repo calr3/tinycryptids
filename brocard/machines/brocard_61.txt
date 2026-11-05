@@ -1,0 +1,188 @@
+; Minimised from brocard.txt by minimize.py
+; 61 states, 2 symbols
+
+blank_symbol: 0
+
+seed0
+    0 1 R seed1
+    1 1 R seed9
+seed1
+    0 1 R seed2
+    1 1 R p3
+seed2
+    0 1 R seed3
+    1 0 R PS1
+seed3
+    0 1 R seed4
+    1 1 R s3
+seed4
+    0 1 R seed5
+    1 0 R seed12
+seed5
+    0 1 R seed6
+    1 0 L PP1
+seed6
+    0 1 R seed7
+    1 1 R seed0
+seed7
+    0 0 R seed8
+    1 1 L seed7
+seed8
+    0 0 R seed9
+    1 1 R seed4
+seed9
+    0 1 R seed10
+    1 0 R x1
+seed10
+    0 0 R seed11
+    1 1 L seed10
+seed11
+    0 1 R seed12
+    1 1 R seed16
+seed12
+    0 0 R seed13
+    1 1 R seed12
+seed13
+    0 0 R seed14
+    1 0 L s5
+seed14
+    0 1 R seed15
+    1 1 R seed6
+seed15
+    0 1 R seed16
+    1 1 R y3
+seed16
+    0 1 R seed17
+    1 0 L PP1
+seed17
+    0 0 R seed18
+    1 1 R n3
+seed18
+    0 1 R x1
+    1 0 R w2
+p3
+    0 0 R PK2
+    1 1 L seed2
+PS1
+    0 0 R PS2
+    1 1 R PS1
+PS2
+    0 0 R PS1
+    1 1 L seed2
+s3
+    0 1 R s5
+    1 1 L seed5
+s5
+    0 1 L seed10
+    1 0 L k1
+PP1
+    0 0 L PP2
+    1 1 L PP1
+PP2
+    0 0 L PP1
+    1 1 R seed0
+PK1
+    0 0 R PK2
+    1 1 R PK1
+PK2
+    0 0 R PK1
+    1 1 L k1
+k1
+    0 0 L k2
+    1 1 L k1
+k2
+    0 0 L v1
+    1 1 L k3
+k3
+    0 0 L halt
+    1 1 L kz
+kz
+    0 0 R r1
+    1 1 L kz
+r1
+    0 0 R r2
+    1 0 R r1
+r2
+    0 0 L z1
+    1 0 R r1
+z1
+    0 0 L z1
+    1 1 L z2
+z2
+    0 0 L z3
+    1 1 L z2
+z3
+    0 0 L seed7
+    -
+x1
+    0 0 R x2
+    1 1 R x1
+x2
+    0 0 R x3
+    -
+x3
+    0 1 L PB1
+    1 1 R x3
+PB1
+    0 0 L PB2
+    1 1 L PB1
+PB2
+    0 0 L PB1
+    1 1 R seed14
+y3
+    0 0 L PN1
+    1 1 L seed9
+PN1
+    0 0 L PN2
+    1 1 L PN1
+PN2
+    0 0 L PN1
+    1 1 R seed16
+n3
+    0 0 R m1
+    1 1 L seed4
+m1
+    0 0 R m2
+    -
+m2
+    0 1 R m3
+    1 1 R m2
+m3
+    0 1 R m4
+    -
+m4
+    0 0 L seed13
+    1 1 R m4
+v1
+    0 1 L v2
+    1 1 L v1
+v2
+    0 0 L v3
+    1 0 R seed12
+v3
+    0 0 L v4
+    1 0 L v4
+v4
+    0 0 R t1
+    1 1 R w1
+w1
+    0 0 R w2
+    -
+w2
+    0 0 R w3
+    1 1 R w2
+w3
+    0 0 R t5
+    1 1 R v2
+t1
+    0 0 R w1
+    -
+t5
+    0 1 R t10
+    1 1 R seed18
+t10
+    0 0 R t11
+    -
+t11
+    0 1 L PP2
+    -

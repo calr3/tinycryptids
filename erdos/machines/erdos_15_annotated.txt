@@ -1,0 +1,77 @@
+; ============================================================================
+; A 15-state, 2-symbol Turing machine that HALTS IFF SOME POWER 2^n WITH n > 8
+; HAS NO DIGIT 2 IN BASE 3 (Erdős' conjecture on powers of 2 is false).
+; Start on a blank tape in A. The one undefined transition (L reading 1) halts.
+; Same machine as erdos_15.txt (state letters as in the standard text
+; 1RB1RO_0RC0RC_0RD1RJ_0LE1RC_0LF1LK_0LG1LE_0LH1LF_1RI0LL_0RB1LK_1RC0RA_0LI1LN_1RM---_0RI0RO_0LK1LK_1LM1RA).
+; Lean proof: lean/TinyCryptids/Erdos/Main.lean, theorem TM.Erdos.halts_iff.
+; ============================================================================
+;
+; TAPE (cell 0 is where the machine starts):
+;
+;     x y 0 0 | a0 b0 a1 b1 ... ak bk | blank ...
+;    -4 -3 -2 -1  0  1  2  3
+;
+;   DIGITS   2^n in base 3, least significant digit first, one digit per cell
+;            pair (a b): 0 = 01, 1 = 10, 2 = 11. A pair 00 never occurs inside
+;            the number, so the separator 00 at cells -2, -1 marks its end.
+;   COUNTER  c = 2x + y: how many powers so far had no digit 2.
+;
+; ALGORITHM: round n (2^n on the tape, head just right of the top digit):
+;   SCAN     move left pair by pair, top digit first, looking for a 2 (11).
+;   FOUND    a 2: walk on left to the separator, then DOUBLE.
+;   NONE     reached the separator: c := c + 1 (HALT if c was already 3), then DOUBLE.
+;   DOUBLE   one pass right, least significant digit first, with a carry; the
+;            new top digit (if the carry is left over) is written into the blank.
+; Only 2^0 = 1, 2^2 = 11 and 2^8 = 100111 (base 3) have no 2 below n = 9, so the
+; counter is 3 from round 9 on, and the next power without a 2 halts the machine.
+;
+; Each transition line: read write move next ; what it does.
+
+blank_symbol: 0
+
+A       ; DOUBLE, carry 1, first cell of a digit (also the start: 2^0 = carry into an empty number)
+    0 1 R B         ; digit 0 (01) or the blank end (00) -> 1 (10), carry 0; B writes the 0
+    1 1 R O         ; digit 1 or 2: O decides
+B       ; second cell of a digit that becomes 1 (10)
+    0 0 R C         ; -> next digit, carry 0
+    1 0 R C         ; (also: the separator's second cell, on the way into the pass)
+C       ; DOUBLE, carry 0, first cell of a digit
+    0 0 R D         ; digit 0 (01) or the end (00): D decides
+    1 1 R J         ; digit 1 or 2: J decides
+D       ; carry 0, second cell after a first cell 0
+    0 0 L E         ; 00: the number has ended, start the SCAN
+    1 1 R C         ; digit 0 doubles to 0, carry 0
+E       ; SCAN: first cell of a digit whose second cell was 1 (or the end pair)
+    0 0 L F         ; digit 0 (01) (or the end): next digit
+    1 1 L K         ; digit 2 (11): FOUND
+F       ; SCAN: second cell of a digit
+    0 0 L G         ; digit 1 (10) or the separator (00): G decides
+    1 1 L E         ; digit 0 or 2: E decides
+G       ; SCAN: first cell of a digit whose second cell was 0
+    0 0 L H         ; the separator: no 2 found, increment the counter
+    1 1 L F         ; digit 1 (10): next digit
+H       ; COUNTER: low bit y
+    0 1 R I         ; y = 0: set it (c = 0 -> 1, 2 -> 3), go to the pass
+    1 0 L L         ; y = 1: clear it, carry into x
+I       ; first cell of a digit whose second cell was 0, moving left; or the separator
+    0 0 R B         ; the separator (00): go right into the DOUBLE pass
+    1 1 L K         ; digit 1 (10): keep walking left
+J       ; carry 0, second cell after a first cell 1
+    0 1 R C         ; digit 1 (10) doubles to 2 (11), carry 0
+    1 0 R A         ; digit 2 (11) doubles to 1 (10), carry 1
+K       ; FOUND: walk left to the separator, second cell of a digit
+    0 0 L I         ; second cell 0: digit 1 or the separator, I decides
+    1 1 L N         ; digit 0 or 2
+L       ; COUNTER: high bit x
+    0 1 R M         ; x = 0: set it (c = 1 -> 2)
+    -               ; x = 1: the counter was 3, this is the 4th power without a 2: HALT
+M       ; back right after setting x / fixing the first cell of a digit
+    0 0 R I         ; after the counter: on to the separator
+    1 0 R O         ; DOUBLE: turn 11 into 01 (digit 1 with carry 1 -> 0, carry 1)
+N       ; FOUND walk: first cell of a digit 0 or 2
+    0 0 L K         ; digit 0
+    1 1 L K         ; digit 2
+O       ; DOUBLE, carry 1, second cell after a first cell 1
+    0 1 L M         ; digit 1 (10): write 11, M clears the first cell -> 0 (01), carry 1
+    1 1 R A         ; digit 2 (11) doubles with carry to 2 (11), carry 1

@@ -1,0 +1,307 @@
+; ============================================================================
+; A 55-state, 2-symbol BEEPING Turing machine that QUASIHALTS IFF THERE ARE
+; ONLY FINITELY MANY AMICABLE NUMBERS.
+;
+; THE BEEP is the transition of state H5 reading 0 (marked BEEP below).
+; Started on a blank tape in the first state, the machine never halts, and it
+; takes the beep transition exactly once for every x with s(x) > x and
+; s(s(x)) = x (s = sum of proper divisors), i.e. once for the smaller number
+; of every amicable pair, in increasing order: 220, 1184, 2620, 5020, ...
+; There are infinitely many amicable numbers iff there are infinitely many
+; such x, so the machine quasihalts iff there are only finitely many.
+; Lean proof: lean/TinyCryptids/Amicable/M55.lean,
+; theorem TM.Amicable.M55.quasihalts_iff (and never_halts).
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 69-state design of build.py / amicable.txt with states
+;   merged. States are merged only when their defined transitions agree, and
+;   no state that reads 0 joins the beep state, so the beep transition is taken
+;   exactly where the design takes it. Each state below plays one or more
+;   ROLES of the design (its name joins them); each transition line is tagged
+;   [role] with the role(s) that use it. A '-' line is never used.
+;
+; TAPE (blocks of 1s; 00 between blocks; a HOLE is a single 0 in a block)
+;   round for x:   P 0 00 N          pass 1 scans N (x + 4 cells), P = 1^(x+1)
+;   pass 2:        A 00 X 00 N       pass 2 scans X = 1^(m+4), m = s(x); N = 1^x
+;   SCAN of a block of x + 4 cells (../oddperfect's mod walk): D 00 R with
+;   x = d + r + 1, for d = 1 .. x - 1: a mod walk tests d | x, and if so the
+;   ADD moves D's hole down D, and each step fills the hole of the
+;   ACCUMULATOR left of the block (the third 0 left of D) and makes the next
+;   cell left the hole: the accumulator gains a cell, or (a preload: cells
+;   left of its hole) loses one there. At the end the block is 1^x 0000.
+; ALGORITHM (one round)
+;   round    N := N + 4 cells, a marker 2 cells further, copy N (x + 3 units,
+;            the add routine with D = N) into a fresh P, N's last new cell;
+;            P's last cell erased: P is a preload of x + 1 cells.
+;   pass 1   scan N with P: P's hole reaches its far end iff s(x) >= x + 1.
+;   check    no: erase P, next round. yes: P (4 cells more) is the block of
+;            m + 4 cells for pass 2, with a fresh accumulator A.
+;   pass 2   scan it: A = 1^s(m). Fill the block, copy N (x units) into A's
+;            right end: one cell of A stays left of the hole iff s(m) = x:
+;            BEEP. Erase everything left of N, next round.
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START (walk right over N) -----------------------------------
+
+; k0     walk right over N; 0: N's first new cell
+start_k0
+    0 1 R k1_ra1_ra4           ; [k0]
+    1 1 R start_k0             ; [k0]
+
+; ---------- ROUND START: N's new cells, the marker, the copy of N into P 
+
+; k1     N's second new cell
+; ra1    fill the R hole
+; ra4    the new R hole, then left (PM)
+k1_ra1_ra4
+    0 1 R k2_ra2               ; [k1, ra1]
+    1 0 L PM1                  ; [ra4]
+; k2     N's third new cell
+; ra2    R's next cell
+k2_ra2
+    0 1 R k3_mw3               ; [k2]
+    1 1 R ra3                  ; [ra2]
+; k3     skip a cell (the copy's entry cell)
+; mw3    wrap: the hole on D's cell 1
+k3_mw3
+    0 0 R k4_mw1               ; [k3]
+    1 0 R PR1                  ; [mw3]
+; k4     skip a cell
+; mw1    wrap: run left to D's start
+k4_mw1
+    0 0 R k5_mw2               ; [k4, mw1]
+    1 1 L k4_mw1               ; [mw1]
+; k5     write the marker, back
+; mw2    wrap: D's cell 0
+k5_mw2
+    0 1 L k6_C1_e2             ; [k5]
+    1 1 R k3_mw3               ; [mw2]
+; k6     back over a blank cell
+; C1     cut the block: cell 1 := 0
+; e2     the separator's second cell
+k6_C1_e2
+    0 0 L k7_e3                ; [k6, e2]
+    1 0 R V2_C2_R1             ; [C1]
+; k7     the copy's entry cell: write it, start the copy of N (a2)
+; e3     D's home: 0: d | x, the add (a2); 1: fill the D hole (f1)
+k7_e3
+    0 1 L a2                   ; [k7, e3]
+    1 1 L f1                   ; [e3]
+
+; ---------- THE SCAN: mod walk (../oddperfect) --------------------------
+
+; ma1    mod walk: fill the D hole
+ma1
+    0 1 R ma2                  ; [ma1]
+    -
+; ma2    the next D cell is the hole; 0: D's end, wrap (mw1)
+ma2
+    0 0 L k4_mw1               ; [ma2]
+    1 0 R PR1                  ; [ma2]
+; PR1    right parser to the R hole
+PR1
+    0 0 R PR2                  ; [PR1]
+    1 1 R PR1                  ; [PR1]
+; PR2    right parser (after one 0)
+PR2
+    0 0 R PR1                  ; [PR2]
+    1 1 L k1_ra1_ra4           ; [PR2]
+; ra3    0: R is used up, the walk is over (e1); 1: move the R hole
+ra3
+    0 0 L e1                   ; [ra3]
+    1 1 L k1_ra1_ra4           ; [ra3]
+; PM1    left parser to the D hole
+PM1
+    0 0 L PM2                  ; [PM1]
+    1 1 L PM1                  ; [PM1]
+; PM2    left parser (after one 0)
+PM2
+    0 0 L PM1                  ; [PM2]
+    1 1 R ma1                  ; [PM2]
+; e1     back over R to the separator
+e1
+    0 0 L k6_C1_e2             ; [e1]
+    1 1 L e1                   ; [e1]
+
+; ---------- THE SCAN: shift d := d + 1, and the ends of the copies ------
+
+; f1     walk left to the D hole and fill it
+f1
+    0 1 R f2                   ; [f1]
+    1 1 L f1                   ; [f1]
+; f2     walk right over D; 0: the separator (f3)
+f2
+    0 0 R f3                   ; [f2]
+    1 1 R f2                   ; [f2]
+; f3     the separator: D's new home; 1: the copy's marker: copy done (CE1)
+f3
+    0 0 R f4                   ; [f3]
+    1 0 L CE1                  ; [f3]
+; f4     R's cell 0 := 0 (new separator); 0: the subtraction copy is done (H0)
+f4
+    0 0 L H0                   ; [f4]
+    1 0 R f5_H2                ; [f4]
+; f5     R's new cell 0 := the R hole
+; H2     the separator's second cell
+f5_H2
+    0 0 L H3                   ; [H2]
+    1 0 R f6                   ; [f5]
+; f6     1: the next walk (PM2); 0: the scan is over (PE1)
+f6
+    0 0 R PE1                  ; [f6]
+    1 1 L PM2                  ; [f6]
+
+; ---------- THE ADD: d units into the accumulator -----------------------
+
+; a1     add: fill the D hole
+; T3     right over N; 0: the entry cell, copy N into A's right end (a2)
+a1_T3
+    0 1 L a2                   ; [a1, T3]
+    1 1 R a1_T3                ; [T3]
+; a2     add: the next D cell (down) is the hole, to the accumulator (Z1); 0: D is used up (f2)
+a2
+    0 0 R f2                   ; [a2]
+    1 0 L Z1                   ; [a2]
+; Z1     left over D to the separator
+Z1
+    0 0 L Z2                   ; [Z1]
+    1 1 L Z1                   ; [Z1]
+; Z2     the separator's second cell
+Z2
+    0 0 L Z3                   ; [Z2]
+    -
+; Z3     left to the accumulator's hole (the next 0), fill it
+Z3
+    0 1 L W                    ; [Z3]
+    1 1 L Z3                   ; [Z3]
+; W      the next cell left := the new hole, then right (PA)
+W
+    0 0 R PA1                  ; [W]
+    1 0 R PA1                  ; [W]
+; PA1    right parser back to the D hole
+PA1
+    0 0 R PA2                  ; [PA1]
+    1 1 R PA1                  ; [PA1]
+; PA2    right parser (after one 0)
+PA2
+    0 0 R PA1                  ; [PA2]
+    1 1 L a1_T3                ; [PA2]
+
+; ---------- PASS 1 ready: P's hole, the cut of N ------------------------
+
+; CE1    the copy is done (marker erased): N's last new cell, then left (V1)
+CE1
+    0 1 L V1                   ; [CE1]
+    -
+; V1     walk left over N; 0: the separator (V2)
+V1
+    0 0 L V2_C2_R1             ; [V1]
+    1 1 L V1                   ; [V1]
+; V2     the separator's second cell (V3)
+; C2     cell 2 := 0, back to cell 1: the shift starts (f2)
+; R1     pass 2 is over: left over the separator
+V2_C2_R1
+    0 0 L V3_R2                ; [V2, R1]
+    1 0 L f2                   ; [C2]
+; V3     erase P's last cell: P's hole (P = preload x + 1), back right (V4)
+; R2     the separator's second cell
+V3_R2
+    0 0 L FL2                  ; [R2]
+    1 0 R V4                   ; [V3]
+; V4     walk right over blanks to the next block; on its cell 0 step to cell 1 (C1)
+V4
+    0 0 R V4                   ; [V4]
+    1 1 R k6_C1_e2             ; [V4]
+
+; ---------- AFTER A SCAN: which pass, the abundance check, pass 2's block 
+
+; PE1    after a scan: the cell past the separator
+PE1
+    0 0 R PE2                  ; [PE1]
+    -
+; PE2    1: N, this was pass 2 (R1); 0: pass 1 (G0)
+PE2
+    0 0 L G0                   ; [PE2]
+    1 1 L V2_C2_R1             ; [PE2]
+; G0     pass 1: left over blanks to N
+G0
+    0 0 L G0                   ; [G0]
+    1 1 L G1                   ; [G0]
+; G1     left over N
+G1
+    0 0 L G2                   ; [G1]
+    1 1 L G1                   ; [G1]
+; G2     the separator's second cell
+G2
+    0 0 L G3                   ; [G2]
+    -
+; G3     left over P's cells right of its hole; the hole: fill it (G4)
+G3
+    0 1 L G4                   ; [G3]
+    1 1 L G3                   ; [G3]
+; G4     0: P's hole was at its far end (s(x) > x): 3 more cells, pass 2 (g1); 1: no, clean up (x1)
+G4
+    0 1 L g1                   ; [G4]
+    1 1 R x1                   ; [G4]
+; g1     pass 2's block: another cell
+g1
+    0 1 L g2                   ; [g1]
+    -
+; g2     pass 2's block: its first cell, then right (V4)
+g2
+    0 1 L V4                   ; [g2]
+    -
+
+; ---------- AFTER PASS 2: the subtraction copy and the BEEP check -------
+
+; FL2    fill the block's four 0s
+FL2
+    0 1 L FL2                  ; [FL2]
+    1 1 R T1                   ; [FL2]
+; T1     right over the block
+T1
+    0 0 R T2                   ; [T1]
+    1 1 R T1                   ; [T1]
+; T2     the separator's second cell
+T2
+    0 0 R a1_T3                ; [T2]
+    -
+; H0     left over blanks; N's extra cell: erase it (H1)
+H0
+    0 0 L H0                   ; [H0]
+    1 0 L H1                   ; [H0]
+; H1     left over N
+H1
+    0 0 L f5_H2                ; [H1]
+    1 1 L H1                   ; [H1]
+; H3     left over the merged block to the hole; fill it (H4)
+H3
+    0 1 L H4                   ; [H3]
+    1 1 L H3                   ; [H3]
+; H4     0: no cell left of the hole (s(m) < x), clean up; 1: (H5)
+H4
+    0 0 R x1                   ; [H4]
+    1 1 L H5                   ; [H4]
+; H5     0: exactly one cell left of the hole, s(m) = x: BEEP, clean up; 1: more (s(m) > x), clean up
+H5
+    0 0 R x1                   ; [H5]   BEEP
+    1 1 R x1                   ; [H5]
+
+; ---------- CLEANUP: erase left of N ------------------------------------
+
+; x1     cleanup: walk right over the block left of N; 0: the separator, step back (er)
+x1
+    0 0 L er                   ; [x1]
+    1 1 R x1                   ; [x1]
+; er     erase the block left of N from its right end; 0: done (bk)
+er
+    0 0 R bk                   ; [er]
+    1 0 L er                   ; [er]
+; bk     walk right over blanks to N, then over N (k0)
+bk
+    0 0 R bk                   ; [bk]
+    1 1 R start_k0             ; [bk]

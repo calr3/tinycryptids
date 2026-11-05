@@ -1,0 +1,538 @@
+; ============================================================================
+; A 100-state, 2-symbol Turing machine that HALTS IFF THE AGOH-GIUGA
+; CONJECTURE IS FALSE, i.e. iff some composite n >= 2 divides
+; 1^(n-1) + 2^(n-1) + ... + (n-1)^(n-1) + 1.
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/AgohGiuga/M100.lean,
+; theorem TM.AgohGiuga.M100.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 167-state design of build.py / agoh_giuga.txt with
+;   states merged. States are merged only when their defined transitions
+;   agree, so each state below plays one or more ROLES of the design (its name
+;   joins them). Each transition line is tagged [role] with the role(s) that
+;   use it. A '-' line is never used. The seed roles run once at the start and
+;   only ever read 0, so all of them double as a step of some other routine.
+;
+; THE IDEA
+;   For n = 4, 5, 6, ... and the bases i = n - 1, ..., 2: compute i^(n-1) in
+;   unary and add i^(n-1) - 1 to B, a counter mod n. After each base, if B is
+;   not 0, set a flag. A prime never sets it (Fermat: i^(n-1) = 1 mod n); a
+;   composite always does (at a divisor i of n, i^(n-1) != 1 mod n). At the
+;   end of round n, B = 1^(n-1) + ... + (n-1)^(n-1) + 1 - n mod n: HALT iff
+;   the flag is set and B = 0.
+;
+; TAPE LAYOUT
+;
+;      N 00 I 00 J 00 K 00 S 00 R [00 Q]
+;
+;   A block of v + 2 cells holds v; its cells 1..v are the positions of a
+;   cyclic HOLE (a single 0).
+;   N: holds n; its hole (at cell 1 at rest) is the Horner run's exponent.
+;   I: holds the base i, hole at cell 1. J: no hole, n - i + flag cells;
+;   |I| + |J| is fixed in a round, and i - 1 moves the I/J separator left.
+;   K: no hole; 2 cells, 1 once the flag is set (J then has a cell more).
+;   S: holds n; its hole at cell B + 1.
+;   R: 101 (holds 1) between bases; the Horner run makes it i^(n-1), with
+;   copies Q appended after it.
+;
+; ALGORITHM (one base)
+;   horner    ../firoozbakht's Horner run (exponent N, base I, skipped hole
+;             S): n - 1 rounds R := i * R (i - 1 copies of R, then a merge).
+;   consume   erase R's last cell and advance S's hole, until R = 101:
+;             B += R - 1.
+;   check     S's hole at cell 1? If not, set the flag (K 2 -> 1 cells).
+;   shift     I's last cell joins the I/J separator: i - 1, then the next
+;             Horner run. If i was 2, the round ends: S's hole at cell 1 and
+;             K = 1: HALT. Otherwise the reset for n + 1: S's hole filled, S
+;             a cell longer on its left with its hole at the new cell 1,
+;             K := 11, J := 1, I := n (taking two cells of N), N three cells
+;             longer on its left with its hole at the new cell 1.
+;   seed      write the end of round 3 and do the reset: round 4 starts.
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0  seed: write 1 and step right
+; z2     round end: the cell before it
+start_z2
+    0 1 R d1                   ; [seed0]
+    1 1 L f2_z3_pa1            ; [z2]
+
+; ---------- HORNER: R := i^(n-1) (exponent N, base I) -------------------
+
+; HE1    scan left to the next hole, then cross the skipped hole (HF): R's cursor crossed
+; g1     reset: run left over the region to the N/I separator
+HE1_g1
+    0 0 L HE2_g2_g7            ; [HE1, g1]
+    1 1 L HE1_g1               ; [HE1, g1]
+; seed29 seed: R's cell 2, step left
+; HE2    scan left to the next hole, then cross the skipped hole (HF): R's cursor crossed
+; g2     reset: the separator's first cell becomes I's cell 0
+; g7     reset: a new cell left of N
+HE2_g2_g7
+    0 1 L g3_g8                ; [seed29, g2, g7]
+    1 1 L HF1                  ; [HE2]
+; HF1    scan left to the next hole, then cross the base hole (HG): S's hole crossed
+HF1
+    0 0 L HF2                  ; [HF1]
+    1 1 L HF1                  ; [HF1]
+; HF2    scan left to the next hole, then cross the base hole (HG): S's hole crossed
+HF2
+    0 0 L HF1                  ; [HF2]
+    1 1 L HG1                  ; [HF2]
+; HG1    scan left to the next hole, then find the exponent hole (HH): I's hole crossed
+HG1
+    0 0 L HG2                  ; [HG1]
+    1 1 L HG1                  ; [HG1]
+; HG2    scan left to the next hole, then find the exponent hole (HH): I's hole crossed
+HG2
+    0 0 L HG1                  ; [HG2]
+    1 1 L HH1                  ; [HG2]
+; HH1    scan left to the next hole, then advance the exponent hole (ea1)
+HH1
+    0 0 L HH2                  ; [HH1]
+    1 1 L HH1                  ; [HH1]
+; HH2    scan left to the next hole, then advance the exponent hole (ea1)
+HH2
+    0 0 L HH1                  ; [HH2]
+    1 1 R ea1_ca4_ca7          ; [HH2]
+; seed10 seed: write 1 and step right
+; ea1    advance the exponent's hole: fill it
+; ca4    advance S's hole: the new hole, then to R's hole (PC)
+; ca7    wrap around: the new hole at cell 1, then to R's hole (PC)
+ea1_ca4_ca7
+    0 1 R ea2                  ; [seed10, ea1]
+    1 0 R PC1                  ; [ca4, ca7]
+; seed11 seed: write 1 and step right
+; ea2    advance the exponent's hole: step over the next cell
+ea2
+    0 1 R h10                  ; [seed11]
+    1 1 R ea3                  ; [ea2]
+; ea3    advance the exponent's hole: is that cell past the last? 0: yes, wrap around
+ea3
+    0 0 L ea5                  ; [ea3]
+    1 1 L ea4                  ; [ea3]
+; seed6  seed: write 0 and step right
+; ea4    advance the exponent's hole: the new hole, then to the base hole (MB)
+ea4
+    0 0 R g4                   ; [seed6]
+    1 0 R MB1                  ; [ea4]
+; seed18 seed: write 0 and step right
+; ea5    wrap around: run left to the start of the exponent
+ea5
+    0 0 R ea6                  ; [seed18, ea5]
+    1 1 L ea5                  ; [ea5]
+; seed19 seed: write 0 and step right
+; ea6    wrap around: step over cell 0
+ea6
+    0 0 R m5_h12               ; [seed19]
+    1 1 R ea7                  ; [ea6]
+; seed5  seed: write 0 and step right
+; ea7    wrap around: the new hole at cell 1, then consume (PD): R = i^(n-1)
+ea7
+    0 0 R ea4                  ; [seed5]
+    1 0 R PD1                  ; [ea7]
+; MB1    scan right to the next hole, then advance the base hole (ba1)
+MB1
+    0 0 R MB2                  ; [MB1]
+    1 1 R MB1                  ; [MB1]
+; MB2    scan right to the next hole, then advance the base hole (ba1)
+MB2
+    0 0 R MB1                  ; [MB2]
+    1 1 L ba1_d2               ; [MB2]
+; seed2  seed: write 1 and step right
+; ba1    advance the base's hole: fill it
+; d2     copy done: step over cell 0
+ba1_d2
+    0 1 R ba2                  ; [seed2, ba1]
+    1 1 R d3_m2                ; [d2]
+; seed3  seed: write 1 and step right
+; ba2    advance the base's hole: step over the next cell
+ba2
+    0 1 R z5                   ; [seed3]
+    1 1 R ba3                  ; [ba2]
+; ba3    advance the base's hole: is that cell past the last? 0: yes, wrap around
+ba3
+    0 0 L ba5                  ; [ba3]
+    1 1 L ba4                  ; [ba3]
+; seed8  seed: write 1 and step right
+; ba4    advance the base's hole: the new hole, then to R's cursor: copy (MC)
+ba4
+    0 1 R g9                   ; [seed8]
+    1 0 R MC1                  ; [ba4]
+; seed14 seed: write 0 and step right
+; ba5    wrap around: run left to the start of the base
+ba5
+    0 0 R ba6                  ; [seed14, ba5]
+    1 1 L ba5                  ; [ba5]
+; seed15 seed: write 0 and step right
+; ba6    wrap around: step over cell 0
+ba6
+    0 0 R c6                   ; [seed15]
+    1 1 R ba7_ca1              ; [ba6]
+; seed21 seed: write 1 and step right
+; ba7    wrap around: the new hole at cell 1, then to R's cursor: merge (MM)
+; ca1    advance S's hole: fill it
+ba7_ca1
+    0 1 R ca2                  ; [seed21, ca1]
+    1 0 R MM1                  ; [ba7]
+; MC1    scan right to the next hole, then find R's cursor (MD): S's hole crossed
+MC1
+    0 0 R MC2                  ; [MC1]
+    1 1 R MC1                  ; [MC1]
+; MC2    scan right to the next hole, then find R's cursor (MD): S's hole crossed
+MC2
+    0 0 R MC1                  ; [MC2]
+    1 1 R MD1                  ; [MC2]
+; MD1    scan right to the next hole, then copy R onto Q (c1)
+MD1
+    0 0 R MD2                  ; [MD1]
+    1 1 R MD1                  ; [MD1]
+; MD2    scan right to the next hole, then copy R onto Q (c1)
+MD2
+    0 0 R MD1                  ; [MD2]
+    1 1 R c1                   ; [MD2]
+; MM1    scan right to the next hole, then find R's cursor (MN): S's hole crossed
+MM1
+    0 0 R MM2                  ; [MM1]
+    1 1 R MM1                  ; [MM1]
+; MM2    scan right to the next hole, then find R's cursor (MN): S's hole crossed
+MM2
+    0 0 R MM1                  ; [MM2]
+    1 1 R MN1                  ; [MM2]
+; MN1    scan right to the next hole, then merge R 00 Q (mR)
+MN1
+    0 0 R MN2                  ; [MN1]
+    1 1 R MN1                  ; [MN1]
+; MN2    scan right to the next hole, then merge R 00 Q (mR)
+MN2
+    0 0 R MN1                  ; [MN2]
+    1 1 R mR                   ; [MN2]
+; c1     copy: run right to the end of R
+c1
+    0 0 R c2_a4                ; [c1]
+    1 1 R c1                   ; [c1]
+; c2     copy: R/Q separator, first cell
+; a4     copy: the cursor one cell on, then copy the next cell (c1)
+c2_a4
+    0 0 R c3_h3                ; [c2]
+    1 0 R c1                   ; [a4]
+; c3     copy: run right over Q; a cell after it
+; h3     reset: write 1 (S's new cell 0), step left
+c3_h3
+    0 1 L c4_h4                ; [c3, h3]
+    1 1 R c3_h3                ; [c3]
+; c4     copy: run left over Q
+; h4     reset: write 0 (separator), step left
+c4_h4
+    0 0 L c5_h5                ; [c4, h4]
+    1 1 L c4_h4                ; [c4]
+; c5     copy: R/Q separator, second cell
+; h5     reset: write 0 (separator), step left
+c5_h5
+    0 0 L c6                   ; [c5]
+    1 0 L h1_h6                ; [h5]
+; seed16 seed: write 1 and step right
+; c6     copy: run left over R to the cursor; fill it
+c6
+    0 1 R a2                   ; [seed16, c6]
+    1 1 L c6                   ; [c6]
+; seed17 seed: write 1 and step right
+; a2     copy: step over the cell after the cursor
+a2
+    0 1 R ea5                  ; [seed17]
+    1 1 R a3                   ; [a2]
+; a3     copy: last cell of R? 0: yes, copy done (d1)
+a3
+    0 0 L d1                   ; [a3]
+    1 1 L c2_a4                ; [a3]
+; seed1  seed: write 0 and step right
+; d1     copy done: run left to the start of R
+d1
+    0 0 R ba1_d2               ; [seed1, d1]
+    1 1 L d1                   ; [d1]
+; d3     copy done: R's cursor back at cell 1, then to the base (NB)
+; m2     merge: fill the R/Q separator
+d3_m2
+    0 1 R m3                   ; [m2]
+    1 0 L NB1                  ; [d3]
+; NB1    scan left to the next hole, then find the base hole (NC): S's hole crossed
+NB1
+    0 0 L NB2                  ; [NB1]
+    1 1 L NB1                  ; [NB1]
+; NB2    scan left to the next hole, then find the base hole (NC): S's hole crossed
+NB2
+    0 0 L NB1                  ; [NB2]
+    1 1 L NC1                  ; [NB2]
+; NC1    scan left to the next hole, then advance the base hole (ba1)
+NC1
+    0 0 L NC2                  ; [NC1]
+    1 1 L NC1                  ; [NC1]
+; NC2    scan left to the next hole, then advance the base hole (ba1)
+NC2
+    0 0 L NC1                  ; [NC2]
+    1 1 R ba1_d2               ; [NC2]
+; mR     merge: run right to the end of R
+mR
+    0 1 R d3_m2                ; [mR]
+    1 1 R mR                   ; [mR]
+; m3     merge: run right to the end of Q
+m3
+    0 0 L m4_h11               ; [m3]
+    1 1 R m3                   ; [m3]
+; seed23 seed: write 1 and step right
+; m4     merge: erase Q's last cell
+; h11    reset: write 0 (separator), step left
+m4_h11
+    0 1 R t3                   ; [seed23]
+    1 0 L m5_h12               ; [m4, h11]
+; seed20 seed: write 1 and step right
+; m5     merge: erase the next one, then back to the exponent (HE)
+; h12    reset: write 0 (separator), step left
+m5_h12
+    0 1 R ba7_ca1              ; [seed20]
+    1 0 L HE1_g1               ; [m5, h12]
+
+; ---------- CONSUME: B += R - 1 -----------------------------------------
+
+; PD1    scan right to the next hole, then cross S's hole (PE): I's hole crossed
+PD1
+    0 0 R PD2                  ; [PD1]
+    1 1 R PD1                  ; [PD1]
+; PD2    scan right to the next hole, then cross S's hole (PE): I's hole crossed
+PD2
+    0 0 R PD1                  ; [PD2]
+    1 1 R PE1                  ; [PD2]
+; PE1    scan right to the next hole, then find R's hole (PC): S's hole crossed
+PE1
+    0 0 R PE2                  ; [PE1]
+    1 1 R PE1                  ; [PE1]
+; PE2    scan right to the next hole, then find R's hole (PC): S's hole crossed
+PE2
+    0 0 R PE1                  ; [PE2]
+    1 1 R PC1                  ; [PE2]
+; PC1    scan right to the next hole, then run to R's end (r1)
+PC1
+    0 0 R PC2                  ; [PC1]
+    1 1 R PC1                  ; [PC1]
+; PC2    scan right to the next hole, then run to R's end (r1)
+PC2
+    0 0 R PC1                  ; [PC2]
+    1 1 R r1                   ; [PC2]
+; seed32 seed: step left over separator
+; r1     consume: run right to the end of R
+r1
+    0 0 L r2                   ; [seed32, r1]
+    1 1 R r1                   ; [r1]
+; seed33 seed: step left over separator, then the reset (x1)
+; r2     consume: R's last cell
+r2
+    0 0 L x1                   ; [seed33]
+    1 1 L r3                   ; [r2]
+; r3     consume: the cell before it; 0: R = 101, done: to S's hole (PK)
+r3
+    0 0 L PK1                  ; [r3]
+    1 1 R r4_tt3               ; [r3]
+; r4     consume: erase R's last cell, then back to S's hole (PN)
+; tt3    round end: fill the I/J separator
+r4_tt3
+    0 1 R t5_tt4               ; [tt3]
+    1 0 L PN1_y1               ; [r4]
+; PN1    scan left to the next hole, then find S's hole (PO): R's hole crossed
+; y1     scan left for the I/J separator (00)
+PN1_y1
+    0 0 L PN2_y2               ; [PN1, y1]
+    1 1 L PN1_y1               ; [PN1, y1]
+; PN2    scan left to the next hole, then find S's hole (PO): R's hole crossed
+; y2     after a 0: 0: the I/J separator, to I's last cell (t1)
+PN2_y2
+    0 0 L t1_PZ2               ; [y2]
+    1 1 L PO1                  ; [PN2]
+; PO1    scan left to the next hole, then advance S's hole (ca1)
+PO1
+    0 0 L PO2                  ; [PO1]
+    1 1 L PO1                  ; [PO1]
+; PO2    scan left to the next hole, then advance S's hole (ca1)
+PO2
+    0 0 L PO1                  ; [PO2]
+    1 1 R ba7_ca1              ; [PO2]
+; seed22 seed: write 1 and step right
+; ca2    advance S's hole: step over the next cell
+ca2
+    0 1 R m4_h11               ; [seed22]
+    1 1 R ca3                  ; [ca2]
+; ca3    advance S's hole: is that cell past the last? 0: yes, wrap around
+ca3
+    0 0 L ca5_t6               ; [ca3]
+    1 1 L ea1_ca4_ca7          ; [ca3]
+; ca5    wrap around: run left to the start of S
+; t6     shift: step over the separator
+ca5_t6
+    0 0 R ca6_t7               ; [ca5, t6]
+    1 1 L ca5_t6               ; [ca5]
+; ca6    wrap around: step over cell 0
+; t7     shift: J's new cell 0, then the next base (HG)
+ca6_t7
+    0 1 L HG1                  ; [t7]
+    1 1 R ea1_ca4_ca7          ; [ca6]
+
+; ---------- CHECK, FLAG, SHIFT ------------------------------------------
+
+; PK1    scan left to the next hole, then check S's hole (k1)
+PK1
+    0 0 L PK2                  ; [PK1]
+    1 1 L PK1                  ; [PK1]
+; PK2    scan left to the next hole, then check S's hole (k1)
+PK2
+    0 0 L PK1                  ; [PK2]
+    1 1 L k1                   ; [PK2]
+; k1     check: 0: S's hole is at cell 1, B = 0 (Y1); 1: B != 0, set the flag (f1)
+k1
+    0 0 L Y1                   ; [k1]
+    1 1 L f1                   ; [k1]
+; f1     flag: run left over S to its separator
+f1
+    0 0 L f2_z3_pa1            ; [f1]
+    1 1 L f1                   ; [f1]
+; f2     flag: S's separator, second cell
+; z3     round end: 0: the hole is at cell 1, B = 0 (z4); 1: B != 0, the reset (za)
+; pa1    reset: back right over K
+f2_z3_pa1
+    0 0 L f3_z4                ; [f2, z3]
+    1 1 R tt1_pa2_za           ; [z3, pa1]
+; f3     flag: K's last cell
+; z4     B = 0: S's separator
+f3_z4
+    0 0 L z5                   ; [z4]
+    1 1 L f4_h8                ; [f3]
+; f4     flag: K's cell 0 (or the separator) becomes a separator cell
+; h8     reset: write 0 (separator), step left
+f4_h8
+    0 0 L f5_h9                ; [f4, h8]
+    1 0 L f5_h9                ; [f4, h8]
+; f5     flag: the separator
+; h9     reset: write 0 (separator), step left
+f5_h9
+    0 0 L f6                   ; [f5]
+    1 0 L h10                  ; [h9]
+; f6     flag: the separator's first cell becomes J's last cell (K = 1)
+f6
+    0 1 L PN1_y1               ; [f6]
+    1 1 L PN1_y1               ; [f6]
+; Y1     B = 0: scan left for the K/J separator (00)
+Y1
+    0 0 L Y2                   ; [Y1]
+    1 1 L Y1                   ; [Y1]
+; Y2     B = 0: after a 0: 0: the separator found, to the I/J one (y1)
+Y2
+    0 0 L PN1_y1               ; [Y2]
+    1 1 L Y1                   ; [Y2]
+; t1     I's last cell
+; PZ2    scan right to the next hole, then look at S's hole (z1)
+t1_PZ2
+    0 0 R PZ1                  ; [PZ2]
+    1 1 L t2_z1                ; [t1, PZ2]
+; t2     I's cell i
+; z1     round end: S's hole
+t2_z1
+    0 0 L start_z2             ; [z1]
+    1 1 L t3                   ; [t2]
+; seed24 seed: write 1 and step right
+; t3     I's cell i - 1: 0 (the hole): i = 2, the round ends (tt1); 1: i > 2
+t3
+    0 1 R tt1_pa2_za           ; [seed24, t3]
+    1 1 R t4                   ; [t3]
+; seed28 seed: write 0 and step right
+; t4     shift: back right
+t4
+    0 0 R HE2_g2_g7            ; [seed28]
+    1 1 R t5_tt4               ; [t4]
+; t5     shift: I's last cell becomes a separator cell (i - 1)
+; tt4    round end: fill it, then to S's hole (PZ)
+t5_tt4
+    0 1 R PZ1                  ; [tt4]
+    1 0 R ca5_t6               ; [t5]
+
+; ---------- ROUND END: HALT, or the reset for n + 1 ---------------------
+
+; seed25 seed: write 0 and step right
+; tt1    round end: I's hole filled
+; pa2    reset: S's separator
+; za     reset: back right
+tt1_pa2_za
+    0 0 R x1                   ; [seed25, pa2]
+    1 1 R tt2_zb               ; [tt1, za]
+; tt2    round end: step over I's cell 3
+; zb     reset: fill S's hole
+tt2_zb
+    0 1 L x1                   ; [zb]
+    1 1 R r4_tt3               ; [tt2]
+; PZ1    scan right to the next hole, then look at S's hole (z1)
+PZ1
+    0 0 R t1_PZ2               ; [PZ1]
+    1 1 R PZ1                  ; [PZ1]
+; seed4  seed: write 1 and step right
+; z5     B = 0: K's last cell
+z5
+    0 1 R ea7                  ; [seed4]
+    1 1 L z6                   ; [z5]
+; z6     B = 0: 0: K = 1, the flag is set: HALT; 1: the reset (pa1)
+z6
+    0 0 R halt                 ; [z6]
+    1 1 R f2_z3_pa1            ; [z6]
+; seed26 seed: write 0 and step right
+; x1     reset: run left over S to its separator
+x1
+    0 0 R xR                   ; [seed26, x1]
+    1 1 L x1                   ; [x1]
+; seed27 seed: write 1 and step right
+; xR     reset: S's cell 0, then rewrite from cell 1 leftwards (h1)
+xR
+    0 1 R t4                   ; [seed27]
+    1 1 R h1_h6                ; [xR]
+; h1     reset: write 1 (S's cell 1 (old hole filled)), step left
+; h6     reset: write 1 (K), step left
+h1_h6
+    0 1 L h2_h7                ; [h1, h6]
+    1 1 L h2_h7                ; [h1, h6]
+; h2     reset: write 0 (S's new hole), step left
+; h7     reset: write 1 (K), step left
+h2_h7
+    0 1 L f4_h8                ; [h7]
+    1 0 L c3_h3                ; [h2]
+; seed12 seed: write 1 and step right
+; h10    reset: write 1 (J), step left
+h10
+    0 1 R g6                   ; [seed12]
+    1 1 L m4_h11               ; [h10]
+; seed30 seed: step left over R's cell 1
+; g3     reset: N's last cell becomes a separator cell
+; g8     reset: N's new hole
+g3_g8
+    0 0 L g9                   ; [seed30, g8]
+    1 0 L g4                   ; [g3]
+; seed7  seed: write 1 and step right
+; g4     reset: and the one before it
+g4
+    0 1 R ba4                  ; [seed7]
+    1 0 L g5                   ; [g4]
+; g5     reset: run left over N; fill its hole
+g5
+    0 1 L g6                   ; [g5]
+    1 1 L g5                   ; [g5]
+; seed13 seed: write 1 and step right
+; g6     reset: N's cell 0
+g6
+    0 1 R ba5                  ; [seed13]
+    1 1 L HE2_g2_g7            ; [g6]
+; seed9  seed: write 1 and step right
+; seed31 seed: step left over R's cell 0
+; g9     reset: N's new cell 0, then the Horner run (ea1)
+g9
+    0 1 R ea1_ca4_ca7          ; [seed9, g9]
+    1 1 L r1                   ; [seed31]

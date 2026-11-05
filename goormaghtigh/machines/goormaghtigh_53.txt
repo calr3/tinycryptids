@@ -1,0 +1,164 @@
+; Minimised from goormaghtigh.txt by minimize_clique.py
+; 53 states, 2 symbols
+
+blank_symbol: 0
+
+seed0
+    0 1 L seed1
+    1 0 R KR1
+seed1
+    0 1 L seed2
+    1 0 R G1
+seed2
+    0 1 L seed3
+    1 1 L seed2
+seed3
+    0 1 L seed4
+    1 1 L seed3
+seed4
+    0 0 L seed5
+    1 1 L seed4
+seed5
+    0 0 L seed6
+    1 0 R X
+seed6
+    0 1 L seed7
+    1 1 L seed6
+seed7
+    0 1 L seed8
+    1 1 L seed7
+seed8
+    0 1 L seed9
+    1 1 L K3
+seed9
+    0 1 L seed10
+    1 0 R KR2
+seed10
+    0 0 L seed11
+    1 1 R seed10
+seed11
+    0 1 L seed12
+    1 1 L seed13
+seed12
+    0 1 L seed13
+    1 1 R seed1
+seed13
+    0 1 L seed14
+    1 1 L seed9
+seed14
+    0 1 R VR1
+    1 1 L seed14
+X
+    0 0 L Y0
+    1 0 L SA
+SA
+    0 0 L SB
+    -
+SB
+    0 0 L SC
+    1 1 L SB
+SC
+    0 0 L SD
+    -
+SD
+    0 0 R seed12
+    1 1 L SD
+G1
+    0 0 R G2
+    1 1 R G1
+G2
+    0 0 R G3
+    1 0 R G1
+G3
+    0 0 R MV
+    1 0 R TJ
+TJ
+    0 0 R TK
+    1 1 R TJ
+TK
+    0 1 R TL
+    1 1 R TK
+TL
+    0 0 L seed2
+    1 0 L TM
+TM
+    0 0 L TN
+    1 1 L TM
+TN
+    0 1 R TO
+    1 1 L TN
+TO
+    0 0 L PQ
+    1 0 R TJ
+PQ
+    0 0 L PR
+    1 1 L PQ
+PR
+    0 0 L PS
+    -
+PS
+    0 1 R G2
+    1 1 L PS
+MV
+    0 1 R MW
+    1 1 R MV
+MW
+    0 0 R X
+    1 1 R MW
+Y0
+    0 1 L A1
+    -
+A1
+    0 0 L A2
+    1 1 L A1
+A2
+    0 0 L A3
+    -
+A3
+    0 0 L A4
+    1 1 L A3
+A4
+    0 0 L A5
+    1 1 L A4
+A5
+    0 0 L A6
+    1 0 R B1
+A6
+    0 0 R B1
+    1 0 R B1
+B1
+    0 0 R B1
+    1 1 R B2
+B2
+    0 1 L seed8
+    1 1 R B2
+K3
+    0 1 L VF1
+    1 1 R seed0
+KR1
+    0 0 R KR2
+    1 1 R KR1
+KR2
+    0 0 R H1
+    1 1 R KR2
+H1
+    0 0 R V7
+    1 1 R seed5
+VF1
+    0 0 L VF2
+    1 0 L seed14
+VF2
+    0 1 L VFh
+    1 1 L seed14
+VFh
+    0 0 R halt
+    1 1 R VR1
+VR1
+    0 0 R seed10
+    1 1 R VR1
+V7
+    0 1 L V14
+    1 1 R V7
+V14
+    0 0 R H1
+    1 1 L V14

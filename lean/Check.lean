@@ -45,6 +45,104 @@ Run `lake env lean Check.lean` after `lake build`. -/
 #print axioms TM.FermatPrimes.halts_iff
 #check @TM.FermatPrimes.M25.halts_iff
 #print axioms TM.FermatPrimes.M25.halts_iff
+#check @TM.Legendre.halts_iff
+#print axioms TM.Legendre.halts_iff
+#check @TM.Legendre.M44.halts_iff
+#print axioms TM.Legendre.M44.halts_iff
+#check @TM.Oppermann.halts_iff
+#print axioms TM.Oppermann.halts_iff
+#check @TM.Oppermann.M45.halts_iff
+#print axioms TM.Oppermann.M45.halts_iff
+#check @TM.LegendreSieve.halts_iff
+#print axioms TM.LegendreSieve.halts_iff
+#check @TM.LegendreSieve.M45.halts_iff
+#print axioms TM.LegendreSieve.M45.halts_iff
+#check @TM.Brocard.halts_iff
+#print axioms TM.Brocard.halts_iff
+#check @TM.Brocard.M61.halts_iff
+#print axioms TM.Brocard.M61.halts_iff
+#check @TM.Erdos.halts_iff
+#print axioms TM.Erdos.halts_iff
+#check @TM.ZeroFree.halts_iff
+#print axioms TM.ZeroFree.halts_iff
+#check @TM.ZeroFree.M44.halts_iff
+#print axioms TM.ZeroFree.M44.halts_iff
+#check @TM.Carmichael.halts_iff
+#print axioms TM.Carmichael.halts_iff
+#check @TM.Carmichael.M80.halts_iff
+#print axioms TM.Carmichael.M80.halts_iff
+#check @TM.Beal.halts_iff
+#print axioms TM.Beal.halts_iff
+#check @TM.Beal.M135.halts_iff
+#print axioms TM.Beal.M135.halts_iff
+#check @TM.Lychrel.halts_iff
+#print axioms TM.Lychrel.halts_iff
+#check @TM.Lychrel.M95.halts_iff
+#print axioms TM.Lychrel.M95.halts_iff
+#check @TM.HardyLittlewood2.halts_iff
+#print axioms TM.HardyLittlewood2.halts_iff
+#check @TM.HardyLittlewood2.M79.halts_iff
+#print axioms TM.HardyLittlewood2.M79.halts_iff
+#check @TM.Gilbreath.halts_iff
+#print axioms TM.Gilbreath.halts_iff
+#check @TM.Gilbreath.M97.halts_iff
+#print axioms TM.Gilbreath.M97.halts_iff
+#check @TM.LehmerTau.halts_iff
+#print axioms TM.LehmerTau.halts_iff
+#check @TM.LehmerTau.M295.halts_iff
+#print axioms TM.LehmerTau.M295.halts_iff
+#check @TM.ErdosMoser.halts_iff
+#print axioms TM.ErdosMoser.halts_iff
+#check @TM.ErdosMoser.M71.halts_iff
+#print axioms TM.ErdosMoser.M71.halts_iff
+#check @TM.BrocardPrimes.halts_iff
+#print axioms TM.BrocardPrimes.halts_iff
+#check @TM.BrocardPrimes.M72.halts_iff
+#print axioms TM.BrocardPrimes.M72.halts_iff
+#check @TM.FeitThompson.halts_iff
+#print axioms TM.FeitThompson.halts_iff
+#check @TM.FeitThompson.M106.halts_iff
+#print axioms TM.FeitThompson.M106.halts_iff
+#check @TM.Singmaster.halts_iff
+#print axioms TM.Singmaster.halts_iff
+#check @TM.Singmaster.M77.halts_iff
+#print axioms TM.Singmaster.M77.halts_iff
+#check @TM.Firoozbakht.halts_iff
+#print axioms TM.Firoozbakht.halts_iff
+#check @TM.Firoozbakht.M117.halts_iff
+#print axioms TM.Firoozbakht.M117.halts_iff
+#check @TM.Lemoine.halts_iff
+#print axioms TM.Lemoine.halts_iff
+#check @TM.Lemoine.M54.halts_iff
+#print axioms TM.Lemoine.M54.halts_iff
+#check @TM.LehmerTotient.halts_iff
+#print axioms TM.LehmerTotient.halts_iff
+#check @TM.LehmerTotient.M67.halts_iff
+#print axioms TM.LehmerTotient.M67.halts_iff
+#check @TM.Andrica.halts_iff
+#print axioms TM.Andrica.halts_iff
+#check @TM.Andrica.M51.halts_iff
+#print axioms TM.Andrica.M51.halts_iff
+#check @TM.AgohGiuga.halts_iff
+#print axioms TM.AgohGiuga.halts_iff
+#check @TM.AgohGiuga.M100.halts_iff
+#print axioms TM.AgohGiuga.M100.halts_iff
+#check @TM.ErdosStraus.halts_iff
+#print axioms TM.ErdosStraus.halts_iff
+#check @TM.ErdosStraus.M128.halts_iff
+#print axioms TM.ErdosStraus.M128.halts_iff
+#check @TM.Goormaghtigh.halts_iff
+#print axioms TM.Goormaghtigh.halts_iff
+#check @TM.Goormaghtigh.M53.halts_iff
+#print axioms TM.Goormaghtigh.M53.halts_iff
+#check @TM.PerfectCuboid.halts_iff
+#print axioms TM.PerfectCuboid.halts_iff
+#check @TM.PerfectCuboid.M88.halts_iff
+#print axioms TM.PerfectCuboid.M88.halts_iff
+#check @TM.Barker.halts_iff
+#print axioms TM.Barker.halts_iff
+#check @TM.Barker.M84.halts_iff
+#print axioms TM.Barker.M84.halts_iff
 -- Goldbach with 6 symbols (goldbach): also halts_iff_not, with GoldbachConjecture
 #check @TMK.Goldbach.halts_iff
 #print axioms TMK.Goldbach.halts_iff
@@ -97,6 +195,15 @@ Run `lake env lean Check.lean` after `lake build`. -/
 #check @TM.Mersenne.M14.never_halts
 #print axioms TM.Mersenne.M14.never_halts
 #check @TM.Mersenne.M14.beep_transition
+#check @TM.Amicable.quasihalts_iff
+#print axioms TM.Amicable.quasihalts_iff
+#check @TM.Amicable.never_halts
+#print axioms TM.Amicable.never_halts
+#check @TM.Amicable.M55.quasihalts_iff
+#print axioms TM.Amicable.M55.quasihalts_iff
+#check @TM.Amicable.M55.never_halts
+#print axioms TM.Amicable.M55.never_halts
+#check @TM.Amicable.M55.beep_transition
 #check @TM.SophieGermain.quasihalts_iff
 #print axioms TM.SophieGermain.quasihalts_iff
 #check @TM.SophieGermain.never_halts

@@ -1,0 +1,682 @@
+; ============================================================================
+; A 135-state, 2-symbol Turing machine that HALTS IFF BEAL'S CONJECTURE FAILS:
+; iff a^x + b^y = c^z for some a, b, c >= 1, x, y, z >= 3 with gcd(a, b) = 1.
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/Beal/M135.lean, theorem TM.Beal.M135.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 225-state design of build.py / beal.txt with states
+;   merged. States are merged only when their defined transitions agree, so
+;   each state below plays one or more ROLES of the design (its name joins
+;   them). Each transition line is tagged [role] with the role(s) that use it.
+;   A '-' line is never used.
+;
+; TAPE:  x 00 y 00 z 00 a 00 b 00 c 00 M 00 A 00 R 00 Q
+;   x, y, z: E + 1 cells, a cursor (hole) on cells 1 .. E; x keeps an anchor
+;     hole on cell 1 between tuples.
+;   a, b, c: beta + 3 cells, a cursor on cells 2 .. beta + 1.
+;   M = 1 marker, A = a^x + b^y (2 + value cells), R the running power, Q scratch.
+;
+; SEARCH: NEXCOM order of the six block lengths minus 4 (every tuple).
+; PER TUPLE:
+;   walk    holes on a's and b's first cursor cells; each tick advances both
+;           cyclically; when a's wraps, b's at its first cell -> coprime, at
+;           its last -> not coprime (next tuple).
+;   powers  R := 1; E rounds of R := R * beta (copy R beta - 1 times onto Q,
+;           merge); for (x, a), (y, b), (z, c); the exponent cursor moves on
+;           to the next block, the base cursor too; R is added into A.
+;   compare zig-zag A against R: equal -> HALT; else clear, restore A, bring
+;           the cursor left in a back to x as the anchor, next tuple.
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0  seed: write the first tuple
+; q8     add: erase
+start_q8
+    0 1 R f5__WB2                  ; [seed0]
+    1 0 L t1                       ; [q8]
+
+; ---------- ENUMERATION (NEXCOM) ----------------------------------------
+
+; seed37 seed: write the first tuple
+; en2    enum: x cell 2
+en2
+    0 1 R WW1__cr4                 ; [seed37]
+    1 1 R en3__nb2                 ; [en2]
+; seed12 seed: write the first tuple
+; en3    enum: x cell 3
+; nb2    next base: the separator
+en3__nb2
+    0 0 R nb3                      ; [seed12, nb2]
+    1 1 R en4                      ; [en3]
+; seed23 seed: write the first tuple
+; en4    enum: x cell 4 (1: x > min)
+en4
+    0 0 R f1__nb5                  ; [seed23, en4]
+    1 1 R e6                       ; [en4]
+; e6     enum h=1: right across x
+e6
+    0 0 L e7__nb0                  ; [e6]
+    1 1 R e6                       ; [e6]
+; seed10 seed: write the first tuple
+; e7     enum h=1: x loses its last cell
+; nb0    next base: fill the base cursor
+e7__nb0
+    0 1 R nb1                      ; [seed10, nb0]
+    1 0 R e8__gB2__BW1             ; [e7]
+; e8     enum h=1: the separator
+; gB2    setup: H_b on b cell 2
+; BW1    walk: H_b wraps, left across b
+e8__gB2__BW1
+    0 0 R e9__gB3__BW2             ; [e8, gB2, BW1]
+    1 1 L e8__gB2__BW1             ; [BW1]
+; e9     enum h=1: y gains a cell
+; gB3    setup: H_b on b cell 2
+; BW2    walk: b cell 0
+e9__gB3__BW2
+    0 1 L HS1                      ; [e9]
+    1 1 R HU2__gB4__BW3            ; [gB3, BW2]
+; HS1    parser: to the anchor, start the walk
+HS1
+    0 0 L HS2__f3                  ; [HS1]
+    1 1 L HS1                      ; [HS1]
+; HS2    parser: to the anchor, start the walk
+; f3     enum: block cell 1
+HS2__f3
+    0 0 L HS1                      ; [HS2]
+    1 1 R f4__gA0                  ; [HS2, f3]
+; seed24 seed: write the first tuple
+; f1     enum: the separator
+; nb5    next base: base cursor on cell 2
+f1__nb5
+    0 0 R f2                       ; [seed24, f1]
+    1 0 R MQ1                      ; [nb5]
+; seed25 seed: write the first tuple
+; f2     enum: block cell 0
+f2
+    0 1 R n5                       ; [seed25]
+    1 1 R HS2__f3                  ; [f2]
+; f4     enum: block cell 2
+; gA0    setup: from the anchor to a, H_a on a cell 2
+f4__gA0
+    0 0 R gA1                      ; [gA0]
+    1 1 R f5__WB2                  ; [f4]
+; seed1  seed: write the first tuple
+; f5     enum: block cell 3
+; WB2    walk: the separator
+f5__WB2
+    0 0 R WB3                      ; [seed1, WB2]
+    1 1 R f6                       ; [f5]
+; f6     enum: block cell 4 (1: not minimal, B_h)
+f6
+    0 0 R f1__nb5                  ; [f6]
+    1 1 R k1__u2                   ; [f6]
+; seed5  seed: write the first tuple
+; k1     enum: right across B_h
+; u2     transfer: the separator
+k1__u2
+    0 0 R k2__u3                   ; [seed5, k1, u2]
+    1 1 R k1__u2                   ; [k1]
+; seed6  seed: write the first tuple
+; k2     enum: the separator
+; u3     transfer: the block loses cell 0
+k2__u3
+    0 0 R k3                       ; [seed6, k2]
+    1 0 R u4__HE2                  ; [u3]
+; seed7  seed: write the first tuple
+; k3     enum: next block cell 0
+k3
+    0 1 R zA3                      ; [seed7]
+    1 1 R k4__n6__HL2              ; [k3]
+; k4     enum: next block cell 1 (0: the marker, B_h is c)
+; n6     enum: B_h
+; HL2    parser: to the anchor, grow x
+k4__n6__HL2
+    0 0 L HL1                      ; [k4, HL2]
+    1 1 L n2__n7__g1               ; [k4, n6, HL2]
+; n2     enum: back
+; n7     enum: B_h
+; g1     enum last: x grows on the left
+n2__n7__g1
+    0 1 R g2                       ; [g1]
+    1 1 L n3__n8                   ; [n2, n7]
+; n3     enum: the next block gains a cell
+; n8     enum: B_h
+n3__n8
+    0 1 L n4__u6                   ; [n3]
+    1 1 L n9                       ; [n8]
+; n4     enum: the separator
+; u6     transfer: block
+n4__u6
+    0 0 L n5                       ; [n4]
+    1 1 R u7                       ; [u6]
+; seed26 seed: write the first tuple
+; n5     enum: B_h loses a cell
+n5
+    0 1 R g2                       ; [seed26]
+    1 0 L k4__n6__HL2              ; [n5]
+; seed28 seed: write the first tuple
+; n9     enum: B_h
+n9
+    0 1 R gA7                      ; [seed28]
+    1 1 L n10                      ; [n9]
+; n10    enum: B_h still > min? (1: transfer to x)
+n10
+    0 0 L HS2__f3                  ; [n10]
+    1 1 L HU1                      ; [n10]
+; HL1    parser: to the anchor, grow x
+HL1
+    0 0 L k4__n6__HL2              ; [HL1]
+    1 1 L HL1                      ; [HL1]
+; seed27 seed: write the first tuple
+; g2     enum last: the anchor moves
+g2
+    0 1 R n9                       ; [seed27]
+    1 0 R g3__bA4                  ; [g2]
+; g3     enum last: old anchor filled
+; bA4    base step: cursor advanced
+g3__bA4
+    0 1 L uh__gB5__WB6__BW4__TC9   ; [g3]
+    1 0 R MC1                      ; [bA4]
+; HU1    parser: to the anchor, transfer
+HU1
+    0 0 L HU2__gB4__BW3            ; [HU1]
+    1 1 L HU1                      ; [HU1]
+; HU2    parser: to the anchor, transfer
+; gB4    setup: H_b on b cell 2
+; BW3    walk: b cell 1
+HU2__gB4__BW3
+    0 0 L HU1                      ; [HU2]
+    1 1 R uh__gB5__WB6__BW4__TC9   ; [HU2, gB4, BW3]
+; uh     transfer: on the anchor
+; gB5    setup: H_b on b cell 2
+; WB6    walk: H_b advanced
+; BW4    walk: H_b on b cell 2
+; TC9    check: H_b advanced
+uh__gB5__WB6__BW4__TC9
+    0 0 R u1                       ; [uh]
+    1 0 L GK1                      ; [gB5, WB6, BW4, TC9]
+; seed4  seed: write the first tuple
+; u1     transfer: right across x, x gains a cell
+u1
+    0 1 R k1__u2                   ; [seed4, u1]
+    1 1 R u1                       ; [u1]
+; u4     transfer: block
+; HE2    parser: left to a cursor (back to the anchor)
+u4__HE2
+    0 0 L HE1                      ; [HE2]
+    1 1 R u5__X1                   ; [u4, HE2]
+; u5     transfer: block
+; X1     fill the cursor found
+u5__X1
+    0 1 L H1                       ; [X1]
+    1 1 R n4__u6                   ; [u5]
+; u7     transfer: block cell 4 (0: minimal, it gains it back)
+u7
+    0 1 R k1__u2                   ; [u7]
+    1 1 R u8                       ; [u7]
+; u8     transfer: B_h still > min?
+u8
+    0 0 L HS1                      ; [u8]
+    1 1 L HU1                      ; [u8]
+
+; ---------- COPRIMALITY WALK --------------------------------------------
+
+; gA1    setup: from the anchor to a, H_a on a cell 2
+gA1
+    0 0 R gA2__TC1                 ; [gA1]
+    1 1 R gA1                      ; [gA1]
+; gA2    setup: from the anchor to a, H_a on a cell 2
+; TC1    check: right across a
+gA2__TC1
+    0 0 R gA3__TC2                 ; [gA2, TC1]
+    1 1 R gA2__TC1                 ; [TC1]
+; gA3    setup: from the anchor to a, H_a on a cell 2
+; TC2    check: the separator
+gA3__TC2
+    0 0 R gA4__TC3                 ; [gA3, TC2]
+    1 1 R gA3__TC2                 ; [gA3]
+; gA4    setup: from the anchor to a, H_a on a cell 2
+; TC3    check: b cell 0
+gA4__TC3
+    0 0 R gA5                      ; [gA4]
+    1 1 R gA6__TC4                 ; [TC3]
+; gA5    setup: from the anchor to a, H_a on a cell 2
+gA5
+    0 0 R gA6__TC4                 ; [gA5]
+    1 1 R gA5                      ; [gA5]
+; gA6    setup: from the anchor to a, H_a on a cell 2
+; TC4    check: b cell 1
+gA6__TC4
+    0 0 R gA7                      ; [gA6]
+    1 1 R TC5                      ; [TC4]
+; seed29 seed: write the first tuple
+; gA7    setup: from the anchor to a, H_a on a cell 2
+gA7
+    0 0 R bD1                      ; [seed29]
+    1 1 R gA8__c2                  ; [gA7]
+; gA8    setup: from the anchor to a, H_a on a cell 2
+; c2     copy: the separator
+gA8__c2
+    0 0 R c3                       ; [c2]
+    1 1 R gA9                      ; [gA8]
+; seed14 seed: write the first tuple
+; gA9    setup: from the anchor to a, H_a on a cell 2
+gA9
+    0 1 R q7                       ; [seed14]
+    1 0 R gB1                      ; [gA9]
+; gB1    setup: H_b on b cell 2
+gB1
+    0 0 R e8__gB2__BW1             ; [gB1]
+    1 1 R gB1                      ; [gB1]
+; GK1    walk: left across b
+GK1
+    0 0 L GK2__d3                  ; [GK1]
+    1 1 L GK1                      ; [GK1]
+; GK2    walk: the separator
+; d3     copy done: R cursor on cell 1
+GK2__d3
+    0 0 L WA                       ; [GK2]
+    1 0 L NB1                      ; [d3]
+; seed34 seed: write the first tuple
+; WA     walk: find H_a, advance it
+WA
+    0 1 R WA2                      ; [seed34, WA]
+    1 1 L WA                       ; [WA]
+; seed35 seed: write the first tuple
+; WA2    walk: H_a next cell
+WA2
+    0 0 R H5                       ; [seed35]
+    1 1 R WA3                      ; [WA2]
+; WA3    walk: H_a 2 cells on (0: wrap)
+WA3
+    0 0 L WW1__cr4                 ; [WA3]
+    1 1 L WA4                      ; [WA3]
+; seed9  seed: write the first tuple
+; WA4    walk: H_a advanced
+WA4
+    0 1 R e7__nb0                  ; [seed9]
+    1 0 R WB1                      ; [WA4]
+; WB1    walk: right across a
+WB1
+    0 0 R f5__WB2                  ; [WB1]
+    1 1 R WB1                      ; [WB1]
+; seed2  seed: write the first tuple
+; WB3    walk: find H_b, advance it
+WB3
+    0 1 R WB4                      ; [seed2, WB3]
+    1 1 R WB3                      ; [WB3]
+; seed3  seed: write the first tuple
+; WB4    walk: H_b next cell
+WB4
+    0 1 R u1                       ; [seed3]
+    1 1 R WB5                      ; [WB4]
+; WB5    walk: H_b 2 cells on (0: wrap)
+WB5
+    0 0 L e8__gB2__BW1             ; [WB5]
+    1 1 L uh__gB5__WB6__BW4__TC9   ; [WB5]
+; WW1    walk: H_a wraps, left across a
+; cr4    restore A: 0
+WW1__cr4
+    0 0 R WW2__cr5                 ; [WW1, cr4]
+    1 1 L WW1__cr4                 ; [WW1]
+; WW2    walk: a cell 0
+; cr5    restore A: 0
+WW2__cr5
+    0 0 R WW4__bAt__cr6            ; [cr5]
+    1 1 R WW3__NB2__p3             ; [WW2]
+; WW3    walk: a cell 1
+; NB2    parser: back to the base cursor
+; p3     push R: back
+WW3__NB2__p3
+    0 0 L NB1                      ; [NB2, p3]
+    1 1 R WW4__bAt__cr6            ; [WW3, NB2]
+; WW4    walk: H_a on a cell 2
+; bAt    base step: on the base cursor
+; cr6    restore A: 1
+WW4__bAt__cr6
+    0 1 R bA2__cr7                 ; [bAt, cr6]
+    1 0 R gA2__TC1                 ; [WW4]
+; TC5    check: b cell 2 (0: H_b there, coprime)
+TC5
+    0 1 R t1                       ; [TC5]
+    1 1 R TC6                      ; [TC5]
+; seed21 seed: write the first tuple
+; TC6    check: find H_b, advance it
+TC6
+    0 1 R TC7                      ; [seed21, TC6]
+    1 1 R TC6                      ; [TC6]
+; seed22 seed: write the first tuple
+; TC7    check: H_b next cell
+TC7
+    0 1 R en4                      ; [seed22]
+    1 1 R TC8                      ; [TC7]
+; TC8    check: H_b 2 cells on (0: wraps, not coprime)
+TC8
+    0 0 L HE1                      ; [TC8]
+    1 1 L uh__gB5__WB6__BW4__TC9   ; [TC8]
+
+; ---------- POWERS ------------------------------------------------------
+
+; bA2    base step: next cell
+; cr7    restore A: 1
+bA2__cr7
+    0 1 L HE1                      ; [cr7]
+    1 1 R bA3                      ; [bA2]
+; bA3    base step: 2 cells on (0: round done)
+bA3
+    0 0 L bD1                      ; [bA3]
+    1 1 L g3__bA4                  ; [bA3]
+; MC1    parser: to the R cursor, copy
+MC1
+    0 0 R MC2                      ; [MC1]
+    1 1 R MC1                      ; [MC1]
+; MC2    parser: to the R cursor, copy
+MC2
+    0 0 R MC1                      ; [MC2]
+    1 1 R c1                       ; [MC2]
+; seed30 seed: write the first tuple
+; bD1    round done: left across the base
+bD1
+    0 0 R bD2                      ; [seed30, bD1]
+    1 1 L bD1                      ; [bD1]
+; seed31 seed: write the first tuple
+; bD2    round done: base cell 0
+bD2
+    0 1 R c6                       ; [seed31]
+    1 1 R bD3__p1                  ; [bD2]
+; bD3    round done: base cell 1
+; p1     push R: its hole
+bD3__p1
+    0 0 R bD4__p2                  ; [p1]
+    1 1 R bD4__p2                  ; [bD3]
+; bD4    round done: base cursor on cell 2
+; p2     push R: its end
+bD4__p2
+    0 1 L WW3__NB2__p3             ; [p2]
+    1 0 R MM1                      ; [bD4]
+; MM1    parser: to the R cursor, merge
+MM1
+    0 0 R MM2                      ; [MM1]
+    1 1 R MM1                      ; [MM1]
+; MM2    parser: to the R cursor, merge
+MM2
+    0 0 R MM1                      ; [MM2]
+    1 1 R mR                       ; [MM2]
+; c1     copy: right across R
+c1
+    0 0 R gA8__c2                  ; [c1]
+    1 1 R c1                       ; [c1]
+; c3     copy: right across Q, append 1
+c3
+    0 1 L c4                       ; [c3]
+    1 1 R c3                       ; [c3]
+; c4     copy: left across Q
+c4
+    0 0 L c5__q6                   ; [c4]
+    1 1 L c4                       ; [c4]
+; c5     copy: the separator
+; q6     add: erase
+c5__q6
+    0 0 L c6                       ; [c5]
+    1 0 L q7                       ; [q6]
+; seed32 seed: write the first tuple
+; c6     copy: find the R cursor
+c6
+    0 1 R a2                       ; [seed32, c6]
+    1 1 L c6                       ; [c6]
+; seed33 seed: write the first tuple
+; a2     copy: R cursor next cell
+a2
+    0 1 R WA                       ; [seed33]
+    1 1 R a3                       ; [a2]
+; a3     copy: 2 cells on (0: R copied)
+a3
+    0 0 L d1                       ; [a3]
+    1 1 L a4                       ; [a3]
+; seed16 seed: write the first tuple
+; a4     copy: R cursor advanced
+a4
+    0 1 R zA2                      ; [seed16]
+    1 0 R c1                       ; [a4]
+; seed18 seed: write the first tuple
+; d1     copy done: left across R
+d1
+    0 0 R d2                       ; [seed18, d1]
+    1 1 L d1                       ; [d1]
+; seed19 seed: write the first tuple
+; d2     copy done: R cell 0
+d2
+    0 1 R cz1                      ; [seed19]
+    1 1 R GK2__d3                  ; [d2]
+; NB1    parser: back to the base cursor
+NB1
+    0 0 L WW3__NB2__p3             ; [NB1]
+    1 1 L NB1                      ; [NB1]
+; mR     merge: right across R
+mR
+    0 1 R m2__q5                   ; [mR]
+    1 1 R mR                       ; [mR]
+; m2     merge: fill the separator
+; q5     add: erase
+m2__q5
+    0 1 R m3                       ; [m2]
+    1 0 L c5__q6                   ; [q5]
+; m3     merge: right across Q
+m3
+    0 0 L m4__eF1                  ; [m3]
+    1 1 R m3                       ; [m3]
+; m4     merge: erase
+; eF1    power done: the separator
+m4__eF1
+    0 0 R LG2__eF2                 ; [eF1]
+    1 0 L m5__q0                   ; [m4]
+; m5     merge: erase
+; q0     add R into A: fill the R cursor
+m5__q0
+    0 1 L q1__CP2                  ; [q0]
+    1 0 L LE1                      ; [m5]
+; LE1    parser: left: past the R cursor
+LE1
+    0 0 L LE2                      ; [LE1]
+    1 1 L LE1                      ; [LE1]
+; LE2    parser: left: past the R cursor
+LE2
+    0 0 L LE1                      ; [LE2]
+    1 1 L LF1                      ; [LE2]
+; LF1    parser: left: past the base cursor
+LF1
+    0 0 L LF2                      ; [LF1]
+    1 1 L LF1                      ; [LF1]
+; LF2    parser: left: past the base cursor
+LF2
+    0 0 L LF1                      ; [LF2]
+    1 1 L LG1                      ; [LF2]
+; LG1    parser: left: to the exponent cursor
+LG1
+    0 0 L LG2__eF2                 ; [LG1]
+    1 1 L LG1                      ; [LG1]
+; LG2    parser: left: to the exponent cursor
+; eF2    power done: next block cell 0
+LG2__eF2
+    0 0 L LG1                      ; [LG2]
+    1 1 R eAt__eF3                 ; [LG2, eF2]
+; eAt    exponent step: on the cursor
+; eF3    power done: exponent cursor on its cell 1
+eAt__eF3
+    0 1 R eA2                      ; [eAt]
+    1 0 R MN1                      ; [eF3]
+; eA2    exponent step: next cell (0: the power is done)
+eA2
+    0 0 R m4__eF1                  ; [eA2]
+    1 0 R MB1                      ; [eA2]
+; MB1    parser: to the base cursor, next round
+MB1
+    0 0 R MB2                      ; [MB1]
+    1 1 R MB1                      ; [MB1]
+; MB2    parser: to the base cursor, next round
+MB2
+    0 0 R MB1                      ; [MB2]
+    1 1 L WW4__bAt__cr6            ; [MB2]
+; MN1    parser: to the base cursor, power done
+MN1
+    0 0 R MN2                      ; [MN1]
+    1 1 R MN1                      ; [MN1]
+; MN2    parser: to the base cursor, power done
+MN2
+    0 0 R MN1                      ; [MN2]
+    1 1 L e7__nb0                  ; [MN2]
+
+; ---------- NEXT BASE, ADD, PUSH R --------------------------------------
+
+; seed11 seed: write the first tuple
+; nb1    next base: right across the base
+nb1
+    0 0 R en3__nb2                 ; [seed11, nb1]
+    1 1 R nb1                      ; [nb1]
+; seed13 seed: write the first tuple
+; nb3    next base: next block cell 0
+nb3
+    0 1 R gA9                      ; [seed13]
+    1 1 R nb4                      ; [nb3]
+; nb4    next base: cell 1 (0: the marker, compare)
+nb4
+    0 0 R q1__CP2                  ; [nb4]
+    1 1 R f1__nb5                  ; [nb4]
+; MQ1    parser: to the R cursor, add R into A
+MQ1
+    0 0 R MQ2                      ; [MQ1]
+    1 1 R MQ1                      ; [MQ1]
+; MQ2    parser: to the R cursor, add R into A
+MQ2
+    0 0 R MQ1                      ; [MQ2]
+    1 1 L m5__q0                   ; [MQ2]
+; q1     add: R cell 0
+; CP2    parser: to the R cursor, compare
+q1__CP2
+    0 0 R CP1                      ; [CP2]
+    1 1 L q2__cp5__zZ2             ; [q1, CP2]
+; q2     add: fill the separator
+; cp5    compare: fill the R cursor
+; zZ2    zig-zag: erase R's cell
+q2__cp5__zZ2
+    0 1 L q3__cp6                  ; [q2, cp5]
+    1 0 L zH1                      ; [zZ2]
+; q3     add: fill the separator
+; cp6    compare: R cell 0
+q3__cp6
+    0 1 R q4                       ; [q3]
+    1 1 L zH1                      ; [cp6]
+; q4     add: right across R
+q4
+    0 0 L m2__q5                   ; [q4]
+    1 1 R q4                       ; [q4]
+; seed15 seed: write the first tuple
+; q7     add: erase
+q7
+    0 1 R a4                       ; [seed15]
+    1 0 L start_q8                 ; [q7]
+; t1     push R: to the end of the stack
+t1
+    0 0 R t2                       ; [t1]
+    1 1 R t1                       ; [t1]
+; t2     push R: after a 0
+t2
+    0 0 R t3                       ; [t2]
+    1 1 R t1                       ; [t2]
+; t3     push R: after 0 0
+t3
+    0 1 R bD3__p1                  ; [t3]
+    1 1 R t1                       ; [t3]
+
+; ---------- COMPARE, CLEAR, HOME ----------------------------------------
+
+; CP1    parser: to the R cursor, compare
+CP1
+    0 0 R q1__CP2                  ; [CP1]
+    1 1 R CP1                      ; [CP1]
+; zH1    zig-zag: left to A's last cell
+zH1
+    0 0 L zH1                      ; [zH1]
+    1 1 L zA1                      ; [zH1]
+; zA1    zig-zag: A's cell before (0: A has one cell)
+zA1
+    0 0 R zA3                      ; [zA1]
+    1 1 R zA2                      ; [zA1]
+; seed17 seed: write the first tuple
+; zA2    zig-zag: erase A's cell
+zA2
+    0 0 R d1                       ; [seed17]
+    1 0 R zG1                      ; [zA2]
+; zG1    zig-zag: right to R's first cell
+zG1
+    0 0 R zG1                      ; [zG1]
+    1 1 R zZ1                      ; [zG1]
+; zZ1    zig-zag: R's next cell (0: R has one cell)
+zZ1
+    0 0 L cz1                      ; [zZ1]
+    1 1 L q2__cp5__zZ2             ; [zZ1]
+; seed8  seed: write the first tuple
+; zA3    zig-zag: erase A's last cell
+zA3
+    0 1 R WA4                      ; [seed8]
+    1 0 R zK1                      ; [zA3]
+; zK1    zig-zag: right to R
+zK1
+    0 0 R zK1                      ; [zK1]
+    1 0 R zK2                      ; [zK1]
+; zK2    zig-zag: R's last cell? (0: equal, HALT)
+zK2
+    0 0 R halt                     ; [zK2]
+    1 0 R cr1                      ; [zK2]
+; cr1    clear: erase R
+cr1
+    0 0 L cr3                      ; [cr1]
+    1 0 R cr1                      ; [cr1]
+; seed20 seed: write the first tuple
+; cz1    clear: erase R's cell
+cz1
+    0 1 R TC6                      ; [seed20]
+    1 0 L cz2                      ; [cz1]
+; cz2    clear: left
+cz2
+    0 0 L cz2                      ; [cz2]
+    1 0 L cz3                      ; [cz2]
+; cz3    clear: erase A
+cz3
+    0 0 L cr3                      ; [cz3]
+    1 0 L cz3                      ; [cz3]
+; cr3    clear: left to M
+cr3
+    0 0 L cr3                      ; [cr3]
+    1 1 R WW1__cr4                 ; [cr3]
+; HE1    parser: left to a cursor (back to the anchor)
+HE1
+    0 0 L u4__HE2                  ; [HE1]
+    1 1 L HE1                      ; [HE1]
+; H1     home: left
+H1
+    0 0 L H2                       ; [H1]
+    1 1 L H1                       ; [H1]
+; H2     home: after a 0
+H2
+    0 0 L H3                       ; [H2]
+    1 1 L H1                       ; [H2]
+; H3     home: after 0 0 (0: the blank)
+H3
+    0 0 R H4                       ; [H3]
+    1 1 L H1                       ; [H3]
+; H4     home: right to x
+H4
+    0 0 R H4                       ; [H4]
+    1 1 R H5                       ; [H4]
+; seed36 seed: write the first tuple
+; H5     home: anchor on x cell 1
+H5
+    0 0 R en2                      ; [seed36, H5]
+    1 0 R en2                      ; [H5]

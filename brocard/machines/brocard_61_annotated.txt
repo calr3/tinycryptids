@@ -1,0 +1,339 @@
+; ============================================================================
+; A 61-state, 2-symbol Turing machine that HALTS IFF BROCARD'S PROBLEM HAS A
+; SOLUTION BEYOND THE KNOWN ONES: iff n! + 1 = m^2 for some n >= 8.
+; (The known solutions are n = 4, 5, 7.)
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/Brocard/M61.lean, theorem TM.Brocard.M61.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 98-state design of build.py / brocard.txt with states
+;   merged. States are merged only when their defined transitions agree, so
+;   each state below plays one or more ROLES of the design (its name joins
+;   them). Each transition line is tagged [role] with the role(s) that use it.
+;   A '-' line is never used. The seed roles run once at the start and only
+;   ever read 0, so each of them doubles as a step of some other routine.
+;
+; TAPE LAYOUT (blocks of 1s separated by 00):
+;
+;      W 00 N 00 F 00 S      during the square test
+;      W 00 N 00 F 00 Q      during the multiplication
+;
+;   F  n!+4 cells. In the test, its HOLE (a single 0) at cell u+1 counts the
+;      units of n!+1 used so far; in the multiplication it is the copy cursor
+;      (cells 3 .. n!+2)
+;   S  d+2 cells: the odd number d = 2j+1 being subtracted, with a cyclic hole
+;   Q  the copies of F made so far
+;   N  n+2 cells: the round n; in the multiplication its hole counts the copies
+;   W  countdown of the warm-up rounds n < 8 (no test); N grows into it
+;
+; ALGORITHM (round n = 1, 2, 3, ...)
+;   test      (n >= 8) one unit at a time: advance the F hole, then the S hole;
+;             when the S hole wraps, d += 2. So after 1 + 3 + ... + (2j+1)
+;             units the S hole is back at cell 1. When F runs out (n!+1 units)
+;             with the S hole at cell 1, n!+1 = (j+1)^2: HALT. Else erase S.
+;   multiply  n times: copy the n! cells of F onto Q; merge Q into F:
+;             F = (n+1)!.
+;   grow      N := n+1, taking a cell from W. If W is now empty, write S = 101
+;             and put the F hole at cell 1 for the next test.
+;   seed      write 1111111 00 101 00 11101: round 1, multiplication started.
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0  seed: write 1 and step right
+; p1     test: one more unit: fill the F hole
+; g5     multiply: step over cell 2 of F
+start_p1_g5
+    0 1 R p2                   ; [seed0, p1]
+    1 1 R g6_y4                ; [g5]
+
+; ---------- SQUARE TEST: is n!+1 a sum 1 + 3 + ... + (2j+1)? ------------
+
+; seed1  seed: write 1 and step right
+; p2     test: step over the next cell
+p2
+    0 1 R p4_s1                ; [seed1]
+    1 1 R p3                   ; [p2]
+; p3     test: is that cell the last one of F? 0: yes, n!+1 units used: check S (PK)
+p3
+    0 0 R PK2                  ; [p3]
+    1 1 L p4_s1                ; [p3]
+; seed2  seed: write 1 and step right
+; p4     test: make the new F hole, then go to the S hole (PS)
+; s1     advance the S hole: fill it
+p4_s1
+    0 1 R s2                   ; [seed2, s1]
+    1 0 R PS1                  ; [p4]
+; PS1    scan right to the next hole, then advance the S hole (s1)
+PS1
+    0 0 R PS2                  ; [PS1]
+    1 1 R PS1                  ; [PS1]
+; PS2    scan right to the next hole, then advance the S hole (s1)
+PS2
+    0 0 R PS1                  ; [PS2]
+    1 1 L p4_s1                ; [PS2]
+; seed3  seed: write 1 and step right
+; s2     advance the S hole: step over the next cell
+s2
+    0 1 R z6_n4                ; [seed3]
+    1 1 R s3                   ; [s2]
+; s3     advance the S hole: last cell of S? 0: yes, wrap around and grow S by 2
+s3
+    0 1 R s5_m6                ; [s3]
+    1 1 L s4                   ; [s3]
+; seed5  seed: write 1 and step right
+; s4     advance the S hole: make the new hole, then back to the F hole (PP)
+s4
+    0 1 R g4                   ; [seed5]
+    1 0 L PP1                  ; [s4]
+; s5     wrap: S grows by 2
+; m6     merge: erase the next 1
+s5_m6
+    0 1 L s6                   ; [s5]
+    1 0 L k1_v0                ; [m6]
+; seed10 seed: write 0 and step right
+; s6     wrap: run left to the start of S
+s6
+    0 0 R s7                   ; [seed10, s6]
+    1 1 L s6                   ; [s6]
+; seed11 seed: write 1 and step right
+; s7     wrap: step over cell 0
+s7
+    0 1 R g1                   ; [seed11]
+    1 1 R s8_n1                ; [s7]
+; seed16 seed: write 1 and step right
+; s8     wrap: new hole at cell 1, then back to the F hole (PP)
+; n1     advance the N hole: fill it
+s8_n1
+    0 1 R n2                   ; [seed16, n1]
+    1 0 L PP1                  ; [s8]
+; PP1    scan left to the next hole, then one more unit (p1)
+PP1
+    0 0 L PP2_t12              ; [PP1]
+    1 1 L PP1                  ; [PP1]
+; PP2    scan left to the next hole, then one more unit (p1)
+; t12    test setup: back to the F hole (PP)
+PP2_t12
+    0 0 L PP1                  ; [PP2, t12]
+    1 1 R start_p1_g5          ; [PP2]
+; PK1    scan right to the next hole, then check the S hole (k1)
+PK1
+    0 0 R PK2                  ; [PK1]
+    1 1 R PK1                  ; [PK1]
+; PK2    scan right to the next hole, then check the S hole (k1); entered on the separator after F
+PK2
+    0 0 R PK1                  ; [PK2]
+    1 1 L k1_v0                ; [PK2]
+; k1     check: step left from the S hole
+; v0     grow N: run left over F
+k1_v0
+    0 0 L k2_v0b               ; [k1, v0]
+    1 1 L k1_v0                ; [v0]
+; k2     check: step over cell c of S
+; v0b    grow N: step over the separator
+k2_v0b
+    0 0 L v1                   ; [v0b]
+    1 1 L k3                   ; [k2]
+; k3     check: 0: the S hole is at cell 1, n!+1 is a square: HALT; 1: not a square
+k3
+    0 0 L halt                 ; [k3]
+    1 1 L kz                   ; [k3]
+; kz     not a square: run left to the start of S
+kz
+    0 0 R r1                   ; [kz]
+    1 1 L kz                   ; [kz]
+; r1     erase S
+r1
+    0 0 R r2                   ; [r1]
+    1 0 R r1                   ; [r1]
+; r2     erase S: after a 0, a 1 means the hole was passed; 0: S is gone
+r2
+    0 0 L z1                   ; [r2]
+    1 0 R r1                   ; [r2]
+; z1     run left over the blank cells to F
+z1
+    0 0 L z1                   ; [z1]
+    1 1 L z2                   ; [z1]
+; z2     run left over F
+z2
+    0 0 L z3                   ; [z2]
+    1 1 L z2                   ; [z2]
+; z3     step over the separator
+z3
+    0 0 L z4                   ; [z3]
+    -
+; seed7  seed: write 0 and step right
+; z4     run left over N
+z4
+    0 0 R z5                   ; [seed7, z4]
+    1 1 L z4                   ; [z4]
+; seed8  seed: write 0 and step right
+; z5     step over cell 0 of N
+z5
+    0 0 R g6_y4                ; [seed8]
+    1 1 R z6_n4                ; [z5]
+; seed4  seed: write 1 and step right
+; z6     N hole at cell 1, then multiply (g1)
+; n4     advance the N hole: make the new hole, then the next copy (g1)
+z6_n4
+    0 1 R s4                   ; [seed4]
+    1 0 R g1                   ; [z6, n4]
+
+; ---------- MULTIPLY: F := (n+1) F --------------------------------------
+
+; seed12 seed: write 0 and step right
+; g1     multiply: run right over N
+g1
+    0 0 R g2_m5                ; [seed12, g1]
+    1 1 R g1                   ; [g1]
+; seed13 seed: write 0 and step right
+; g2     multiply: step over the separator
+; m5     merge: erase the last 1 (the separator was filled)
+g2_m5
+    0 0 R g3_y1                ; [seed13, g2]
+    1 0 L s5_m6                ; [m5]
+; seed14 seed: write 1 and step right
+; g3     multiply: step over cell 0 of F
+; y1     advance the copy cursor: fill it
+g3_y1
+    0 1 R y2                   ; [seed14, y1]
+    1 1 R g4                   ; [g3]
+; seed6  seed: write 1 and step right
+; g4     multiply: step over cell 1 of F
+g4
+    0 1 R z4                   ; [seed6]
+    1 1 R start_p1_g5          ; [g4]
+; seed9  seed: write 1 and step right
+; g6     multiply: copy cursor at cell 3 of F
+; y4     advance the copy cursor: make the new cursor, then copy the next cell
+g6_y4
+    0 1 R s6                   ; [seed9]
+    1 0 R x1                   ; [g6, y4]
+; x1     copy: run right over the rest of F
+x1
+    0 0 R x2                   ; [x1]
+    1 1 R x1                   ; [x1]
+; x2     copy: step over the separator
+x2
+    0 0 R x3                   ; [x2]
+    -
+; x3     copy: run right over Q and append a 1
+x3
+    0 1 L PB1                  ; [x3]
+    1 1 R x3                   ; [x3]
+; PB1    scan left to the next hole, then advance the copy cursor (y1)
+PB1
+    0 0 L PB2                  ; [PB1]
+    1 1 L PB1                  ; [PB1]
+; PB2    scan left to the next hole, then advance the copy cursor (y1)
+PB2
+    0 0 L PB1                  ; [PB2]
+    1 1 R g3_y1                ; [PB2]
+; seed15 seed: write 1 and step right
+; y2     advance the copy cursor: step over the next cell
+y2
+    0 1 R s8_n1                ; [seed15]
+    1 1 R y3                   ; [y2]
+; y3     advance the copy cursor: last cell of F? 0: yes, one copy done: advance the N hole (PN)
+y3
+    0 0 L PN1                  ; [y3]
+    1 1 L g6_y4                ; [y3]
+; PN1    scan left to the next hole, then advance the N hole (n1)
+PN1
+    0 0 L PN2                  ; [PN1]
+    1 1 L PN1                  ; [PN1]
+; PN2    scan left to the next hole, then advance the N hole (n1)
+PN2
+    0 0 L PN1                  ; [PN2]
+    1 1 R s8_n1                ; [PN2]
+; seed17 seed: write 0 and step right
+; n2     advance the N hole: step over the next cell
+n2
+    0 0 R t6                   ; [seed17]
+    1 1 R n3                   ; [n2]
+; n3     advance the N hole: last cell of N? 0: yes, n copies made: merge (m1)
+n3
+    0 0 R m1                   ; [n3]
+    1 1 L z6_n4                ; [n3]
+
+; ---------- MERGE Q into F, GROW N, warm-up gate ------------------------
+
+; m1     merge: step over the separator
+m1
+    0 0 R m2                   ; [m1]
+    -
+; m2     merge: run right over F, fill the separator
+m2
+    0 1 R m3                   ; [m2]
+    1 1 R m2                   ; [m2]
+; m3     merge: fill the separator
+m3
+    0 1 R m4                   ; [m3]
+    -
+; m4     merge: run right over Q
+m4
+    0 0 L g2_m5                ; [m4]
+    1 1 R m4                   ; [m4]
+; v1     grow N: run left over N, then one more cell for N
+v1
+    0 1 L v2_w4                ; [v1]
+    1 1 L v1                   ; [v1]
+; v2     grow N: step over the separator
+; w4     warm-up: N hole at cell 1, then multiply (g1)
+v2_w4
+    0 0 L v3                   ; [v2]
+    1 0 R g1                   ; [w4]
+; v3     grow N: take a cell from W
+v3
+    0 0 L v4                   ; [v3]
+    1 0 L v4                   ; [v3]
+; v4     gate: 1: W not empty: a warm-up round (w1); 0: test next round (t1)
+v4
+    0 0 R t1                   ; [v4]
+    1 1 R w1_t2                ; [v4]
+; w1     warm-up: step right
+; t2     test setup: step over the separator
+w1_t2
+    0 0 R w2_t3_t7             ; [w1, t2]
+    -
+; w2     warm-up: step over the separator
+; t3     test setup: run right over N
+; t7     test setup: run right over F
+w2_t3_t7
+    0 0 R w3_t4_t8             ; [w2, t3, t7]
+    1 1 R w2_t3_t7             ; [t3, t7]
+; w3     warm-up: step over cell 0 of N
+; t4     test setup: step over the separator
+; t8     test setup: step over the separator
+w3_t4_t8
+    0 0 R t5_t9                ; [t4, t8]
+    1 1 R v2_w4                ; [w3]
+
+; ---------- TEST SETUP: F hole at cell 1, S = 101 -----------------------
+
+; t1     test setup: step right
+t1
+    0 0 R w1_t2                ; [t1]
+    -
+; t5     test setup: step over cell 0 of F
+; t9     test setup: write S = 101: cell 0
+t5_t9
+    0 1 R t10                  ; [t9]
+    1 1 R t6                   ; [t5]
+; seed18 seed: write 1 and step right
+; t6     test setup: F hole at cell 1
+t6
+    0 1 R x1                   ; [seed18]
+    1 0 R w2_t3_t7             ; [t6]
+; t10    test setup: S cell 1 is the hole
+t10
+    0 0 R t11                  ; [t10]
+    -
+; t11    test setup: S cell 2
+t11
+    0 1 L PP2_t12              ; [t11]
+    -

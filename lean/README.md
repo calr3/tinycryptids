@@ -21,7 +21,7 @@ Every main theorem depends only on `propext`, `Classical.choice` and `Quot.sound
 | `TinyCryptids/Core/Basic3.lean` | The same model with 3 symbols (`TM3`: `Sym` = `s0 s1 s2`, `s0` blank) and its single steps and scans, for `weakcollatz/sym3/` |
 | `TinyCryptids/Core/Multi.lean` | Machines with any number of symbols (namespace `TMK`): symbols `Nat` (0 blank), stream tapes `Nat → Nat`, `step`, `Halts`, `halts_iff_of_sim`; used by the 6-symbol Goldbach machine (`goldbach/`) and the 10-symbol PA machine (`pa_nsymbols/`) |
 | `TinyCryptids/Core/BeepK.lean` | `Beep.lean`'s `BeepsAt`, `QuasiHalts`, `run_sub` and `quasihalts_of_sub` for the machines of `Multi.lean`; used by the 4-symbol twin prime machine (`twinprimes/sym4/`) |
-| `TinyCryptids/Defs.lean` | **The definitions used in the theorem statements**, namespace `TinyCryptids`: `iterate`, `collatz`, `Prime`, `properDivSum`, `fact`, `leftFact`, `GoldbachConjecture`, `TwinPrimeConjecture`, `MersennePrimeConjecture`, `SophieGermainPrime`, `FinitelyManySophieGermainPrimes`, `InfinitelyManyFermatPrimes`, `radBelow`, `rad`, `ABCConjecture`, `PillaiConjecture`, and the theory T of the PA machines (`Wff`, `Wff.Axiom`, `Wff.Provable`); also `prime_iff_dvd` |
+| `TinyCryptids/Defs.lean` | **The definitions used in the theorem statements**, namespace `TinyCryptids`: `iterate`, `collatz`, `Prime`, `primeCount`, `primesBelow`, `properDivSum`, `fact`, `leftFact`, `fib`, `choose`, `totient`, `sigma`, `tau756`, `rep`, `powSum`, `digits3`, `rev10`, `hasZeroDigit`, `gilbreathRow`, `IsBarker`, `Amicable`, `InfinitelyManyAmicable`, `GoldbachConjecture`, `TwinPrimeConjecture`, `MersennePrimeConjecture`, `SophieGermainPrime`, `FinitelyManySophieGermainPrimes`, `InfinitelyManyFermatPrimes`, `radBelow`, `rad`, `ABCConjecture`, `PillaiConjecture`, and the theory T of the PA machines (`Wff`, `Wff.Axiom`, `Wff.Provable`); also `prime_iff_dvd` |
 | `TinyCryptids/<Machine>/` | One hand-designed machine per folder, namespace `TM.<Machine>` |
 | `TinyCryptids/PA/`, `TinyCryptids/PAK/` | The compiled PA machines: 2 symbols (`TM.PA`) and 10 symbols (`TMK.PA`); see the outlines below |
 | `Check.lean` | Every main theorem with `#check` and `#print axioms` |
@@ -52,6 +52,31 @@ Each hand-designed machine folder has the same shape:
 | `TM.WallSunSun2.halts_iff`, `M50` | `∃ p, Prime p ∧ p * p ∣ fib (wssIndex p)` |
 | `TM.Sierpinski.halts_iff`, `M60` | `∀ k, k % 2 = 1 → k < 78557 → ∃ n, 1 ≤ n ∧ Prime (k * 2 ^ n + 1)` (Σ₁: the machine halts iff it is true) |
 | `TM.Riesel.halts_iff`, `M76` | `∀ k, k % 2 = 1 → k < 509203 → ∃ n, 1 ≤ n ∧ Prime (k * 2 ^ n - 1)` (Σ₁ likewise) |
+| `TM.Legendre.halts_iff`, `M44` | `∃ n, 1 ≤ n ∧ ∀ p, n ^ 2 < p → p < (n + 1) ^ 2 → ¬ Prime p` |
+| `TM.LegendreSieve.halts_iff`, `M45` | the same statement as `TM.Legendre` |
+| `TM.Oppermann.halts_iff`, `M45` | `∃ n, 2 ≤ n ∧ ((∀ p, n * n - n < p → p < n * n → ¬ Prime p) ∨ (∀ p, n * n < p → p < n * n + n → ¬ Prime p))` |
+| `TM.Brocard.halts_iff`, `M61` | `∃ n m, 8 ≤ n ∧ fact n + 1 = m * m` |
+| `TM.Erdos.halts_iff` | `∃ n, 8 < n ∧ 2 ∉ digits3 (2 ^ n)` |
+| `TM.ZeroFree.halts_iff`, `M44` | `∃ n, 86 < n ∧ ∀ k, 2 ^ n / 10 ^ k ≠ 0 → (2 ^ n / 10 ^ k) % 10 ≠ 0` |
+| `TM.Carmichael.halts_iff`, `M80` | `∃ m, 1 ≤ m ∧ ∀ n, n ≠ m → totient n ≠ totient m` |
+| `TM.Beal.halts_iff`, `M135` | `∃ a b c x y z, 1 ≤ a ∧ 1 ≤ b ∧ 1 ≤ c ∧ 3 ≤ x ∧ 3 ≤ y ∧ 3 ≤ z ∧ Nat.gcd a b = 1 ∧ a ^ x + b ^ y = c ^ z` |
+| `TM.Lychrel.halts_iff`, `M95` | `∃ k, rev10 (iterate (fun x => x + rev10 x) k 196) = iterate (fun x => x + rev10 x) k 196` |
+| `TM.HardyLittlewood2.halts_iff`, `M79` | `∃ x y, 2 ≤ x ∧ 2 ≤ y ∧ primeCount x + primeCount y < primeCount (x + y)` |
+| `TM.Gilbreath.halts_iff`, `M97` | `∃ N k, 1 ≤ k ∧ k < (primesBelow N).length ∧ (gilbreathRow (primesBelow N) k).head? ≠ some 1` |
+| `TM.LehmerTau.halts_iff`, `M295` | `∃ n, 1 ≤ n ∧ tau756 n = 0` |
+| `TM.ErdosMoser.halts_iff`, `M71` | `∃ k m, 2 ≤ k ∧ 1 ≤ m ∧ powSum m k = m ^ k` |
+| `TM.BrocardPrimes.halts_iff`, `M72` | `∃ p q, 3 ≤ p ∧ Prime p ∧ Prime q ∧ p < q ∧ (∀ r, p < r → r < q → ¬ Prime r) ∧ primeCount (q ^ 2) - primeCount (p ^ 2) < 4` |
+| `TM.Goormaghtigh.halts_iff`, `M53` | `∃ x y m n, 1 < y ∧ y < x ∧ 2 < m ∧ 2 < n ∧ rep x m = rep y n ∧ rep x m ≠ 31 ∧ rep x m ≠ 8191` |
+| `TM.FeitThompson.halts_iff`, `M106` | `∃ p q, Prime p ∧ Prime q ∧ p ≠ q ∧ rep p q ∣ rep q p` |
+| `TM.Singmaster.halts_iff`, `M77` | `∃ N, 2 ≤ N ∧ ∃ l : List (Nat × Nat), l.Nodup ∧ 9 ≤ l.length ∧ ∀ x ∈ l, choose x.1 x.2 = N` |
+| `TM.Firoozbakht.halts_iff`, `M117` | `∃ p q, Prime p ∧ Prime q ∧ p < q ∧ (∀ r, p < r → r < q → ¬ Prime r) ∧ p ^ (primeCount p + 1) ≤ q ^ primeCount p` |
+| `TM.Lemoine.halts_iff`, `M54` | `∃ n, 7 ≤ n ∧ n % 2 = 1 ∧ ∀ p q, Prime p → Prime q → p + 2 * q ≠ n` |
+| `TM.LehmerTotient.halts_iff`, `M67` | `∃ n, 2 ≤ n ∧ ¬ Prime n ∧ totient n ∣ n - 1` |
+| `TM.Andrica.halts_iff`, `M51` | `∃ p q, Prime p ∧ Prime q ∧ p < q ∧ (∀ r, p < r → r < q → ¬ Prime r) ∧ 4 * p ≤ (q - p - 1) ^ 2` |
+| `TM.AgohGiuga.halts_iff`, `M100` | `∃ n, 2 ≤ n ∧ ¬ Prime n ∧ n ∣ powSum n (n - 1) + 1` |
+| `TM.PerfectCuboid.halts_iff`, `M88` | `∃ a b c d e f g, 1 ≤ a ∧ 1 ≤ b ∧ 1 ≤ c ∧ a * a + b * b = d * d ∧ a * a + c * c = e * e ∧ b * b + c * c = f * f ∧ a * a + b * b + c * c = g * g` |
+| `TM.ErdosStraus.halts_iff`, `M128` | `∃ n, 2 ≤ n ∧ ∀ x y z, 1 ≤ x → 1 ≤ y → 1 ≤ z → 4 * x * y * z ≠ n * (x * y + y * z + z * x)` |
+| `TM.Barker.halts_iff`, `M84` | `∃ a : List Int, 13 < a.length ∧ IsBarker a` |
 
 Beeping machines (`Core/Beep.lean`): the beep transition is `qb` reading `bb`.
 
@@ -59,6 +84,7 @@ Beeping machines (`Core/Beep.lean`): the beep transition is `qb` reading `bb`.
 |---------|-----------|
 | `TM.FermatPrimesInf.quasihalts_iff`, `M16` | `QuasiHalts delta G0 false start ↔ ¬ InfinitelyManyFermatPrimes`, with `InfinitelyManyFermatPrimes := ∀ n, ∃ k, n ≤ k ∧ Prime (2 ^ 2 ^ k + 1)`; also `never_halts : ¬ Halts delta start` (and for `M16`: `delta2`, `St2.G0`, `start2`) |
 | `TM.WallSunSunInf.quasihalts_iff`, `M48` | `QuasiHalts delta q9 false start ↔ ¬ InfinitelyManyWallSunSunPrimes`, with `InfinitelyManyWallSunSunPrimes := ∀ n, ∃ p, n ≤ p ∧ Prime p ∧ p * p ∣ fib (wssIndex p)`; also `never_halts` (and for `M48`: `delta2`, `St2.q9`, `start2`) |
+| `TM.Amicable.quasihalts_iff`, `M55` | `QuasiHalts delta H5 false start ↔ ¬ InfinitelyManyAmicable`, with `Amicable n := properDivSum n ≠ n ∧ properDivSum (properDivSum n) = n` and `InfinitelyManyAmicable := ∀ N, ∃ n, N ≤ n ∧ Amicable n`; also `never_halts` (and for `M55`: `delta2`, `St2.H5`, `start2`) |
 | `TM.Mersenne.quasihalts_iff`, `M14` | `QuasiHalts delta G0 false start ↔ ¬ MersennePrimeConjecture`, with `MersennePrimeConjecture := ∀ n, ∃ k, n ≤ k ∧ Prime (2 ^ k - 1)`; also `never_halts : ¬ Halts delta start` (and for `M14`: `delta2`, `St2.G0`, `start2`) |
 | `TM.SophieGermain.quasihalts_iff`, `M17` | `QuasiHalts delta G0 false start ↔ FinitelyManySophieGermainPrimes`, with `SophieGermainPrime p := Prime p ∧ Prime (2 * p + 1)` and `FinitelyManySophieGermainPrimes := ∃ N, ∀ p, SophieGermainPrime p → p < N`; also `never_halts`, `beeps_forever_iff` (and for `M17`: `delta2`, `St2.G0`, `start2`) |
 | `TM.TwinPrimes.quasihalts_iff`, `M18` | `QuasiHalts delta G2 false start ↔ ¬ TwinPrimeConjecture`, with `TwinPrimeConjecture := ∀ n, ∃ p, n ≤ p ∧ Prime p ∧ Prime (p + 2)`; also `never_halts : ¬ Halts delta start` (and for `M18`: `delta2`, `St2.G2`, `start2`) |
@@ -229,6 +255,253 @@ with two-cell separators, trial division from `d = 3`) with `k·2^n − 1`: the 
 cells (`comp_end`), so the next candidate is `2P + 1` (`cand_succ`); the counter has five groups,
 with its lemmas proven for any number of groups (`Cg`, `cg_dec`, `cg_zero`); the search starts
 at `k = 5` (`good_one`, `good_three` for `k = 1, 3`).
+
+**Legendre** (`TinyCryptids/Legendre`). `CS q k f m` is the configuration before testing
+`m`, the `k`-th number of an interval with flag `f`. `test`: trial division reaches
+the Q hole with the flag set iff `m` is prime. `ival`/`interval`: over the `2n+1`
+numbers of interval `n` the machine halts iff none is prime, else reaches `IS (n+1)`.
+
+**Oppermann** (`TinyCryptids/Oppermann`). Legendre's machine with the intervals
+`[q(j), q(j + 1))`, `q(j) = ⌊j²/4⌋`: Q has `j` inner cells and its hole moves two cells per
+number (`qadv_next`); when it runs off Q (`qadv_end`) the flag is read (`ie_halt`) or erased and
+Q grows by one cell (`ie_next`). `CS q i f m`, `cand`, `ival`; `interval`: from `IB n`
+(`m = n²`) the intervals `[n², n² + n)` and `[n² + n, (n + 1)²)`, halting iff `FB n` or
+`FA (n + 1)`, else `IB (n + 1)`. `Spec`: `FA_iff`, `FB_iff`, `not_FA_two`.
+
+**Goormaghtigh** (`TinyCryptids/Goormaghtigh`). The walk `r := r·b + 1` for base `b` of `V` runs
+in one region `R H D` of `V + 1` cells: a step moves H by `r(b − 1) + 1` cells, one per cell of R
+in each of `b − 1` passes, so copying and comparing with `V` are one motion. `Step`: `tick`,
+`pass`, `passes`, `step_ok`, and the overflows `tick_ovf`, `passes_ovf`, `step_ovf`. `Base`:
+`hit0..2` (F counts the hits up to 2), `kstep` (next base), `vend0..2`, `vend_halt`,
+`seed_reach`. `Spec`: `it`, `Hit`, `hit_iff` (repunits), `hc`, `bad`, `gc`, `conj_iff`,
+`third_iff`. `Main`: `walk` (strong induction on `V − r`), `base`, `bloop`, `round` (from
+`CV V g` halt at a bad `V` with `g = 2`, else `CV (V + 1) (g + [bad V])`), `halts_iff_third`.
+
+**Legendre, sieve version** (`TinyCryptids/LegendreSieve`). `Sweep`: a block's hole move and
+wrap. `SProc`: the S block in prime mode, composite mode, square growth, halting.
+`Home`, `Copy`, `Tape`: navigation, copying M, the tape as a list. `Math`: a sieve
+step on the residues; primality is used in the divisor form `PrimeDvd`, equivalent
+to `TinyCryptids.Prime` (`primeDvd_iff`). `Cycle`: one step. The checkpoint invariant
+`Inv m n f`: `n² ≤ m < (n+1)²` and `f = true ↔ ∃ prime p, n² < p ≤ m`.
+
+**Brocard** (`TinyCryptids/Brocard`). `TP n v u d c`: square test of `v + 1` after `u`
+units with invariant `u = j * j + c`, `d = 2j + 1`; at the end `c = 0` iff `v + 1` is a
+square (`not_square_between`). `multiply`: `n * v` copies; `merge_pre`,
+`gate_test`/`gate_warm` start the next round. `RS n := TP n (fact n) 0 1 0`.
+
+**Erdős** (`TinyCryptids/Erdos`), for a given 15-state machine. Digits of `2 ^ n` in base 3
+take two cells each (`01`, `10`, `11`), with a 2-bit counter of powers without a 2 left of a
+`00` separator. `Spec`: digit-wise doubling `dbl` and `pw n` are the digits of `2 ^ n`
+(`pw_eq`). `Round`: the doubling `pass`, the scans, and the three round lemmas
+`round_two`, `round_no2`, `round_halt` from the round start `S c ds`. `Main`: rounds 0–8
+by `decide` (`early`, reaching `S 3 (pw 9)`), then (→) by `not_halts_of_progress` over
+`S 3 (pw n)` and (←) by `later` up to the counterexample.
+
+**Zero-free powers of 2** (`TinyCryptids/ZeroFree`). Decimal digits of `2 ^ n` in four
+cells (parity, then three cells for `d / 2`) in two codes: A between rounds, B written by the
+pass (`Codes.lean`, generated). `Spec`: digit-wise doubling `dbl`, `pw n` stands for `2 ^ n`
+(`pw_num`), and `zero_free_iff` links `d0 ∉ pw n` to the statement. `Round`: the `pass`
+(four steps right per digit, A → B), the scan (four steps left per digit, B → A, looking for
+the digit 0), the 6-bit counter (`inc`, `overflow`), and the round lemmas `round_no0`,
+`round_0`, `round_halt`. `Main`: rounds 0–86 by a computed table and `decide` (`early`, the
+counter reaches 63), then (→) by `not_halts_of_progress` over `S 63 (pw n)` and (←) by `later`.
+
+**Carmichael's totient conjecture** (`TinyCryptids/Carmichael`). For `v = 2, 3, …` the
+machine counts the `M ≤ s + 1` with `φ(M) = v` and halts if there is exactly one. `Spec`:
+`first_hit` (the walk `0, k, 2k, …` mod `r` reaches 1 before 0 iff `gcd k r = 1`, via
+`inv_exists`), `cp` (the `k < M` coprime to `M`; `gcd_sub` turns `gcd k (M - k)` into
+`gcd k M`), and `exists_iff`: with windows `N ≥ 2 v²` (`totient_bound` from `Carmichael/Totient.lean`),
+a counterexample is a `v ≥ 2` with `nm v N = 1`. `Round`: the test's ticks (`tick`, `tickW`)
+and wraps (`wrapC`, `wrapM`, `wrapN`), whole strides (`stride`) and the test (`test`); the count
+in V (`coprime`), the shift and the `sweep` over `k`; the round end (`cross_match`,
+`cross_nomatch`, `advance`, `reset`); the next `v` (`vg`, `fill`, `append`, `grow`, `kr_init`,
+`rebuild1`, `rebuild2`) and the `seed`. `Main`: the six round outcomes, the window (`loop`,
+`window`), the window sizes `sz` with `sz_bound`, then (→) by `not_halts_of_progress` over the
+window starts and (←) by `reach` and `window`.
+
+**Beal's conjecture** (`TinyCryptids/Beal`). Fermat's machine with three exponents and a
+coprimality test. `Walk`: the test of `gcd(a, b) = 1` by two holes ticking in lockstep (`tick`,
+`tickW`, `wrapC`, `wrapM`, `wrapN`), then Carmichael's `stride`, `strides` and `test` unchanged.
+`Copy`, `Pow`: Fermat's copy and base loop; the round end (`round_end`, with `ParserL.find3` for
+an exponent cursor next to a separator), the exponent step (`e_adv`, `e_done`: the cursor moves
+on to the next exponent block) and `pow_full`. `Stack`: `next_base`, pushing R, the zig-zag.
+`Tuple`: `walk_entry`, `cop_start`, `nc_exit`, `clear_home` and `tuple_check`. `Enum`: the
+transfer loop (`u_loop`) and the cases `enum_first`, `enum_mid`, `enum_last`. `Main`: NEXCOM on
+six blocks (`nxt`, `reached`), `enum_step`, the seed, `cycle`, and the theorem.
+
+**Lychrel 196** (`TinyCryptids/Lychrel`). Unary x, T, A; a counter D (12 cells, a hole at
+`d(p+1)`) holds `p mod 10`. `Find`: 3-state hole finders that cross runs of at least two 0s
+(`FindL.cross`, `FindR.cross` over `GC` lists). `DStep`: `p += 1` and `p -= 1`, with their wraps.
+`Div`: the division walk `DV` (T's hole at cell `c`): `dv_step`, `dv_wrap` (append to Q,
+`excursion`), `dv_last`, and `divide` (Q = `t / 10 + 3` cells, `p = t % 10`). `Mul`: `PL`, the
+deposits to P (`dep1`, `dep4`, `dep5`, `hb_back`), `pl_n`, `pl_w`, `multiply` (P = `1 + d + 10 a`).
+`Iter`: the end of the walk (`wd_keep` when T is X, `wd_erase` otherwise) and of an iteration
+(`pl_next`), the finders' segment lists (`CX_nil`, `CX_gap`). `Cmp`: `pl_zero`, the compare
+walk `K` / `N` (`k_step`, `k_one`, `n_step`) and its ends (`k_halt`, `k_end`, `n_end`). `Main`:
+`iter_one` and `rev_loop` (strong induction, `revAux`), `compare`, the round `RD x G`
+(`round_halt`, `round_next`), `seed_reach` (the run computes `A = 195`, `x = 196`), `reach_k`;
+(→) by `not_halts_of_progress` over the round starts, (←) by `haltAt_of`.
+
+**Second Hardy–Littlewood** (`TinyCryptids/HardyLittlewood2`). The machine keeps the half gaps of
+1 and the odd primes twice (B' newest first, A oldest first) and at each prime runs a counter E over
+pairs of gaps taken from both ends. `Spec`: `Q` (1 and the odd primes, counted by `pq`;
+`primeCount_eq` for `x ≥ 2`), the invariant `Inv m g c`, the test `bad`, `sound` and `complete`
+(a counterexample exists iff the test fails at the largest prime up to `x + y`), the counter
+process `ok` and `ok_iff_bad`. `Round`: Legendre's mod walk and `test`. `Blocks`: lists of blocks
+(`bks`) and crossing lemmas for parsers and the trip home (`HomeL`). `Trip`: the tape during the
+test (`TF`, `BF`), one add or subtract trip from either cursor. `Pair`: the cursors, one pair,
+and `run` over all pairs (induction on the bottoms). `Check`: the test's start and end.
+`Rebuild`: the shared pattern `writer`, `comp_rebuild`, `prime_rebuild`. `Main`: `cand`,
+`test_prime`, `reach_all`; (→) by `no_halt` (`not_halts_of_progress` over the checkpoints), (←) by
+`haltAt_of`.
+
+**Gilbreath** (`TinyCryptids/Gilbreath`). `Spec`: the list level (`ext`,
+`D`, `lst_ext_cons`, `fail_iff`). `Trial`: `../legendre`'s trial division for any tape left of D
+(`cand`: prime → `PX`, composite → `CP`). `Walk`: the walk to the queue's right end (`WalkR`, `WC`
+lists) and `FindL.crossZ1`. `Queue`: one step `Z := |L - B|` from `CA` (L's cursor hole):
+`p1a`, `p1b` (`zinc`), `p2a`, `p2b`, `phase1`, `phase2`, `step`. `Update`: `step_end` (`mkz`),
+`final_ok`, `final_halt`, `prime_start`, `composite`. `Main`: `upd` (induction on the old values),
+the candidate `RC` and its invariant `Inv` against `D m` (`inv_step`), `seed_reach`, `reach_k`;
+(→) by `not_halts_of_progress`, (←) by `haltAt_of`.
+
+**Lehmer's τ** (`TinyCryptids/LehmerTau`). For each `n ≥ 2` the machine builds
+`P = 252·691 Σ_{i<n} Σ_{d∣i} Σ_{e∣n−i} d⁵e⁵` and `M = Σ_{d∣n} (691 d⁵ + 65 d¹¹)` in unary and halts
+iff `P = M`. `Walk`: legendre's mod walk on a frame (`DV`, `RS`, `next_div`, `unshift`). `Trip`:
+far parsers over `Clean12` words. `Run`: the odometer: var digits and active K digits counted
+like a mixed-radix counter, each count a trip to the far left (`run`: the accumulator gains
+`pV vs * pK kR`). `Copy`: one copy of a block (`copy1`), the copy counter X (`xstep`, `xloop`).
+`Loop`: the divisor loop `dloop`/`dloopR` (an action at each divisor, summed by `dsum`). `Post`:
+erase the copies (`runpost`). `RAct`, `RLoop`, `RStep`: the R phase (`eact`, `dact_R`,
+`ri_next`); `LStart`, `LAct`: the L phase (`ri_last`, `dact_L`, the K switches `flip_1`,
+`flip_2`); `End`: E', Re' reset (`tl_loop`), the compare (`cmp`), the next `n` (`endn`).
+`NStep`: one `n` (`nstep`). `Seed`: the written word and the binary counters (`dc3`,
+`drain_all`, `next_counter`, `seed`). `Main`: `key` (`M = P ↔ tau756 n = 0`), `step_n`; (→) by
+`no_halt` (`not_halts_of_progress` over the starts `Sn n`), (←) by `haltAt_of`.
+
+**Erdős–Moser** (`TinyCryptids/ErdosMoser`). Fermat's powers with the base block being the cells
+of M right of a marker hole: for each pair `(k, m)` the marker walks from cell `m` to cell 1, the
+bases `1 … m − 1` are added into A and `m^k` is compared with A. `Copy` (Fermat's), `Blk`. `Pow`:
+the base step (`base_adv`, `base_loop`, `nb_back0` for a cursor next to the separator), the round
+end (`round_end`, `lg_find`), the exponent step (`e_adv`, `e_done`), `pow_full`. `Next`: the marker
+moves left and R is added into A (`next_base`). `Compare`: `final_start`, the zig-zag (`Z`,
+`zz_step`, `zz`) and `HaltAt`. `End`: A and R restored, the marker placed (`end_common`), the next
+pair (`end_shift`, `end_reset`). `Main`: `powers` (one pair's sum `sumP`), `cycle`, `reached`
+(the diagonal order covers every pair), `seed_reach`; (→) by `not_halts_of_progress`, (←) by
+`haltAt_of`.
+
+**Lemoine** (`TinyCryptids/Lemoine`). Two pairs `D 00 R` under `../legendre`'s trial division,
+P (`p = n − 2q`) and Q (`q`). `Test`: the trial division for a pair between any two streams
+(`MW`, `mw_step`, `mw_last_div` to `CK`, `tail_zero` to `CP`, `test`), and the normalization from
+R's end (`NZ`, `norm`, `norm_halt` for `p = 1`). `Round`: the checkpoint `K` and the routes
+`chk_norm`, `p_comp`, `q_comp` (`nq_tail`: `q + 1`, the right sentinel moves), `p_prime`,
+`q_prime` (the gap filled into Rp, `seed_tail`). `Spec`: `Rep`, `fails_iff`. `Main`: `Chk`,
+`round`, `seed_reach`; (→) by `not_halts_of_progress` over the checkpoints with no representation
+below `q`, (←) by `halt_from` (strong induction) and `haltAt_of`.
+
+**Lehmer's totient problem** (`TinyCryptids/LehmerTotient`). `../carmichael`'s coprimality walk
+counts `φ(n)` into a pair `D 00 P` under one of `../legendre`'s mod walks. `Walk`: Carmichael's
+tick lemmas, `test`, the sweep's `shift` and the round end's `reset`, on this machine. `Test`: the
+mod walk for a pair between any two streams (`MW`, `mw_upto`), `one_test` (`d ∣ r` halts, else
+`ND`). `Round`: `coprime` (the pair's separator one cell right) and the way back (`ret`),
+`to_test`, `prime_next`, `nodiv_next`, `norm` (D := 1 from P's end) and `norm_ret`. `Spec`:
+`cp_lt`, `cp_two`, `totient_two`, `totient_le_comp`, `Bad`, `bad_iff`. `Main`: `test_count`,
+`sweep` over `k = 2 … n − 1`, `round` from `Cn n` to `Cn (n + 1)` or a halt, `seed_reach`;
+(→) by `not_halts_of_progress`, (←) by `halt_from` and `haltAt_of`.
+
+**Amicable numbers** (`TinyCryptids/Amicable`, beeping; walkthrough `amicable/PROOF.md`).
+`Spec`: `Small x` (the smaller number of an amicable pair), `inf_iff` (infinitely many amicable
+numbers iff infinitely many `Small x`, via `properDivSum_le : properDivSum n ≤ n * n`).
+`Scan`: `../OddPerfect`'s mod walk and shift with a general stream right of R (`MW`, `E3`, `SEP`,
+`RE`, `walk`, `shift`, `shift_end`, `fill_hole`), a left accumulator `ACC a b` grown or eaten one
+unit at a time (`add_unit`, `add_all`, `add_from`, `tln_ones`), `dstep`, `scan` (`properDivSum x`
+units). `Round`: `CS k`, `start1`, `pass1`, `to_hole1`, `reject1`, `cleanup`, `start2`, `pass2`,
+`post2`, `check_no`, `check_beep`, `after_beep`, `round_no`, `round_beep`. `Main`: `round_step`,
+`reach_cs`, `never_halts`, `quasihalts_iff`, `beeps_forever_iff`. `M55` by `quasihalts_iff_of_sim`
+with `excl`.
+
+**Andrica** (`TinyCryptids/Andrica`). `../legendre`'s trial division tests `m = 2, 3, …`
+(`Test`, from `../lemoine`); a countdown `|T|` in `U 00 T` is reset to `t = ⌈2√m⌉` at a prime and
+counts composites. `Spec`: `IsT m t` (`4m ≤ t²`, `(t − 1)² < 4m`) and `isT_le_iff`; the phase
+block's invariant `Hinv` and `hinv_next` (H's hole two cells on, or H grows); `lpb`,
+`exists_prime_gt`, `next_prime`, `Bad`, `bad_iff`. `Round`: `comp` (the U/T separator one cell
+right), `comp_halt`, `prime` (the separator back to U's left end), `hadv`, `hwrap`, `ret` with
+`rebuild`. `Main`: `Inv` (`|T| + (m − p) = t(p) + 1`), `round` from `RS m` to `RS (m + 1)` or a
+halt, `seed_reach`; (→) by `not_halts_of_progress`, (←) by `halt_from` and `haltAt_of`.
+
+**Agoh–Giuga** (`TinyCryptids/AgohGiuga`). For `n = 4, 5, …` and the bases `i = n − 1 … 2`,
+`i^(n−1)` by `../firoozbakht`'s Horner run (`Horner`, `Copy`, `Blocks`, ported with the skipped
+block's hole anywhere: `skq`), then `B += i^(n−1) − 1` into S's cyclic hole (`Consume`:
+`cons_step`, `cons_loop`). `Fermat`: Fermat's little theorem in core Lean (`prime_dvd_mul`,
+`prime_dvd_choose`, `binom`, `fermat`). `Spec`: `gsum`, the flag `fl`, `gsum_last`,
+`gsum_prime`, `fl_comp`, `Bad`, `bad_iff`. `Round`: `run_cons`, `check_zero`, `check_flag`,
+`shift`, and at the end of a round `round_pz`, `round_halt`, `round_a`, `round_b`,
+`round_reset`. `Main`: `It n m`, `base`, `last`, `seed_reach`; (→) by `not_halts_of_progress`,
+(←) by `halt_from` and `haltAt_of`.
+
+**Brocard's conjecture** (`TinyCryptids/BrocardPrimes`). `../legendre-sieve`'s sieve (`Sweep`,
+`Home`, `Copy` copied) with a marker and a counter. `Arith`: primes in divisor form, `primesDesc`,
+`pc` (= `primeCount`), `lp` and `base`. `Blocks`: the split at the marker (`up`, `lo`) and how it
+changes (`up_prime`, `up_sq`, `up_bd`, `lo_bd`, `up_not_dvd`). `Tape`: `CW m n c`, `sweep_all`
+(`marker_cross`). `SProc`: S after the sweep (`s_prime`, `s_comp`, `s_square`). `Scan`, `Left`:
+the scan to the marker (`ls_blk`, `scan_all`). `Bound`: the marker move (`bd_shift`), the trip
+right (`rcross`), the counter check (`e_reset`, `e_halt`). `Cycle`: `Inv m n c` and the five cases
+(`cyc_prime`, `cyc_comp`, `cyc_sq`, `cyc_bd`, `cyc_halt`). `Main`: `cycle`, `seed_reach`,
+`stop_iff`; (→) by `not_halts_of_progress`, (←) by `haltAt_of_counterex`.
+
+**Feit–Thompson** (`TinyCryptids/FeitThompson`). `Arith`: `rep_horner`, `rep_lt` (`rep q p < rep p q`
+for `1 ≤ p < q`), `ft_iff` (only `p < m` with `rep m p ∣ rep p m` need testing), `pl` (the primes below
+`m`) and `prime_iff_pl`. `Blocks`, `Copy`: `Blk`/`Gap` tapes and Fermat's copy loop. `Cyc`: one
+divisibility routine for two cyclic holes, `cyc_run` (`kd3` iff `c ∣ v`, via `nxs_dvd`). `Horner`:
+`base_loop`, `exp_round` (`R := β R + 1`), `horner` (`R = rep β e`). `Trial`: `TC`, `trial_cyc`,
+`trial_div`, `next_cand`, `trial_next`, `trial_prime`, `retreat`. `Pair`: `pair_h1`, `pair_h2`,
+`test_run`, `cleanup`, `back`, `pair_step`, `per_prime` (Horner with base 1 copies `m` into the next
+M). `Main`: checkpoints `TC`/`PC` with `GT`/`GP`, `trial_step`, `pair_trans`, `start_reach`; (→) by
+`not_halts` (`progress`), (←) by `haltAt_of` (`pass_pairs`, `pass_trial`).
+
+**Singmaster** (`TinyCryptids/Singmaster`). `Spec`: rows `prow n`, the next row `pascal`
+(`pascal_prow`, `prow_reverse`: rows are palindromes), `tcnt N m` (entries equal to `N` in rows
+`0 … m − 1`) and `occ_iff` (`N` occurs `T + 2` times iff `T ≤ tcnt N N`, as row `N` holds `N` twice,
+`row_self`). `Tape`: configurations as lists (`cl`, `cL`), list-level steps, scans and the finders of
+`../Lychrel/Find.lean`. `Compare`: one entry against N, `round`, `rounds`, `n_exh`, `e_exh_lt`,
+`e_exh_eq`, `e_exh_halt`, `tail`, giving `cmp_ne`, `cmp_eq`, `cmp_halt`. `Scan`: the items of the
+triangle, `cross`, `scan` (count `cntv` of matches, or a halt at 7). `Gen`: the next row, `trans` (a
+new block), `back_ok` (the last two blocks grow), `back_exh`, `block`, `gen_row` (the result is
+`pas 0` of the reversed row, `pascal_pas`), `gen_start`, `gen_end` (N += 1, C reset). `Main`:
+checkpoints `Chk N`, `gen_all`, `cyc_ok`, `cyc_halt`, `seed_reach`; (→) by `not_halts_of`
+(`not_halts_of_progress`), (←) by `haltAt_of`.
+
+**Firoozbakht** (`TinyCryptids/Firoozbakht`). `Arith`: `pl` and `prime_iff_pl` (from Feit–Thompson).
+`Cyc`: Feit–Thompson's divisibility cycle with the counter left of the cycled block, `cyc_run`
+(`PM1` iff `c ∣ v`). `Trial`: `TC`, `trial_cyc`, `trial_div`, `ms_end`, `next_cand` (back to N's
+hole), `trial_next`. `CopyC`: the copy of M onto M' (`copyC_all`). `Horner`: power runs,
+`exp_round` (`R := β R`, the merge erases two cells), `horner` (`R = β ^ (e - ep)`). `Compare`:
+the zig-zag `ZC`, `zc_step`, `zc_halt`, `zc_clean`, `compare` (halt iff `b ≤ a`). `Prime`:
+`trial_prime`, `prime_copy`, `hrun`, `run_b`, `after_b` (N grows, its hole to cell 3), `run_a`,
+`after_a`, `prime_step`. `Main`: `primeCount_pl`, `pl_last`, `pl_between`, `bad_iff`,
+`trial_step`, `start_reach`; (→) by `not_halts` (`progress`), (←) by `haltAt_of` (`pass_trial`).
+
+**Erdős–Straus** (`TinyCryptids/ErdosStraus`). `Spec`: `Hit n x y` (`m + 1 ≤ ay ≤ 2m + 2`,
+`ay − m ∣ my` with `a = 4x − n`, `m = nx`), `solvable_iff` (a solution iff a hit with
+`n < 4x ≤ 3n`, via the compiled proof's `sort3` and `sol_of_test`). `XStep`: `G Y n m` (the x step
+at `N`'s cell 0), `nloop` (`M`, `K` += n), `debt_move`, `cross_move`, `b_move`, `b_halt`
+(`sfill`, `hcheck`), `setup`. `YLoop`: `KD' c e d` (`K 00 D 00 P`), `pmloop` (`P += M`),
+`consume_start`, `unit1`, `unit2`, `stop`, `lap1_next`. `Walk`: `../OddPerfect`'s mod walk from
+its second step (`mw_from`, `walk1`), `test_setup`, `test_fail`. `NStep`: `nstep`,
+`nstep_tail`, `seed_reach`. `Main`: the y counter `kc`/`ke`/`kd`, `cloop`, `ystep_lap1`,
+`ystep_test`, `ystep_stop`, `yloop`, `xloop`, `cycle`; (→) by `not_halts_of_progress` over
+`C n`, (←) by `haltAt_of`.
+
+**Perfect cuboid** (`TinyCryptids/PerfectCuboid`). `Spec`: the counter `(k, j)` worth `k² + j`
+(`adv`, `val_advN`, `sq_iff`), `v L = L / 2 - 1`, `Good`, the search order `nxt` and `reached`.
+`Proc`: `Ev` lists and the parsers over them, S's step `sadv`, the `trip` to S and back, one unit
+inside a block (`u_step`, `u_wrap`, `u_wrap0`, `u_last`, `grow`), `region`, `regions` (`U_eq`,
+`U_v`) and `block` (a block of `L` cells adds `v L ^ 2` units). `Check`: `cktick` (W ticks, S reset
+on the wrap), `ckabort`. `Step`: `step_real`, `step_Z`. `Queue`: `home`, `wrap`, the hole-filling
+scan `Cl`/`clscan`/`clean_home`. `Enum`: `nex1`–`nex3`, `nexcom`, `boot`. `Tuple`: the positions
+`PA`…`PE`, `stepA`…`stepZ`, `endA`, `endH`, `abB`, `abC`, `abZ`. `Main`: `tuple` (twelve checks;
+halt iff `Good`, else `TS (nxt t) s'`), `search`, `haltAt_of`, `halts_iff`; `M88` by `halts_iff_of_sim`.
+
+**Barker sequences** (`TinyCryptids/Barker`, see `../barker/README.md`). Each element is a cell pair `[p][a]` (`a` the element, `p = 0` marked), a dummy position in front, the counter `S` right of the gap `0 0` (`Tape`: `U`, `UL`, the scanners). `Seed`: a 4-bit counter writes the first candidate `1 0^13`. `Pair`: one pair of the pass compares the elements under the markers `i` and `j = i + k`, moves both left and adds `±1` to the counter (`Z`: `ZA`, `ZD`); `Pass`: a whole pass leaves the counter at the sum over the pairs at shift `k`. `Rewind`: `j` moves one position right, and `i` too unless `j` is last, then the check (`Check`: `|S| ≤ 1` erases the counter and starts the next pass, otherwise `Fc`); `Fail`: the next candidate by a binary increment (`Spec`). `Round` chains them. `Enum`: `inc` from `1 0^13` reaches every list starting with `1` of length ≥ 14; `Bar`: `IsBarker` in terms of the pass sums on Booleans. `Main`: `passes`, `next_cand`, `reach_iter`; (←) by `haltAt_of_good`, (→) by `not_halts`; `M84` transfers it.
 
 **abc conjecture** (`TinyCryptids/ABC`, beeping booping). `Mult`: the multiplication `Z := Z · base`
 proved once on a template machine (`mult`), embedded as `multR` and, mirrored, as `multL`

@@ -1,0 +1,140 @@
+; Minimised from legendre.txt by minimize.py
+; 45 states, 2 symbols
+
+blank_symbol: 0
+
+seed0
+    0 1 R seed1
+    1 0 R sE
+seed1
+    0 1 R seed2
+    1 1 L hc1
+seed2
+    0 1 R seed3
+    1 1 R seed0
+seed3
+    0 0 R seed4
+    1 0 R p1
+seed4
+    0 0 R seed5
+    1 1 L seed2
+seed5
+    0 0 R seed6
+    1 1 R tA
+seed6
+    0 1 R seed7
+    1 1 L tC
+seed7
+    0 1 R seed8
+    1 0 L hg1
+seed8
+    0 1 R seed9
+    1 1 L qC
+seed9
+    0 0 R seed10
+    1 1 R seed9
+seed10
+    0 1 L hg1
+    1 1 L tA
+hg1
+    0 0 L hg2
+    1 1 L hg1
+hg2
+    0 0 L hg3
+    1 1 L hg1
+hg3
+    0 0 L hg4
+    1 1 L hg1
+hg4
+    0 0 R hg5
+    1 1 L hg1
+hg5
+    0 0 R hg6
+    1 1 R p1
+hg6
+    0 0 R hg7
+    1 1 R hg6
+hg7
+    0 1 R p1
+    1 1 L sA
+p1
+    0 0 R p2
+    1 1 R p1
+p2
+    0 0 R hg5
+    1 1 L pA
+pA
+    0 1 L pA
+    1 1 L pC
+pC
+    0 0 R W2
+    1 1 R seed3
+q1
+    0 0 R q2
+    1 1 R q1
+q2
+    0 0 R q3
+    1 1 L qA
+q3
+    0 0 R seed9
+    1 1 R q1
+qA
+    0 1 L seed8
+    1 0 R q1
+qC
+    0 0 R W2
+    1 1 R qA
+W2
+    0 0 L q2
+    1 1 R W2
+sA
+    0 1 L seed4
+    -
+sE
+    0 0 R sG
+    1 1 R sE
+sG
+    0 1 L hc1
+    1 1 L hc1
+tA
+    0 1 L seed6
+    1 0 L cL1
+tC
+    0 0 R tW
+    1 1 R seed7
+tW
+    0 0 R tF
+    1 1 R tW
+tF
+    0 0 R halt
+    1 1 L hg1
+hc1
+    0 0 L hc2
+    1 1 L hc1
+hc2
+    0 0 L hc3
+    1 1 L hc1
+hc3
+    0 0 L seed1
+    1 1 L hc1
+cL1
+    0 0 L cL2
+    1 1 L cL1
+cL2
+    0 0 L cL3
+    -
+cL3
+    0 1 R cR1
+    1 1 L cL3
+cR1
+    0 0 R cR2
+    1 1 R cR1
+cR2
+    0 0 R cR1
+    1 1 R cQ2
+cQ2
+    0 0 L hg1
+    1 1 L cQ3
+cQ3
+    0 1 L cL1
+    1 0 L cQ3

@@ -1,0 +1,371 @@
+; ============================================================================
+; A 67-state, 2-symbol Turing machine that HALTS IFF LEHMER'S TOTIENT PROBLEM
+; HAS A COUNTEREXAMPLE, i.e. iff some composite n has phi(n) | n - 1.
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/LehmerTotient/M67.lean,
+; theorem TM.LehmerTotient.M67.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 106-state design of build.py / lehmertotient.txt with
+;   states merged. States are merged only when their defined transitions
+;   agree, so each state below plays one or more ROLES of the design (its name
+;   joins them). Each transition line is tagged [role] with the role(s) that
+;   use it. A '-' line is never used. The seed roles run once at the start and
+;   only ever read 0, so all of them double as a step of some other routine.
+;
+; TAPE LAYOUT
+;
+;      1 K 00 1 R 00 [D 00 P]
+;
+;   K/R (as in ../carmichael): k and r slots, k + r = n, each with a HOLE (a
+;   single 0) that ticks cyclically. The PAIR D 00 P (as in ../legendre):
+;   D = 1 0 1^d (d + 2 cells, its hole on cell 1), P has p + 2 cells,
+;   d + p = n - 1; d counts the coprime pairs so far.
+;
+; ALGORITHM (n = 3, 4, 5, ...)
+;   count     for k = 2, ..., n - 1: the walk tests gcd(k, n - k) = 1 (K's
+;             hole and R's hole tick in lockstep; when K's hole wraps, R's hole
+;             on its first slot means coprime, on its last means not). Coprime:
+;             the pair's separator moves one cell right (d += 1, p -= 1). Then
+;             r = 1 ends the round, else K/R's separator moves right.
+;             At the end d = phi(n) (k = 1 counted from the start: d = 1).
+;   test      K/R -> (1, n); to the pair: p = 0 (n prime): next n. Else one
+;             mod walk (p times advance the D hole cyclically, then P's hole):
+;             the D hole back on cell 1 means phi(n) | p, so phi(n) | n - 1
+;             with n composite: HALT.
+;   next n    a cell after P; the separator and D's hole filled, D := 1
+;             (1 0 1 00 from D's left end); back to R; K/R -> (2, n - 1).
+;   seed      write round 3: 1 0 1 00 1 0 00 101 00 111, right to left.
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0  seed: write 1 and step left
+; RS10   round end: the new separator
+start_RS10
+    0 1 L TR3_RS3              ; [seed0]
+    1 0 R RS7_RS11_ma1         ; [RS10]
+
+; ---------- TEST gcd(k, n - k) = 1: the walk of the two holes -----------
+
+; KA     test: find K's hole (going left), advance it
+KA
+    0 1 R KN                   ; [KA]
+    1 1 L KA                   ; [KA]
+; KN     test: K's next cell; 0: off K, wrap
+KN
+    0 0 L KW                   ; [KN]
+    1 0 R TR1_TC2              ; [KN]
+; KW     test: K wraps: left to K's start
+KW
+    0 0 R KW1                  ; [KW]
+    1 1 L KW                   ; [KW]
+; seed11 seed: write 1 and step left
+; KW1    test: K's start cell
+KW1
+    0 1 L RS12                 ; [seed11]
+    1 1 R KW2                  ; [KW1]
+; seed7  seed: write 1 and step left
+; KW2    test: K's hole on a1, check R
+KW2
+    0 1 L sh5                  ; [seed7]
+    1 0 R TC1                  ; [KW2]
+; TR1    test: right across K
+; TC2    check: the separator
+TR1_TC2
+    0 0 R TR2_TC3              ; [TR1, TC2]
+    1 1 R TR1_TC2              ; [TR1]
+; TR2    test: the separator
+; TC3    check: R's start cell
+TR2_TC3
+    0 0 R TR3_RS3              ; [TR2]
+    1 1 R TC4                  ; [TC3]
+; seed1  seed: write 1 and step left
+; TR3    test: R's start cell
+; RS3    round end: fill the separator
+TR3_RS3
+    0 1 L sh3_RS4_c8           ; [seed1, RS3]
+    1 1 R TR4                  ; [TR3]
+; TC1    check: right across K
+TC1
+    0 0 R TR1_TC2              ; [TC1]
+    1 1 R TC1                  ; [TC1]
+; TR4    test: find R's hole, advance it
+TR4
+    0 1 R RN                   ; [TR4]
+    1 1 R TR4                  ; [TR4]
+; RN     test: R's next cell; 0: off R, wrap
+RN
+    0 0 L RW                   ; [RN]
+    1 0 L GK1                  ; [RN]
+; TC4    check: b1: 0 -> coprime (CV1)
+TC4
+    0 0 R CV1                  ; [TC4]
+    1 1 R TC5                  ; [TC4]
+; TC5    check: find R's hole, advance it
+TC5
+    0 1 R CN_RW2               ; [TC5]
+    1 1 R TC5                  ; [TC5]
+; CN     check: 0: R wraps -> not coprime
+; RW2    test: R's hole on b1
+CN_RW2
+    0 0 L CW                   ; [CN]
+    1 0 L GK1                  ; [CN, RW2]
+; RW     test: R wraps: left to R's start
+RW
+    0 0 R RW1                  ; [RW]
+    1 1 L RW                   ; [RW]
+; seed10 seed: write 0 and step left
+; RW1    test: R's start cell
+RW1
+    0 0 L KW1                  ; [seed10]
+    1 1 R CN_RW2               ; [RW1]
+; CW     not coprime: left to R's start
+CW
+    0 0 R CW1_RS1              ; [CW]
+    1 1 L CW                   ; [CW]
+; seed14 seed: write 1 and step left
+; CW1    not coprime: R's start cell
+; RS1    round end: fill R's hole
+CW1_RS1
+    0 1 L RS2                  ; [seed14, RS1]
+    1 1 R CW2_GK2              ; [CW1]
+; CW2    not coprime: R's hole on b1
+; GK2    test: the separator
+CW2_GK2
+    0 0 L KA                   ; [GK2]
+    1 0 R EC1                  ; [CW2]
+; GK1    test: left across R
+GK1
+    0 0 L CW2_GK2              ; [GK1]
+    1 1 L GK1                  ; [GK1]
+
+; ---------- COPRIME: d += 1 in the pair, back to R ----------------------
+
+; CV1    scan right to the next hole, then move the pair's separator (sh1)
+CV1
+    0 0 R CV2                  ; [CV1]
+    1 1 R CV1                  ; [CV1]
+; CV2    scan right to the next hole, then move the pair's separator (sh1)
+CV2
+    0 0 R CV1                  ; [CV2]
+    1 1 R sh1_ra1              ; [CV2]
+; sh1    coprime: run right to the end of D
+; ra1    advance P's hole: fill it
+sh1_ra1
+    0 1 R sh2_ra2              ; [sh1, ra1]
+    1 1 R sh1_ra1              ; [sh1]
+; sh2    coprime: d+1 (fill the first separator cell)
+; ra2    advance P's hole: step over the next cell
+sh2_ra2
+    0 0 R sh3_RS4_c8           ; [sh2]
+    1 1 R ra3                  ; [ra2]
+; seed2  seed: write 1 and step left
+; sh3    coprime: p-1 (erase the first cell of P), then back (PD2)
+; RS4    round end: fill the separator
+; c8     normalize: separator after D, then back to R (PD2)
+sh3_RS4_c8
+    0 1 L RS5                  ; [seed2, RS4]
+    1 0 L PD2                  ; [sh3, c8]
+; PD1    scan left to the next hole, then step left (PB1): D's hole found
+PD1
+    0 0 L PD2                  ; [PD1]
+    1 1 L PD1                  ; [PD1]
+; PD2    scan left to the next hole, then step left (PB1): D's hole found
+PD2
+    0 0 L PD1                  ; [PD2]
+    1 1 L PB1                  ; [PD2]
+; PB1    scan left to the next hole, then step right (Y): R's hole found
+PB1
+    0 0 L PB2_c6               ; [PB1]
+    1 1 L PB1                  ; [PB1]
+; PB2    scan left to the next hole, then step right (Y): R's hole found
+; c6     normalize: step over cell 2 (D := 1)
+PB2_c6
+    0 0 L PB1                  ; [PB2]
+    1 1 R Y_c7                 ; [PB2, c6]
+; Y      back on R's hole, then check r = 1 (EC1)
+; c7     normalize: separator after D
+Y_c7
+    0 0 R EC1                  ; [Y]
+    1 0 R sh3_RS4_c8           ; [c7]
+
+; ---------- r = 1? else the next k --------------------------------------
+
+; seed13 seed: write 0 and step left
+; EC1    r = 1? (0: round end, RS1; 1: shift)
+EC1
+    0 0 L CW1_RS1              ; [seed13, EC1]
+    1 0 L SH2_sh7_ra4          ; [EC1]
+; seed5  seed: write 1 and step left
+; SH2    shift: R's new start
+; sh7    make P's hole at cell 1, then start the mod walk (PM)
+; ra4    advance P's hole: make the new hole, then back to the D hole (PM)
+SH2_sh7_ra4
+    0 1 L SH3                  ; [seed5, SH2]
+    1 0 L PM1                  ; [sh7, ra4]
+; seed6  seed: write 0 and step left
+; SH3    shift: the new separator
+SH3
+    0 0 L KW2                  ; [seed6]
+    1 0 L SH4                  ; [SH3]
+; SH4    shift: the separator
+SH4
+    0 0 L SH5_ma4_maw3         ; [SH4]
+    -
+; SH5    shift: K's new slot
+; ma4    advance the D hole: make the new hole, then go to P's hole (PR)
+; maw3   wrap around: new hole at cell 1, then go to P's hole (PR)
+SH5_ma4_maw3
+    0 1 L KA                   ; [SH5]
+    1 0 R PR1                  ; [ma4, maw3]
+
+; ---------- ROUND END: K/R (n - 1, 1) -> (1, n), to the pair ------------
+
+; seed15 seed: write 0 and step left
+; RS2    round end: R's start cell
+RS2
+    0 0 L maw2                 ; [seed15]
+    1 1 L TR3_RS3              ; [RS2]
+; seed3  seed: write 0 and step left
+; RS5    round end: left to K's hole
+RS5
+    0 0 L RS6                  ; [seed3, RS5]
+    1 1 L RS5                  ; [RS5]
+; seed4  seed: write 0 and step left
+; RS6    round end: erase K's start
+RS6
+    0 0 L SH2_sh7_ra4          ; [seed4]
+    1 0 L RS7_RS11_ma1         ; [RS6]
+; RS7    round end: K's new start, one cell left
+; RS11   round end: R's new start
+; ma1    advance the D hole: fill it
+RS7_RS11_ma1
+    0 1 R RS8_U6_ma2           ; [RS7, ma1]
+    1 1 R RS12                 ; [RS11]
+; RS8    round end: K's hole on a1
+; U6     to the test: the separator, then the test start (sh4)
+; ma2    advance the D hole: step over the next cell
+RS8_U6_ma2
+    0 0 R RS9_sh4              ; [RS8, U6]
+    1 1 R ma3                  ; [ma2]
+; RS9    round end: the new separator
+; sh4    test start: step over cell 0 of P
+RS9_sh4
+    0 0 R start_RS10           ; [RS9]
+    1 1 R sh5                  ; [sh4]
+; seed12 seed: write 0 and step left
+; RS12   round end: R's hole on b1, then to the pair (PU)
+RS12
+    0 0 L EC1                  ; [seed12]
+    1 0 R PU1                  ; [RS12]
+; PU1    scan right to the next hole, then to the test start (U5)
+PU1
+    0 0 R PU2                  ; [PU1]
+    1 1 R PU1                  ; [PU1]
+; PU2    scan right to the next hole, then to the test start (U5)
+PU2
+    0 0 R PU1                  ; [PU2]
+    1 1 R U5                   ; [PU2]
+; U5     to the test: right across D
+U5
+    0 0 R RS8_U6_ma2           ; [U5]
+    1 1 R U5                   ; [U5]
+; seed8  seed: write 0 and step left
+; sh5    test start: step over cell 1 of P
+sh5
+    0 0 L c5                   ; [seed8]
+    1 1 R sh6                  ; [sh5]
+; sh6    test start: does P have a cell 2? 0: no, p = 0, n prime: a cell after P, next n (r1); 1: yes
+sh6
+    0 1 L r1                   ; [sh6]
+    1 1 L SH2_sh7_ra4          ; [sh6]
+
+; ---------- MOD WALK: does phi(n) divide p? -----------------------------
+
+; ma3    advance the D hole: is that cell the last one of D? 0: yes, wrap around
+ma3
+    0 0 L maw1                 ; [ma3]
+    1 1 L SH5_ma4_maw3         ; [ma3]
+; maw1   wrap around: run left to the start of D
+maw1
+    0 0 R maw2                 ; [maw1]
+    1 1 L maw1                 ; [maw1]
+; seed16 seed: K's start, then the first test (KA)
+; maw2   wrap around: step over cell 0
+maw2
+    0 1 R KA                   ; [seed16]
+    1 1 R SH5_ma4_maw3         ; [maw2]
+; PR1    scan right to the next hole, then advance P's hole (ra1)
+PR1
+    0 0 R PR2                  ; [PR1]
+    1 1 R PR1                  ; [PR1]
+; PR2    scan right to the next hole, then advance P's hole (ra1)
+PR2
+    0 0 R PR1                  ; [PR2]
+    1 1 L sh1_ra1              ; [PR2]
+; ra3    advance P's hole: last cell of P? 0: yes, the walk is over: test the D hole (PK)
+ra3
+    0 0 L PK1                  ; [ra3]
+    1 1 L SH2_sh7_ra4          ; [ra3]
+; PM1    scan left to the next hole, then advance the D hole (ma1)
+PM1
+    0 0 L PM2                  ; [PM1]
+    1 1 L PM1                  ; [PM1]
+; PM2    scan left to the next hole, then advance the D hole (ma1)
+PM2
+    0 0 L PM1                  ; [PM2]
+    1 1 R RS7_RS11_ma1         ; [PM2]
+; PK1    scan left to the next hole, then test whether the hole is at cell 1 (k1)
+PK1
+    0 0 L PK2                  ; [PK1]
+    1 1 L PK1                  ; [PK1]
+; PK2    scan left to the next hole, then test whether the hole is at cell 1 (k1)
+PK2
+    0 0 L PK1                  ; [PK2]
+    1 1 L k1                   ; [PK2]
+; k1     divisor test: 0: the D hole is at cell 1, phi(n) | p: HALT; 1: no, next n (A)
+k1
+    0 0 L halt                 ; [k1]
+    1 1 R A                    ; [k1]
+
+; ---------- NEXT n: a cell after P, D := 1, back to R -------------------
+
+; A      next n: right across D (A, B) and the separator
+A
+    0 0 R B                    ; [A]
+    1 1 R A                    ; [A]
+; B      next n: after a 0: 1: that was D's hole; 0: the separator, P (C)
+B
+    0 0 R C                    ; [B]
+    1 1 R A                    ; [B]
+; C      next n: right across P, a cell after it, then normalize (r1)
+C
+    0 1 L r1                   ; [C]
+    1 1 R C                    ; [C]
+; r1     normalize: run left over P, fill the separator cell next to it
+r1
+    0 1 L r2_c4                ; [r1]
+    1 1 L r1                   ; [r1]
+; r2     normalize: fill the other separator cell
+; c4     normalize: step over cell 0
+r2_c4
+    0 1 L r3                   ; [r2]
+    1 1 R c5                   ; [c4]
+; r3     normalize: run left to the D hole, fill it
+r3
+    0 1 L r3b                  ; [r3]
+    1 1 L r3                   ; [r3]
+; r3b    normalize: run left to the start of D
+r3b
+    0 0 R r2_c4                ; [r3b]
+    1 1 L r3b                  ; [r3b]
+; seed9  seed: write 0 and step left
+; c5     normalize: D's hole on cell 1
+c5
+    0 0 L RW1                  ; [seed9]
+    1 0 R PB2_c6               ; [c5]

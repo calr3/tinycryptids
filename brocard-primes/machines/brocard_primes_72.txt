@@ -1,0 +1,221 @@
+; Minimised from brocard_primes.txt by minimize.py
+; 72 states, 2 symbols
+
+blank_symbol: 0
+
+seed0
+    0 1 R seed1
+    -
+seed1
+    0 1 R seed2
+    1 1 L qC
+seed2
+    0 1 R seed3
+    1 1 L hc1
+seed3
+    0 1 R seed4
+    -
+seed4
+    0 0 R seed5
+    1 0 R q1
+seed5
+    0 0 R seed6
+    -
+seed6
+    0 1 R seed7
+    1 1 R tA
+seed7
+    0 0 R seed8
+    1 1 R tD
+seed8
+    0 0 R seed9
+    1 1 R seed8
+seed9
+    0 1 R seed10
+    1 1 R u1
+seed10
+    0 1 R seed11
+    1 1 L hg1
+seed11
+    0 0 R seed12
+    1 1 R i
+seed12
+    0 1 R seed13
+    1 1 L seed4
+seed13
+    0 0 R seed14
+    1 1 L pA
+seed14
+    0 0 R seed15
+    1 1 R p1
+seed15
+    0 0 R seed16
+    1 1 R seed15
+seed16
+    0 1 R seed17
+    1 1 L sA
+seed17
+    0 1 R seed18
+    1 0 R p1
+seed18
+    0 0 R seed19
+    1 1 L pC
+seed19
+    0 1 R seed20
+    1 1 R pA
+seed20
+    0 1 R seed21
+    1 1 L seed10
+seed21
+    0 0 R seed22
+    1 1 L seed21
+seed22
+    0 1 R seed23
+    1 1 R qA
+seed23
+    0 1 L hg1
+    1 1 L seed19
+hg1
+    0 0 L hg2
+    1 1 L hg1
+hg2
+    0 0 L hg3
+    1 1 L hg1
+hg3
+    0 0 L hg4
+    1 1 L hg1
+hg4
+    0 0 R hg5
+    1 1 L hg1
+hg5
+    0 0 R hg6
+    1 1 R q1
+hg6
+    0 0 R hg7
+    1 1 R hg6
+hg7
+    0 1 R p1
+    1 1 L tA
+p1
+    0 0 R seed13
+    1 1 R p1
+pA
+    0 1 L seed18
+    1 0 R sE
+pC
+    0 0 R W2
+    1 1 R seed17
+q1
+    0 0 R q2
+    1 1 R q1
+q2
+    0 0 R hg5
+    1 1 L qA
+qA
+    0 1 L seed1
+    1 0 R mm
+qC
+    0 0 R W2
+    1 1 R seed4
+W2
+    0 0 L seed12
+    1 1 R W2
+sA
+    0 1 L seed23
+    1 1 L seed7
+sE
+    0 0 R sG
+    1 1 R sE
+sG
+    0 1 L hc1
+    1 1 R sG
+tA
+    0 1 L sA
+    1 0 L cL1
+tD
+    0 1 L a
+    1 0 L hg1
+u1
+    0 0 R tD
+    1 0 R u2
+u2
+    0 1 R tD
+    1 1 R u2
+a
+    0 0 L b
+    1 1 L a
+b
+    0 0 L c
+    1 1 L a
+c
+    0 0 L c
+    1 1 L d
+d
+    0 0 L e
+    1 1 L a
+e
+    0 0 L seed20
+    1 1 L a
+i
+    0 1 L seed21
+    1 0 L mm
+mm
+    0 1 L cL1
+    1 0 R r1
+r1
+    0 0 R r2
+    1 1 R r1
+r2
+    0 0 R r3
+    1 1 R r1
+r3
+    0 0 R r4
+    1 1 R r1
+r4
+    0 0 L e0
+    1 1 R r1
+e0
+    0 0 L e0
+    1 0 L e2
+e2
+    0 0 R halt
+    1 0 L e3
+e3
+    0 0 R halt
+    1 0 L e4
+e4
+    0 0 R halt
+    1 0 L e5
+e5
+    0 0 R halt
+    1 0 L e6
+e6
+    0 0 R seed23
+    1 0 L e6
+hc1
+    0 0 L hc2
+    1 1 L hc1
+hc2
+    0 0 L hc3
+    1 1 L hc1
+hc3
+    0 0 L seed2
+    1 1 L hc1
+cL1
+    0 0 L cL2
+    1 1 L cL1
+cL2
+    0 0 L cL3
+    -
+cL3
+    0 1 R cR1
+    1 1 L cL3
+cR1
+    0 0 R cR2
+    1 1 R cR1
+cR2
+    0 0 R cR1
+    1 1 R cQ2
+cQ2
+    0 0 L hg1
+    1 1 L i

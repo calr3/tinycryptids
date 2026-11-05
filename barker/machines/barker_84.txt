@@ -1,0 +1,257 @@
+; Minimised from /tmp/bc2.txt by minimize_clique.py
+; 84 states, 2 symbols
+
+blank_symbol: 0
+
+z0
+    0 1 R z1
+    -
+z1
+    0 0 R z2
+    1 0 L B1
+z2
+    0 0 R z3
+    -
+z3
+    0 1 R z4
+    1 1 L LIa
+z4
+    0 0 R z5
+    1 1 R z5
+z5
+    0 0 R z6
+    1 0 R RJa
+z6
+    0 0 R z7
+    1 0 R z9
+z7
+    0 0 R z8
+    1 0 L A1
+z8
+    0 1 R z9
+    1 0 R RJa
+z9
+    0 0 R z10
+    1 1 R z10
+z10
+    0 1 R z11
+    1 1 R I1
+z11
+    0 1 R PRp
+    -
+PRa
+    0 0 R PRp
+    1 1 R PRp
+PRp
+    0 1 L PLa
+    1 1 R PRa
+PLa
+    0 0 L PLp
+    1 1 L PLp
+PLp
+    0 0 R Ca
+    1 1 L PLa
+Ca
+    0 1 R Q0
+    1 0 L Cp
+Cp
+    0 0 L Ca
+    1 0 R Q1
+Q0
+    0 0 R Q0
+    1 1 R PRa
+Q1
+    0 0 R Q1
+    1 1 R SMa
+Ia
+    0 0 L z6
+    1 1 L z6
+I1
+    0 0 R R0p
+    1 1 R R1p
+R0a
+    0 0 R R0p
+    1 1 R R0p
+R0p
+    0 0 R J0
+    1 1 R R0a
+R1a
+    0 0 R R1p
+    1 1 R R1p
+R1p
+    0 0 R J1
+    1 1 R R1a
+J1
+    0 0 L UDa
+    1 1 L UAa
+J0
+    0 0 L UAa
+    1 1 L UDa
+UAa
+    0 1 L UAb
+    1 0 R SDa
+UAb
+    0 0 L UAc
+    1 1 L UAc
+UAc
+    0 0 L LIa
+    1 0 R SAa
+SAa
+    0 0 R SAp
+    1 1 R SAp
+SAp
+    0 0 R GA
+    1 1 R SAa
+GA
+    0 0 R ZA
+    -
+UDa
+    0 1 L UDb
+    -
+UDb
+    0 0 L UAa
+    1 1 L UAa
+SDa
+    0 0 R SDp
+    1 1 R SDp
+SDp
+    0 0 R GD
+    1 1 R SDa
+GD
+    0 0 R ZD
+    -
+ZA
+    0 0 R SAR
+    1 1 R SER
+ZD
+    0 0 R ZD1
+    1 1 R SAB
+ZD1
+    0 0 L ZD2
+    1 1 R ZD1
+ZD2
+    0 1 L B1
+    1 0 L A1
+SER
+    0 0 L z1
+    1 1 R SER
+SAR
+    0 1 L A1
+    1 1 R SAR
+SAB
+    0 1 L B1
+    1 1 R SAB
+A1
+    0 0 L B1
+    1 1 L A1
+B1
+    0 0 L B2
+    1 1 L B1
+B2
+    0 0 L LPa
+    -
+LPa
+    0 0 L LPp
+    1 1 L LPp
+LPp
+    0 0 L LQa
+    1 1 L LPa
+LQa
+    0 0 L LQp
+    1 1 L LQp
+LQp
+    0 1 L Ia
+    1 1 L LQa
+RJa
+    0 0 R RJp
+    1 1 R RJp
+RJp
+    0 1 R W1
+    1 1 R RJa
+W1
+    0 0 R W2
+    1 1 R W2
+W2
+    0 0 R halt
+    1 0 R W3
+W3
+    0 0 R W4
+    1 1 R W4
+W4
+    0 0 R CG
+    1 1 L UAb
+LIa
+    0 0 L z3
+    1 1 L z3
+CG
+    0 0 R K0
+    -
+K0
+    0 0 R K1
+    1 1 R K4
+K1
+    0 0 L A1
+    1 1 R K2
+K2
+    0 0 L z7
+    1 1 R F1v
+K4
+    0 0 L z1
+    1 1 R F1u
+F1v
+    0 0 L F2v
+    1 1 R F1v
+F2v
+    0 0 L F3
+    1 0 L F2v
+F1u
+    0 0 L F2u
+    1 1 R F1u
+F2u
+    0 0 L F4
+    1 0 L F2u
+F3
+    0 0 L F4
+    1 1 L F4
+F4
+    0 0 L FCa
+    1 1 L Ia
+FCa
+    0 0 L FCp
+    1 1 L FCp
+FCp
+    0 0 L FDa
+    1 1 L FCa
+FDa
+    0 0 L FDp
+    1 1 L FDp
+FDp
+    0 1 R ITa
+    1 1 L FDa
+ITa
+    0 0 R ITp
+    1 1 R ITp
+ITp
+    0 0 R INC
+    1 1 R ITa
+INC
+    0 1 L INQ
+    1 0 L INCp
+INCp
+    0 0 L INC
+    1 1 L INC
+INQ
+    0 0 L INQ2
+    1 1 L INQ2
+INQ2
+    0 0 L INQ3
+    1 1 L INQ3
+INQ3
+    0 1 R SMa
+    1 1 R SMa
+SMa
+    0 0 R SMp
+    1 1 R SMp
+SMp
+    0 0 L F3
+    1 1 R SMa

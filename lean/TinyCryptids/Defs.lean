@@ -10,9 +10,9 @@ namespace TinyCryptids
 /-- `p` is prime: at least 2, and no `d` with `2 ≤ d < p` divides it. -/
 def Prime (p : Nat) : Prop := 2 ≤ p ∧ ∀ d, d < p → 2 ≤ d → p % d ≠ 0
 
-theorem Prime.two_le {p : Nat} (h : Prime p) : 2 ≤ p := h.1
-
 instance : DecidablePred Prime := fun p => by unfold Prime; exact inferInstance
+
+theorem Prime.two_le {p : Nat} (h : Prime p) : 2 ≤ p := h.1
 
 /-- Divisor form of primality: the only divisors are `1` and `p`. -/
 theorem prime_iff_dvd (p : Nat) : Prime p ↔ 2 ≤ p ∧ ∀ d, d ∣ p → d = 1 ∨ d = p := by
@@ -51,6 +51,47 @@ def FinitelyManySophieGermainPrimes : Prop := ∃ N, ∀ p, SophieGermainPrime p
 /-- There are infinitely many Fermat primes: infinitely many `n` with `2 ^ 2 ^ n + 1` prime. -/
 def InfinitelyManyFermatPrimes : Prop := ∀ n, ∃ k, n ≤ k ∧ Prime (2 ^ 2 ^ k + 1)
 
+/-- Number of primes `≤ x`. -/
+def primeCount (x : Nat) : Nat := ((List.range (x + 1)).filter (fun p => decide (Prime p))).length
+
+def fact : Nat → Nat
+  | 0 => 1
+  | n + 1 => fact n * (n + 1)
+
+/-- Left factorial `!n = 0! + 1! + … + (n-1)!`. -/
+def leftFact : Nat → Nat
+  | 0 => 0
+  | n + 1 => leftFact n + fact n
+
+def fib : Nat → Nat
+  | 0 => 0
+  | 1 => 1
+  | n + 2 => fib n + fib (n + 1)
+
+/-- `p - (p/5)` with `(p/5)` the Legendre symbol: the index of the Fibonacci number in
+the definition of a Wall–Sun–Sun prime. -/
+def wssIndex (p : Nat) : Nat :=
+  if p % 5 = 0 then p else if p % 5 = 1 ∨ p % 5 = 4 then p - 1 else p + 1
+
+/-- There are infinitely many Wall–Sun–Sun primes (primes `p` with `p² ∣ F(p - (p/5))`). -/
+def InfinitelyManyWallSunSunPrimes : Prop :=
+  ∀ n, ∃ p, n ≤ p ∧ Prime p ∧ p * p ∣ fib (wssIndex p)
+
+/-- Some decimal digit of `n > 0` is 0. -/
+def hasZeroDigit (n : Nat) : Bool :=
+  if n = 0 then false else (n % 10 == 0) || hasZeroDigit (n / 10)
+termination_by n
+decreasing_by exact Nat.div_lt_self (by omega) (by decide)
+
+/-- `revAux n acc` appends the decimal digits of `n`, last digit first, to `acc`. -/
+def revAux (n acc : Nat) : Nat :=
+  if n = 0 then acc else revAux (n / 10) (acc * 10 + n % 10)
+termination_by n
+decreasing_by exact Nat.div_lt_self (by omega) (by decide)
+
+/-- Decimal digit reversal (`rev10 120 = 21`). -/
+def rev10 (n : Nat) : Nat := revAux n 0
+
 /-- `f` applied `k` times. -/
 def iterate (f : Nat → Nat) : Nat → Nat → Nat
   | 0, x => x
@@ -63,14 +104,66 @@ def collatz (x : Nat) : Nat := if x % 2 = 0 then x / 2 else 3 * x + 1
 example : iterate collatz 3 1 = 1 := by decide
 example : iterate collatz 7 3 = 1 := by decide
 
-def fact : Nat → Nat
-  | 0 => 1
-  | n + 1 => fact n * (n + 1)
-
-/-- Left factorial `!n = 0! + 1! + … + (n-1)!`. -/
-def leftFact : Nat → Nat
+/-- `sigmaBelow k n j = Σ d^k` over the divisors `d ≤ j` of `n`. -/
+def sigmaBelow (k n : Nat) : Nat → Nat
   | 0 => 0
-  | n + 1 => leftFact n + fact n
+  | j + 1 => sigmaBelow k n j + (if n % (j + 1) = 0 then (j + 1) ^ k else 0)
+
+/-- The divisor function `σ_k(n) = Σ_{d ∣ n} d^k` (`sigma k 0 = 0`). -/
+def sigma (k n : Nat) : Nat := sigmaBelow k n n
+
+example : sigma 1 12 = 28 := by decide
+example : sigma 5 2 = 33 := by decide
+
+/-- `tauConvBelow n j = Σ_{i=1}^{j} σ₅(i) σ₅(n - i)`. -/
+def tauConvBelow (n : Nat) : Nat → Nat
+  | 0 => 0
+  | j + 1 => tauConvBelow n j + sigma 5 (j + 1) * sigma 5 (n - (j + 1))
+
+/-- `756 τ(n)`, with `τ` Ramanujan's tau function, by the classical identity
+`756 τ(n) = 65 σ₁₁(n) + 691 σ₅(n) - 252·691 Σ_{i=1}^{n-1} σ₅(i) σ₅(n-i)`
+(the coefficients of `q ∏ (1 - q^k)^24`; the identity itself is not formalized here). -/
+def tau756 (n : Nat) : Int :=
+  65 * (sigma 11 n : Int) + 691 * (sigma 5 n : Int) - 174132 * (tauConvBelow n (n - 1) : Int)
+
+example : tau756 1 = 756 * 1 := by decide
+example : tau756 2 = 756 * (-24) := by decide
+example : tau756 3 = 756 * 252 := by decide
+
+/-- The primes `< n`, in increasing order. -/
+def primesBelow (n : Nat) : List Nat := (List.range n).filter (fun p => decide (Prime p))
+
+/-- Absolute differences of neighbours: `[a, b, c, …] ↦ [|b - a|, |c - b|, …]`. -/
+def absDiffs : List Nat → List Nat
+  | a :: b :: l => (if a ≤ b then b - a else a - b) :: absDiffs (b :: l)
+  | _ => []
+
+/-- Row `k` of Gilbreath's triangle built on the list `l` (row 0 is `l`). -/
+def gilbreathRow (l : List Nat) : Nat → List Nat
+  | 0 => l
+  | k + 1 => absDiffs (gilbreathRow l k)
+
+example : gilbreathRow (primesBelow 12) 2 = [1, 0, 2] := by decide
+
+/-- `rep b n = 1 + b + … + b^(n-1)` (`= (b^n - 1)/(b - 1)` for `b ≥ 2`). -/
+def rep (b : Nat) : Nat → Nat
+  | 0 => 0
+  | n + 1 => rep b n + b ^ n
+
+/-- `powSum m k = 0^k + 1^k + … + (m-1)^k`. -/
+def powSum (m k : Nat) : Nat := match m with
+  | 0 => 0
+  | m + 1 => powSum m k + m ^ k
+
+/-- Binomial coefficients by Pascal's rule. -/
+def choose : Nat → Nat → Nat
+  | _, 0 => 1
+  | 0, _ + 1 => 0
+  | n + 1, k + 1 => choose n k + choose n (k + 1)
+
+/-- Euler's totient: the number of `k < n` with `gcd k n = 1` (equal to the usual count over
+`1 ≤ k ≤ n` for every `n`, including `φ 1 = 1` and `φ 0 = 0`). -/
+def totient (n : Nat) : Nat := ((List.range n).filter (fun k => Nat.gcd k n == 1)).length
 
 /-- sum of the divisors `d ≤ k` of `n` with `d < n` -/
 def divSumBelow (n : Nat) : Nat → Nat
@@ -82,6 +175,24 @@ def properDivSum (n : Nat) : Nat := divSumBelow n n
 
 example : properDivSum 6 = 6 := by decide
 example : properDivSum 28 = 28 := by decide
+
+/-- `n` is an amicable number: with `m = properDivSum n`, `m ≠ n` and `properDivSum m = n`
+(`n` and `m` form an amicable pair, e.g. 220 and 284). -/
+def Amicable (n : Nat) : Prop := properDivSum n ≠ n ∧ properDivSum (properDivSum n) = n
+
+/-- There are infinitely many amicable numbers (an open problem). -/
+def InfinitelyManyAmicable : Prop := ∀ N, ∃ n, N ≤ n ∧ Amicable n
+
+example : fact 4 + 1 = 5 * 5 := by decide
+example : fact 7 + 1 = 71 * 71 := by decide
+
+/-- The base-3 digits of `n`, least significant first (`digits3 0 = []`). -/
+def digits3 (n : Nat) : List Nat :=
+  if h : n = 0 then [] else n % 3 :: digits3 (n / 3)
+decreasing_by omega
+
+example : digits3 256 = [1, 1, 1, 0, 0, 1] := by simp [digits3]
+example : 2 ∈ digits3 512 := by simp [digits3]
 
 /-- The product of the primes `p < k` that divide `n`. -/
 def radBelow (n : Nat) : Nat → Nat
@@ -101,6 +212,9 @@ for every `n ≥ 1` there is an `N` such that every coprime `a, b ≥ 1` with `a
 def ABCConjecture : Prop :=
   ∀ n, 1 ≤ n → ∃ N, ∀ a b, 1 ≤ a → 1 ≤ b → Nat.gcd a b = 1 → N ≤ a + b →
     (a + b) ^ n ≤ rad (a * b * (a + b)) ^ (n + 1)
+
+/-- `1 + 8 = 9` is an exceptional triple for `n = 5`: `9^5 > rad 72 ^ 6 = 6^6`. -/
+example : (1 + 8 : Nat) ^ 5 > rad (1 * 8 * (1 + 8)) ^ (5 + 1) := by decide
 
 /-- Pillai's conjecture: for every `k ≥ 1`, `a ^ x - b ^ y = k` has only finitely many solutions
 with `a, b, x, y ≥ 2` ("finitely many" as a bound on `a + b + x + y`). -/
@@ -162,24 +276,14 @@ inductive Provable : Wff → Prop
 
 end Wff
 
-def fib : Nat → Nat
-  | 0 => 0
-  | 1 => 1
-  | n + 2 => fib n + fib (n + 1)
+/-- Aperiodic autocorrelation of a sequence at shift `k`: `∑ i, a[i] * a[i + k]` over the
+`a.length - k` pairs. -/
+def autocorr (a : List Int) (k : Nat) : Int :=
+  ((a.zip (a.drop k)).map (fun p => p.1 * p.2)).sum
 
-/-- `p - (p/5)` with `(p/5)` the Legendre symbol: the index of the Fibonacci number in
-the definition of a Wall–Sun–Sun prime. -/
-def wssIndex (p : Nat) : Nat :=
-  if p % 5 = 0 then p else if p % 5 = 1 ∨ p % 5 = 4 then p - 1 else p + 1
-
-/-- There are infinitely many Wall–Sun–Sun primes (primes `p` with `p² ∣ F(p - (p/5))`). -/
-def InfinitelyManyWallSunSunPrimes : Prop :=
-  ∀ n, ∃ p, n ≤ p ∧ Prime p ∧ p * p ∣ fib (wssIndex p)
-
-/-- Binomial coefficients by Pascal's rule. -/
-def choose : Nat → Nat → Nat
-  | _, 0 => 1
-  | 0, _ + 1 => 0
-  | n + 1, k + 1 => choose n k + choose n (k + 1)
+/-- A Barker sequence: entries `±1`, every nontrivial autocorrelation at most 1 in absolute
+value. -/
+def IsBarker (a : List Int) : Prop :=
+  (∀ x ∈ a, x = 1 ∨ x = -1) ∧ ∀ k, 0 < k → k < a.length → (autocorr a k).natAbs ≤ 1
 
 end TinyCryptids

@@ -1,0 +1,245 @@
+; ============================================================================
+; A 44-state, 2-symbol Turing machine that HALTS IFF SOME POWER 2^n WITH
+; n > 86 HAS NO DECIMAL DIGIT 0 (2^86 is conjectured to be the last such power).
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/ZeroFree/M44.lean, theorem TM.ZeroFree.M44.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 55-state design of build.py / zerofree.txt with
+;   states merged. States are merged only when their defined transitions
+;   agree, so each state below plays one or more ROLES of the design (its name
+;   joins them). Each transition line is tagged [role] with the role(s) that
+;   use it. A '-' line is never used.
+;
+; TAPE:  v5 g5 v4 g4 ... v0 g0 | 0 0 | b x y z | b x y z | ... | blank
+;   counter (bits v_i, guards g_i = 1; starts at 27, overflows at 64), the
+;   separator, then the decimal digits of 2^n, least significant first.  A digit
+;   d = 2a + b: its parity b, then a (0..4) in three cells x y z.
+;
+; CODES: between rounds a is in code A: 0=010 1=001 2=011 3=111 4=101.
+;   The pass writes x y z in code B, from the old digit d (b, a), one cell at a
+;   time as it reads them; B determines the new a' = (2a + b) mod 5:
+;   (0,0)->010 (0,1)->001 (0,2)->011 (0,3)->111 (0,4)->101
+;   (1,0)->111 (1,1)->101 (1,2)->110 (1,3)->001 (1,4)->011
+;
+; ROUND (2^n on the tape, head on the first parity cell):
+;   pass    double, least significant digit first: the parity cell takes the
+;           carry, x y z are rewritten into code B; carry out = [d >= 5].  A
+;           blank group ends the number (carry 1: it becomes the digit 1).
+;   scan    right to left: rewrite each digit from B into A, look for the digit 0.
+;   found   a digit 0: rewrite the rest into A, then the next pass.
+;   count   no digit 0 (the separator 0 0 is reached): add 1 to the counter
+;           (HALT if it overflows: the 37th power without a 0), next pass.
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0  seed: write cell 0 of the counter / separator
+; P0_11  pass, old parity 0, cell z (read so far: 11): write code B
+; P1_11  pass, old parity 1, cell z (read so far: 11): write code B
+start_P0_11__P1_11
+    0 1 R P1_1                     ; [seed0]
+    1 1 R C1                       ; [P0_11, P1_11]
+
+; ---------- PASS: double, code A -> code B ------------------------------
+
+; C0     pass, carry 0, parity cell: write the carry, read the parity
+C0
+    0 0 R P0_                      ; [C0]
+    1 0 R P1_                      ; [C0]
+; C1     pass, carry 1, parity cell: write the carry, read the parity
+C1
+    0 1 R P0_                      ; [C1]
+    1 1 R P1_                      ; [C1]
+; P0_    pass, old parity 0, cell x (read so far: -): write code B
+P0_
+    0 0 R P0_0                     ; [P0_]
+    1 1 R P0_1                     ; [P0_]
+; P0_0   pass, old parity 0, cell y (read so far: 0): write code B
+P0_0
+    0 0 R P0_00                    ; [P0_0]
+    1 1 R P0_01__N2__Fs            ; [P0_0]
+; seed5  seed: write cell 5 of the counter / separator
+; P0_1   pass, old parity 0, cell y (read so far: 1): write code B
+P0_1
+    0 0 R P0_10                    ; [seed5, P0_1]
+    1 1 R start_P0_11__P1_11       ; [P0_1]
+; P0_00  pass, old parity 0, cell z (read so far: 00): write code B
+P0_00
+    0 0 L Z1                       ; [P0_00]
+    1 1 R C0                       ; [P0_00]
+; P0_01  pass, old parity 0, cell z (read so far: 01): write code B
+; N2     new top digit 1: cell z of its code B word
+; Fs     found, at the separator: on to the first parity cell (next pass)
+P0_01__N2__Fs
+    0 0 R C0                       ; [P0_01, N2, Fs]
+    1 1 R C0                       ; [P0_01]
+; seed6  seed: write cell 6 of the counter / separator
+; P0_10  pass, old parity 0, cell z (read so far: 10): write code B
+P0_10
+    0 1 R seed7                    ; [seed6]
+    1 1 R C1                       ; [P0_10]
+; seed10 seed: write cell 10 of the counter / separator
+; P1_    pass, old parity 1, cell x (read so far: -): write code B
+P1_
+    0 1 R P1_0                     ; [seed10, P1_]
+    1 0 R P1_1                     ; [P1_]
+; seed11 seed: write cell 11 of the counter / separator
+; P1_0   pass, old parity 1, cell y (read so far: 0): write code B
+P1_0
+    0 0 R P1_00                    ; [seed11, P1_0]
+    1 1 R P1_01                    ; [P1_0]
+; seed1  seed: write cell 1 of the counter / separator
+; P1_1   pass, old parity 1, cell y (read so far: 1): write code B
+P1_1
+    0 1 R P1_10                    ; [seed1, P1_1]
+    1 0 R start_P0_11__P1_11       ; [P1_1]
+; seed12 seed: write cell 12 of the counter / separator
+; P1_00  pass, old parity 1, cell z (read so far: 00): write code B
+P1_00
+    0 0 R C1                       ; [seed12]
+    1 1 R C0                       ; [P1_00]
+; P1_01  pass, old parity 1, cell z (read so far: 01): write code B
+P1_01
+    0 1 R C0                       ; [P1_01]
+    1 0 R C1                       ; [P1_01]
+; seed2  seed: write cell 2 of the counter / separator
+; P1_10  pass, old parity 1, cell z (read so far: 10): write code B
+P1_10
+    0 1 R seed3                    ; [seed2]
+    1 1 R C1                       ; [P1_10]
+
+; ---------- END OF THE NUMBER -------------------------------------------
+
+; Z1     pass, blank group: clear it, back to its parity cell
+Z1
+    0 0 L Z2                       ; [Z1]
+    1 0 L Z2                       ; [Z1]
+; Z2     pass, blank group: clear it, back to its parity cell
+Z2
+    0 0 L Z3                       ; [Z2]
+    1 0 L Z3                       ; [Z2]
+; Z3     blank group: 0: the number ended, scan the top digit; 1: carry, the new digit 1
+Z3
+    0 0 L Sz                       ; [Z3]
+    1 1 R N0                       ; [Z3]
+; N0     new top digit 1: cell x of its code B word
+N0
+    0 0 R N1                       ; [N0]
+    -
+; N1     new top digit 1: cell y of its code B word
+N1
+    0 1 R P0_01__N2__Fs            ; [N1]
+    -
+
+; ---------- SCAN: code B -> code A, look for the digit 0 ----------------
+
+; Sz     scan, cell z (read so far, z first: -): rewrite into code A
+Sz
+    0 0 L Sy0                      ; [Sz]
+    1 1 L Sy1                      ; [Sz]
+; Sy0    scan, cell y (read so far, z first: 0): rewrite into code A
+Sy0
+    0 0 L G                        ; [Sy0]
+    1 1 L Sx01                     ; [Sy0]
+; Sy1    scan, cell y (read so far, z first: 1): rewrite into code A
+Sy1
+    0 1 L Sx10                     ; [Sy1]
+    1 0 L Sx11                     ; [Sy1]
+; Sx01   scan, cell x (read so far, z first: 01): rewrite into code A
+Sx01
+    0 0 L Sb1                      ; [Sx01]
+    1 0 L Sb1                      ; [Sx01]
+; Sx10   scan, cell x (read so far, z first: 10): rewrite into code A
+Sx10
+    0 0 L Sb0                      ; [Sx10]
+    1 1 L Sb0                      ; [Sx10]
+; Sx11   scan, cell x (read so far, z first: 11): rewrite into code A
+Sx11
+    0 1 L Sb0                      ; [Sx11]
+    1 0 L Sb0                      ; [Sx11]
+; Sb1    scan, parity cell of a digit with a = 0: 0: the digit 0 (found)
+Sb1
+    0 0 L Fz                       ; [Sb1]
+    1 1 L Sz                       ; [Sb1]
+; Sb0    scan, parity cell
+Sb0
+    0 0 L Sz                       ; [Sb0]
+    1 1 L Sz                       ; [Sb0]
+
+; ---------- FOUND: code B -> code A -------------------------------------
+
+; Fz     found, cell z (read so far, z first: -): rewrite into code A
+Fz
+    0 0 L Fy0                      ; [Fz]
+    1 1 L Fy1                      ; [Fz]
+; Fy0    found, cell y (read so far, z first: 0): rewrite into code A
+Fy0
+    0 0 R P0_01__N2__Fs            ; [Fy0]
+    1 1 L Fx01                     ; [Fy0]
+; Fy1    found, cell y (read so far, z first: 1): rewrite into code A
+Fy1
+    0 1 L Fx10                     ; [Fy1]
+    1 0 L Fx11                     ; [Fy1]
+; Fx01   found, cell x (read so far, z first: 01): rewrite into code A
+Fx01
+    0 0 L Fb                       ; [Fx01]
+    1 0 L Fb                       ; [Fx01]
+; Fx10   found, cell x (read so far, z first: 10): rewrite into code A
+Fx10
+    0 0 L Fb                       ; [Fx10]
+    1 1 L Fb                       ; [Fx10]
+; Fx11   found, cell x (read so far, z first: 11): rewrite into code A
+Fx11
+    0 1 L Fb                       ; [Fx11]
+    1 0 L Fb                       ; [Fx11]
+; Fb     found, parity cell
+Fb
+    0 0 L Fz                       ; [Fb]
+    1 1 L Fz                       ; [Fb]
+
+; ---------- COUNTER -----------------------------------------------------
+
+; G      counter, guard cell; 0 (past the top bit): overflow, HALT
+G
+    0 0 L halt                     ; [G]
+    1 1 L I                        ; [G]
+; I      counter, bit: 0 -> 1 (done, go back right); 1 -> 0 (carry left)
+I
+    0 1 R R1                       ; [I]
+    1 0 L G                        ; [I]
+; R1     back right over the counter, stop after the separator 0 0
+R1
+    0 0 R R2                       ; [R1]
+    1 1 R R1                       ; [R1]
+; R2     back right over the counter, stop after the separator 0 0
+R2
+    0 0 R C0                       ; [R2]
+    1 1 R R1                       ; [R2]
+
+; ---------- SEED only ---------------------------------------------------
+
+; seed3  seed: write cell 3 of the counter / separator
+seed3
+    0 1 R seed4                    ; [seed3]
+    -
+; seed4  seed: write cell 4 of the counter / separator
+seed4
+    0 1 R P0_1                     ; [seed4]
+    -
+; seed7  seed: write cell 7 of the counter / separator
+seed7
+    0 1 R seed8                    ; [seed7]
+    -
+; seed8  seed: write cell 8 of the counter / separator
+seed8
+    0 1 R seed9                    ; [seed8]
+    -
+; seed9  seed: write cell 9 of the counter / separator
+seed9
+    0 1 R P1_                      ; [seed9]
+    -

@@ -1,0 +1,312 @@
+; ============================================================================
+; A 51-state, 2-symbol Turing machine that HALTS IFF ANDRICA'S CONJECTURE IS
+; FALSE, i.e. iff some consecutive primes p < q have 4p <= (q - p - 1)^2
+; (sqrt(q) - sqrt(p) >= 1).
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/Andrica/M51.lean,
+; theorem TM.Andrica.M51.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 88-state design of build.py / andrica.txt with states
+;   merged. States are merged only when their defined transitions agree, so
+;   each state below plays one or more ROLES of the design (its name joins
+;   them). Each transition line is tagged [role] with the role(s) that use it.
+;   A '-' line is never used. The seed roles run once at the start and only
+;   ever read 0, so all of them double as a step of some other routine.
+;
+; THE IDEA
+;   Let t(m) be the least t with t^2 >= 4m. Then 4p <= g^2 iff t(p) <= g, so
+;   the conjecture fails iff after some prime p the next t(p) numbers are all
+;   composite. The machine tests m = 2, 3, 4, ... and keeps a countdown: a
+;   prime sets it to t(m), a composite counts down, and it halts when the
+;   countdown runs out.
+;
+; TAPE LAYOUT
+;
+;      H 00 U 00 T 00 D 00 R
+;
+;   H: t + 1 cells, t = t(m), with a HOLE (a single 0) at cell 2j - 1 when m
+;   is the j-th number with t(m) = t (there are floor(t/2) of them).
+;   U 00 T: |U| + |T| = t (U may be empty: four 0s); |T| is the countdown.
+;   D 00 R (as in ../legendre): D = 1 0 1^d (d + 2 cells, its hole cycling),
+;   R has r + 2 cells, d + r = m.
+;
+; ALGORITHM (m = 2, 3, 4, ...)
+;   test      trial division of m by d = 2, 3, ... (../legendre's mod walk:
+;             r times advance the D hole cyclically, then R's hole; the D
+;             hole back on cell 1 means d | m). Ends at k1 (composite) or
+;             sh6 (r = 0: m is prime).
+;   countdown composite: scan left to the U/T separator (the second 00) and
+;             move it one cell right; T now empty: HALT. Prime: a parser
+;             crosses D's hole, the same scan, then the separator is filled
+;             and written again at U's left end (|T| = t).
+;   phase     a parser finds H's hole and moves it two cells right. If it
+;             would leave H: H's last cell joins the separator, whose last
+;             cell becomes U's new cell 0 (t + 1 for U + T), and two new
+;             cells on H's left hold the new hole at cell 1.
+;   next m    a parser finds D's hole; D := 2, R := m - 1 (a cell more).
+;   seed      write m = 2: 1011 00 00 111 00 1011 00 11, left to right.
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0  seed: write 1 and step right
+; ma4    advance the D hole: make the new hole, then go to R's hole (PR)
+; maw3   wrap around: new hole at cell 1, then go to R's hole (PR)
+start_ma4_maw3
+    0 1 R maw1                 ; [seed0]
+    1 0 R PR1                  ; [ma4, maw3]
+
+; ---------- TEST: trial division of m = d + r ---------------------------
+
+; seed19 seed: write 1 and step right
+; ma1    advance the D hole: fill it
+; sh4    test start: step over cell 0 of R
+ma1_sh4
+    0 1 R ma2                  ; [seed19, ma1]
+    1 1 R sh5                  ; [sh4]
+; seed20 seed: R's cell 1, then the test (sh6): m = 2 is prime
+; ma2    advance the D hole: step over the next cell
+ma2
+    0 1 R sh6_PC2              ; [seed20]
+    1 1 R ma3                  ; [ma2]
+; ma3    advance the D hole: is that cell the last one of D? 0: yes, wrap around
+ma3
+    0 0 L maw1                 ; [ma3]
+    1 1 L start_ma4_maw3       ; [ma3]
+; seed1  seed: write 0 and step right
+; maw1   wrap around: run left to the start of D
+maw1
+    0 0 R maw2                 ; [seed1, maw1]
+    1 1 L maw1                 ; [maw1]
+; seed2  seed: write 1 and step right
+; maw2   wrap around: step over cell 0
+maw2
+    0 1 R sh1_a1               ; [seed2]
+    1 1 R start_ma4_maw3       ; [maw2]
+; PR1    scan right to the next hole, then advance R's hole (ra1)
+PR1
+    0 0 R PR2                  ; [PR1]
+    1 1 R PR1                  ; [PR1]
+; PR2    scan right to the next hole, then advance R's hole (ra1)
+PR2
+    0 0 R PR1                  ; [PR2]
+    1 1 L ra1_k2               ; [PR2]
+; seed8  seed: write 1 and step right
+; ra1    advance R's hole: fill it
+; k2     not a divisor: step right
+ra1_k2
+    0 1 R ra2                  ; [seed8, ra1]
+    1 1 R k3_a5                ; [k2]
+; seed9  seed: write 1 and step right
+; ra2    advance R's hole: step over the next cell
+ra2
+    0 1 R rs3                  ; [seed9]
+    1 1 R ra3                  ; [ra2]
+; ra3    advance R's hole: last cell of R? 0: yes, the walk is over: test the D hole (PK)
+ra3
+    0 0 L PK1                  ; [ra3]
+    1 1 L ra4_sh7_x0           ; [ra3]
+; ra4    advance R's hole: make the new hole, then back to the D hole (PM)
+; sh7    make R's hole at cell 1, then start the mod walk (PM)
+; x0     prime: step over the T/D separator's right cell
+ra4_sh7_x0
+    0 0 L x1                   ; [x0]
+    1 0 L PM1                  ; [ra4, sh7]
+; PM1    scan left to the next hole, then advance the D hole (ma1)
+PM1
+    0 0 L PM2                  ; [PM1]
+    1 1 L PM1                  ; [PM1]
+; PM2    scan left to the next hole, then advance the D hole (ma1)
+PM2
+    0 0 L PM1                  ; [PM2]
+    1 1 R ma1_sh4              ; [PM2]
+; PK1    scan left to the next hole, then test whether the hole is at cell 1 (k1)
+PK1
+    0 0 L PK2                  ; [PK1]
+    1 1 L PK1                  ; [PK1]
+; PK2    scan left to the next hole, then test whether the hole is at cell 1 (k1)
+PK2
+    0 0 L PK1                  ; [PK2]
+    1 1 L k1                   ; [PK2]
+; k1     divisor test: 0: the D hole is at cell 1, d | m: composite (y1); 1: no (k2)
+k1
+    0 0 L y1                   ; [k1]
+    1 1 R ra1_k2               ; [k1]
+; k3     not a divisor: fill the D hole
+; a5     phase: the new hole, then to D's hole (PN)
+k3_a5
+    0 1 L rs1                  ; [k3]
+    1 0 R PN1                  ; [a5]
+; seed11 seed: write 0 and step right
+; rs1    reset: run left to the start of D
+rs1
+    0 0 R rs2                  ; [seed11, rs1]
+    1 1 L rs1                  ; [rs1]
+; seed12 seed: write 0 and step right
+; rs2    reset: step over cell 0
+rs2
+    0 0 R y2                   ; [seed12]
+    1 1 R rs3                  ; [rs2]
+; seed10 seed: write 1 and step right
+; rs3    reset: new hole at cell 1, then shift (sh1)
+rs3
+    0 1 R rs1                  ; [seed10]
+    1 0 R sh1_a1               ; [rs3]
+; seed3  seed: write 1 and step right
+; sh1    shift: run right to the end of D
+; a1     phase: fill H's hole
+sh1_a1
+    0 1 R sh2_a2               ; [seed3, sh1, a1]
+    1 1 R sh1_a1               ; [sh1]
+; seed4  seed: write 0 and step right
+; sh2    shift: d + 1 (fill the first separator cell)
+; a2     phase: step over the next cell
+sh2_a2
+    0 0 R sh3_c8               ; [seed4, sh2]
+    1 1 R a3                   ; [a2]
+; seed5  seed: write 0 and step right
+; sh3    shift: r - 1 (erase cell 0 of R)
+; c8     rebuild: separator after D, then the test (sh4)
+sh3_c8
+    0 0 R f3                   ; [seed5]
+    1 0 R ma1_sh4              ; [sh3, c8]
+; seed16 seed: write 1 and step right
+; sh5    test start: step over cell 1 of R
+sh5
+    0 1 R c4                   ; [seed16]
+    1 1 R sh6_PC2              ; [sh5]
+; sh6    test start: does R have a cell 2? 0: no, r = 0, m is prime (PC); 1: yes
+; PC2    scan left to the next hole, then step left (x0): D's hole crossed
+sh6_PC2
+    0 0 L PC1                  ; [sh6, PC2]
+    1 1 L ra4_sh7_x0           ; [sh6, PC2]
+
+; ---------- COMPOSITE: the U/T separator one cell right, or HALT --------
+
+; y1     composite: scan left for a 00 (the T/D separator's cell is skipped)
+y1
+    0 0 L y2                   ; [y1]
+    1 1 L y1                   ; [y1]
+; seed13 seed: write 1 and step right
+; y2     composite: after a 0: 1: T's cells go on; 0: the U/T separator, fill its left cell
+y2
+    0 1 R z1_c6                ; [seed13, y2]
+    1 1 L y1                   ; [y2]
+; seed14 seed: write 0 and step right
+; z1     composite: the separator's right cell stays 0
+; c6     rebuild: step over cell 3 (D := 2)
+z1_c6
+    0 0 R z2                   ; [seed14, z1]
+    1 1 R c2_c7                ; [c6]
+; seed15 seed: write 1 and step right
+; z2     composite: erase T's cell 0 (the separator moves right)
+z2
+    0 1 R sh5                  ; [seed15]
+    1 0 R z3                   ; [z2]
+; z3     composite: T's next cell; 0: T is empty, HALT; 1: to H (PH1)
+z3
+    0 0 R halt                 ; [z3]
+    1 1 L PH1                  ; [z3]
+
+; ---------- PRIME: the U/T separator back to U's left end ---------------
+
+; PC1    scan left to the next hole, then step left (x0): D's hole crossed
+PC1
+    0 0 L sh6_PC2              ; [PC1]
+    1 1 L PC1                  ; [PC1]
+; x1     prime: scan left for a 00
+x1
+    0 0 L x2                   ; [x1]
+    1 1 L x1                   ; [x1]
+; x2     prime: after a 0: 1: T's cells go on; 0: the U/T separator, fill its left cell
+x2
+    0 1 R f2_f5                ; [x2]
+    1 1 L x1                   ; [x2]
+; f2     prime: fill the separator's right cell
+; f5     prime: the new U/T separator, right cell, then to H (PH2)
+f2_f5
+    0 1 L f3                   ; [f2]
+    1 0 L PH2                  ; [f5]
+; seed6  seed: write 0 and step right
+; f3     prime: run left over U to the H/U separator
+f3
+    0 0 R f4                   ; [seed6, f3]
+    1 1 L f3                   ; [f3]
+; seed7  seed: write 0 and step right
+; f4     prime: the new U/T separator, left cell (U empty)
+f4
+    0 0 R ra1_k2               ; [seed7]
+    1 0 R f2_f5                ; [f4]
+
+; ---------- PHASE: H's hole two cells on, or H and U grow ---------------
+
+; PH1    scan left to the next hole, then advance H's hole by two (a1)
+PH1
+    0 0 L PH2                  ; [PH1]
+    1 1 L PH1                  ; [PH1]
+; PH2    scan left to the next hole, then advance H's hole by two (a1)
+PH2
+    0 0 L PH1                  ; [PH2]
+    1 1 R sh1_a1               ; [PH2]
+; a3     phase: next cell; 0: off H, wrap (w1)
+a3
+    0 0 R w1                   ; [a3]
+    1 1 R a4                   ; [a3]
+; a4     phase: next cell; 0: off H, wrap (w1); 1: back one cell
+a4
+    0 0 R w1                   ; [a4]
+    1 1 L k3_a5                ; [a4]
+; w1     wrap: the separator's last cell becomes U's cell 0
+w1
+    0 1 L w2_w4                ; [w1]
+    -
+; w2     wrap: step over the separator's first cell
+; w4     wrap: run left over H; at the blank: new cell 1, the hole (stays 0)
+w2_w4
+    0 0 L w3_w5                ; [w2, w4]
+    1 1 L w2_w4                ; [w4]
+; w3     wrap: H's last cell becomes the separator's first
+; w5     wrap: new cell 0
+w3_w5
+    0 1 R wh_PN2               ; [w5]
+    1 0 L w2_w4                ; [w3]
+; wh     wrap: step over the new hole, then to D's hole (PN)
+; PN2    scan right to the next hole, then rebuild (c1)
+wh_PN2
+    0 0 R PN1                  ; [wh, PN2]
+    1 1 R c1                   ; [PN2]
+
+; ---------- NEXT m: D := 2, R := m - 1 ----------------------------------
+
+; PN1    scan right to the next hole, then rebuild (c1)
+PN1
+    0 0 R wh_PN2               ; [PN1]
+    1 1 R PN1                  ; [PN1]
+; c1     rebuild: run right to the end of D, fill the separator cell
+c1
+    0 1 R c2_c7                ; [c1]
+    1 1 R c1                   ; [c1]
+; c2     rebuild: fill the other separator cell
+; c7     rebuild: separator after D
+c2_c7
+    0 1 R c3                   ; [c2]
+    1 0 R sh3_c8               ; [c7]
+; c3     rebuild: run right to the end of R, a cell after it
+c3
+    0 1 L c4                   ; [c3]
+    1 1 R c3                   ; [c3]
+; seed17 seed: write 0 and step right
+; c4     rebuild: run left to the D hole
+c4
+    0 0 R c5                   ; [seed17, c4]
+    1 1 L c4                   ; [c4]
+; seed18 seed: write 0 and step right
+; c5     rebuild: step over cell 2
+c5
+    0 0 R ma1_sh4              ; [seed18]
+    1 1 R z1_c6                ; [c5]

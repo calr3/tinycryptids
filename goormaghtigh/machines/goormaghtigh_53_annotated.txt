@@ -1,0 +1,305 @@
+; ============================================================================
+; A 53-state, 2-symbol Turing machine that HALTS IFF THE GOORMAGHTIGH
+; CONJECTURE IS FALSE, i.e. iff some value other than 31 and 8191 is a repunit
+; 1 + x + ... + x^(m-1) = 1 + y + ... + y^(n-1) with 1 < y < x and m, n > 2.
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/Goormaghtigh/M53.lean,
+; theorem TM.Goormaghtigh.M53.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 73-state design of build.py / goormaghtigh.txt with
+;   states merged. States are merged only when their defined transitions agree,
+;   so each state below plays one or more ROLES of the design (its name joins
+;   them). Each transition line is tagged [role] with the role(s) that use it.
+;   A '-' line is never used. The seed roles run once at the start and only
+;   ever read 0, so each of them doubles as a step of some other routine.
+;
+; THE SEARCH: for V = 4, 5, ... and each base b = 2 .. V-2, walk
+;   r = 1, b+1, b^2+b+1, ... (r := r*b + 1) while r < V. A HIT is r = V: V is
+;   a repunit in base b (of length >= 3, as b <= V-2). V is BAD if it has two
+;   hits. 31 and 8191 are the first two bad values; the machine halts at the
+;   third, so it needs neither constant.
+;
+; TAPE LAYOUT (blank on both sides):
+;
+;      F 0^(1+f) Vb 00 Rg
+;
+;   F   the countdown: 4 - g - f cells, g = bad values so far, f = min(hits of
+;       this V, 2): a hit erases F's last cell while f < 2
+;   Vb  V cells; the base hole K has b cells to its right. During a step the
+;       pass cursor P runs from K+2 to Vb's last cell (b - 1 passes)
+;   Rg  V+1 cells: R (r cells) H D (V - r cells). A step turns H into the
+;       marker M and punches a new H on D's first cell; in each pass the copy
+;       cursor C walks R and moves H one cell right per cell of R (a tick).
+;       Filling M then gives R = r*b + 1 cells. H past the region's end:
+;       overflow (r*b + 1 > V); H on its last cell after a step: a hit.
+;
+; ROUTINES
+;   step      X: D empty? hit. Else H -> M, new H; to K, punch P at K+2;
+;             passes (C walks R, ticks move H); P moves after each pass;
+;             P falls off Vb: merge (fill M), back to X.
+;   overflow  fill M, C, P, K; next base.
+;   hit       fill H; past K to the run before Vb: f := min(f + 1, 2)
+;             (erase F's last cell if f < 2); back to K, fill it; next base.
+;   next base K moves one cell left (b + 1); R = 1, H, D = V - 1. If K was on
+;             Vb's cell 1: next value.
+;   next V    Vb grows on the left; F gets its f cells back (one fewer after
+;             a bad V: if F is then empty, HALT) and moves one cell left; K on
+;             Vb's cell V-2 (b = 2); the region grows by one cell.
+;   seed      writes F (4 cells) 0 1111 00 1111, the tape of V = 3 in the
+;             middle of its next-value step.
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0  seed: write 1 and step left
+; K4     next base: punch the new K
+start_K4
+    0 1 L SF                   ; [seed0]
+    1 0 R KR1                  ; [K4]
+
+; ---------- STEP: r := r*b + 1, check r = V -----------------------------
+
+; X      step check, on the cell after H: 1: D is not empty, start a step (H becomes M, new H here); 0: a hit
+X
+    0 0 L Y0                   ; [X]
+    1 0 L SA                   ; [X]
+; SA     step start: step left over M
+SA
+    0 0 L SB                   ; [SA]
+    -
+; SB     step start: run left over R
+SB
+    0 0 L SC                   ; [SB]
+    1 1 L SB                   ; [SB]
+; SC     step start: the separator
+SC
+    0 0 L SD                   ; [SC]
+    -
+; SD     step start: run left over Vb to K
+SD
+    0 0 R SE                   ; [SD]
+    1 1 L SD                   ; [SD]
+; seed12 seed: write 1 and step left
+; SE     step start: step over K+1
+SE
+    0 1 L V3                   ; [seed12]
+    1 1 R SF                   ; [SE]
+; seed1  seed: write 1 and step left
+; SF     step start: punch P on K+2 (the first pass)
+SF
+    0 1 L O1                   ; [seed1]
+    1 0 R G1                   ; [SF]
+; G1     pass: run right over Vb to the separator
+G1
+    0 0 R G2_PT                ; [G1]
+    1 1 R G1                   ; [G1]
+; G2     pass: the separator
+; PT     pass done: 1: P moves here, next pass; 0: P was on Vb's last cell: merge
+G2_PT
+    0 0 R G3_MU                ; [G2, PT]
+    1 0 R G1                   ; [PT]
+; G3     pass: punch C on R's first cell
+; MU     merge: the separator
+G3_MU
+    0 0 R MV                   ; [MU]
+    1 0 R TJ                   ; [G3]
+; TJ     tick: run right over R to M
+TJ
+    0 0 R TK                   ; [TJ]
+    1 1 R TJ                   ; [TJ]
+; TK     tick: run right over Q to H, fill it
+TK
+    0 1 R TL                   ; [TK]
+    1 1 R TK                   ; [TK]
+; TL     tick: 1: punch the new H, back; 0: H was on the region's last cell: overflow
+TL
+    0 0 L O1                   ; [TL]
+    1 0 L TM                   ; [TL]
+; TM     tick: run left over Q to M
+TM
+    0 0 L TN                   ; [TM]
+    1 1 L TM                   ; [TM]
+; TN     tick: run left over R to C, fill it
+TN
+    0 1 R TO                   ; [TN]
+    1 1 L TN                   ; [TN]
+; TO     tick: 1: C moves here, next tick; 0: this is M: the pass is done
+TO
+    0 0 L PQ                   ; [TO]
+    1 0 R TJ                   ; [TO]
+; PQ     pass done: run left over R
+PQ
+    0 0 L PR                   ; [PQ]
+    1 1 L PQ                   ; [PQ]
+; PR     pass done: the separator
+PR
+    0 0 L PS                   ; [PR]
+    -
+; PS     pass done: run left over Vb to P, fill it
+PS
+    0 1 R G2_PT                ; [PS]
+    1 1 L PS                   ; [PS]
+; MV     merge: run right over R to M, fill it
+MV
+    0 1 R MW                   ; [MV]
+    1 1 R MV                   ; [MV]
+; MW     merge: run right over Q to H, then check (X)
+MW
+    0 0 R X                    ; [MW]
+    1 1 R MW                   ; [MW]
+
+; ---------- OVERFLOW: clean up, to K ------------------------------------
+
+; seed2  seed: write 1 and step left
+; O1     overflow: run left over Q to M, fill it
+O1
+    0 1 L O2                   ; [seed2, O1]
+    1 1 L O1                   ; [O1]
+; seed3  seed: write 1 and step left
+; O2     overflow: run left over R to C, fill it
+O2
+    0 1 L O3                   ; [seed3, O2]
+    1 1 L O2                   ; [O2]
+; seed4  seed: write 0 and step left
+; O3     overflow: run left over R
+O3
+    0 0 L O4_H2                ; [seed4, O3]
+    1 1 L O3                   ; [O3]
+; seed5  seed: write 0 and step left
+; O4     overflow: the separator
+; H2     reset the region: punch H on cell 1, then the step check (X)
+O4_H2
+    0 0 L O5                   ; [seed5, O4]
+    1 0 R X                    ; [H2]
+; seed6  seed: write 1 and step left
+; O5     overflow: run left over Vb to P, fill it
+O5
+    0 1 L O6                   ; [seed6, O5]
+    1 1 L O5                   ; [O5]
+; seed7  seed: write 1 and step left
+; O6     to K: run left over Vb, fill K, then the next base (K2)
+O6
+    0 1 L K2                   ; [seed7, O6]
+    1 1 L O6                   ; [O6]
+
+; ---------- HIT: count it in F ------------------------------------------
+
+; Y0     hit: fill H
+Y0
+    0 1 L A1                   ; [Y0]
+    -
+; A1     hit: run left over the region
+A1
+    0 0 L A2                   ; [A1]
+    1 1 L A1                   ; [A1]
+; A2     hit: the separator
+A2
+    0 0 L A3                   ; [A2]
+    -
+; A3     hit: run left over Vb's cells right of K, step over K
+A3
+    0 0 L A4                   ; [A3]
+    1 1 L A3                   ; [A3]
+; A4     hit: run left over Vb's cells left of K
+A4
+    0 0 L A5                   ; [A4]
+    1 1 L A4                   ; [A4]
+; A5     hit: 1: f = 0, erase F's last cell (f = 1); 0: f >= 1
+A5
+    0 0 L A6                   ; [A5]
+    1 0 R B1                   ; [A5]
+; A6     hit: 1: f = 1, erase F's last cell (f = 2); 0: f = 2, nothing
+A6
+    0 0 R B1                   ; [A6]
+    1 0 R B1                   ; [A6]
+; B1     hit: back right over the zeros
+B1
+    0 0 R B1                   ; [B1]
+    1 1 R B2                   ; [B1]
+; B2     hit: run right over Vb to K, fill it, then the next base (K2)
+B2
+    0 1 L K2                   ; [B2]
+    1 1 R B2                   ; [B2]
+
+; ---------- NEXT BASE ---------------------------------------------------
+
+; seed8  seed: write 1 and step left
+; K2     next base: step left from K
+K2
+    0 1 L V4                   ; [seed8]
+    1 1 L K3                   ; [K2]
+; K3     next base: 1: K moves one cell left; 0: K was on Vb's cell 1: next value (Vb grows here)
+K3
+    0 1 L VF1                  ; [K3]
+    1 1 R start_K4             ; [K3]
+; KR1    next base: run right over Vb to the separator
+KR1
+    0 0 R KR2_V5               ; [KR1]
+    1 1 R KR1                  ; [KR1]
+; KR2    next base: the separator
+; V5     next value: run right to the separator
+KR2_V5
+    0 0 R H1_V6                ; [KR2, V5]
+    1 1 R KR2_V5               ; [V5]
+; H1     reset the region: step over R = 1
+; V6     next value: the separator
+H1_V6
+    0 0 R V7                   ; [V6]
+    1 1 R O4_H2                ; [H1]
+
+; ---------- NEXT VALUE: HALT at the third bad value ---------------------
+
+; VF1    next value: 1: f = 0, F's last cell goes; 0: f >= 1
+VF1
+    0 0 L VF2                  ; [VF1]
+    1 0 L VF3                  ; [VF1]
+; VF2    next value: 1: f = 1; 0: f = 2 (a bad value), fill this cell
+VF2
+    0 1 L VFh                  ; [VF2]
+    1 1 L VF3                  ; [VF2]
+; VFh    next value after a bad value: 0: F is empty: the third bad value, HALT
+VFh
+    0 0 R halt                 ; [VFh]
+    1 1 R VR1                  ; [VFh]
+; seed14 seed: write 1 and step right
+; VF3    next value: run left over F, one more cell at its left end
+VF3
+    0 1 R VR1                  ; [seed14, VF3]
+    1 1 L VF3                  ; [VF3]
+; VR1    next value: run right over F
+VR1
+    0 0 R VR2                  ; [VR1]
+    1 1 R VR1                  ; [VR1]
+; seed10 seed: write 0 and step left
+; VR2    next value: run right over Vb to the separator
+VR2
+    0 0 L V2                   ; [seed10, VR2]
+    1 1 R VR2                  ; [VR2]
+; seed11 seed: write 1 and step left
+; V2     next value: step left
+V2
+    0 1 L SE                   ; [seed11]
+    1 1 L V3                   ; [V2]
+; seed13 seed: write 1 and step left
+; V3     next value: step left
+V3
+    0 1 L VF3                  ; [seed13]
+    1 1 L V4                   ; [V3]
+; seed9  seed: write 1 and step left
+; V4     next value: punch K on Vb's third cell from the right (b = 2)
+V4
+    0 1 L VR2                  ; [seed9]
+    1 0 R KR2_V5               ; [V4]
+; V7     next value: run right over the region, one more cell at its end
+V7
+    0 1 L V14                  ; [V7]
+    1 1 R V7                   ; [V7]
+; V14    next value: run left over the region, then reset it (H1)
+V14
+    0 0 R H1_V6                ; [V14]
+    1 1 L V14                  ; [V14]

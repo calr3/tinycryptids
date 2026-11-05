@@ -1,0 +1,540 @@
+; ============================================================================
+; A 106-state, 2-symbol Turing machine that HALTS IFF THE FEIT-THOMPSON
+; CONJECTURE FAILS: iff there are distinct primes p, q with rep p q | rep q p,
+; where rep b n = 1 + b + ... + b^(n-1). It tests rep m p | rep p m for every
+; prime m and every prime p < m (equivalent: Lean's ft_iff).
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/FeitThompson/M106.lean,
+; theorem TM.FeitThompson.M106.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 149-state design of build.py / feitthompson.txt with
+;   states merged. States are merged only when their defined transitions
+;   agree, so each state below plays one or more ROLES of the design (its name
+;   joins them). Each transition line is tagged [role] with the role(s) that
+;   use it. A '-' line is never used. The seed roles run once at the start and
+;   only ever read 0, so each of them doubles as a step of some other routine.
+;
+; TAPE LAYOUT
+;
+;      L 00 P0 00 P1 00 ... 00 Pk 00 M [00 A [00 B]]
+;
+;   A block holding v has v + 2 cells; cells 1..v are the positions of a
+;   CYCLIC HOLE (a single 0). Advancing the hole moves it one cell right, from
+;   cell v back to cell 1 (a wrap).
+;   L, M  the candidate m, each with a hole (at cell 1 at rest).
+;   P0    111: the value 1. P1 < ... < Pk: the primes < m. These blocks are
+;         full except the MARKER (a hole at cell 1) of the block being visited.
+;   A, B  the work blocks of a pair test: A = rep p m, B = rep m p.
+;
+; ALGORITHM (candidate m = 3, 4, 5, ...)
+;   trial   for the marked Pi (i = 1..k): CYC(Pi, L): L's hole goes round once,
+;           Pi's hole advances before each of its m steps, so it is back at
+;           cell 1 iff Pi | m. Composite: M += 1, L += 1, marker on P1, again.
+;           Else the marker moves right; on M (M's hole at cell 1): m is prime.
+;   pairs   for the marked Pi (i = k..1), at the right end:
+;           Horner H1 (skip M, base Pi, exponent L): A = rep p m;
+;           Horner H2 (skip A, base M, exponent Pi): B = rep m p;
+;           CYC(B, A): B | A: HALT. Else erase A and B, marker one block left.
+;   P0      Horner H1 with base P0 writes rep 1 m = m: the next M. The old M
+;           (a prime) joins the list; as for a composite, M += 1, L += 1.
+;   Horner  pushes R = 101 and finds holes from the right: one skipped, the
+;           base b, the exponent e; e - 1 rounds R := b R + 1 (b - 1 copies of
+;           R after a '00', then the '00' filled and one cell erased).
+;   seed    writes m = 2 (no primes, the marker on P0) and starts its P0 step.
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0  seed: write 1 and step right
+; c6     copy: run left to the cursor and fill it
+start_c6
+    0 1 R a2                   ; [seed0, c6]
+    1 1 L start_c6             ; [c6]
+
+; ---------- CYC(counter, cycled): counter | |cycled| ? ------------------
+
+; seed3  seed: write 1 and step right
+; ca1    advance the counter hole: fill it
+; t2     test: run left over B to its hole; advance it (as ca1, then ca2)
+ca1_t2
+    0 1 R ca2                  ; [seed3, ca1, t2]
+    1 1 L ca1_t2               ; [t2]
+; seed4  seed: write 0 and step right
+; ca2    advance the counter hole: step right
+ca2
+    0 0 R ca5                  ; [seed4]
+    1 1 R ca3                  ; [ca2]
+; ca3    advance the counter hole: 1: not its last cell; 0: it was, wrap
+ca3
+    0 0 L ca5                  ; [ca3]
+    1 1 L ca4_ca7              ; [ca3]
+; seed2  seed: write 1 and step right
+; ca4    advance the counter hole: the new hole, then back to the cycled block (PC)
+; ca7    wrap the counter hole: the new hole at cell 1, then back to the cycled block (PC)
+ca4_ca7
+    0 1 R ca1_t2               ; [seed2]
+    1 0 L PC1                  ; [ca4, ca7]
+; seed5  seed: write 0 and step right
+; ca5    wrap the counter hole: run left over the block
+ca5
+    0 0 R ca6                  ; [seed5, ca5]
+    1 1 L ca5                  ; [ca5]
+; seed6  seed: write 1 and step right
+; ca6    wrap the counter hole: step over cell 0
+ca6
+    0 1 R cy5                  ; [seed6]
+    1 1 R ca4_ca7              ; [ca6]
+; PC1    scan left to the next hole, then advance the cycled hole (cy)
+PC1
+    0 0 L PC2                  ; [PC1]
+    1 1 L PC1                  ; [PC1]
+; PC2    scan left to the next hole, then advance the cycled hole (cy)
+PC2
+    0 0 L PC1                  ; [PC2]
+    1 1 R cy1_d2               ; [PC2]
+; seed13 seed: write 1 and step right
+; cy1    advance the cycled hole: fill it
+; d2     one copy done: step over cell 0 of R
+cy1_d2
+    0 1 R cy2                  ; [seed13, cy1]
+    1 1 R d3_pz3               ; [d2]
+; seed14 seed: write 1 and step right
+; cy2    advance the cycled hole: step right
+cy2
+    0 1 R pw1                  ; [seed14]
+    1 1 R cy3                  ; [cy2]
+; cy3    advance the cycled hole: 1: not its last cell; 0: it was, wrap
+cy3
+    0 0 L cy5                  ; [cy3]
+    1 1 L cy4_k1               ; [cy3]
+; cy4    advance the cycled hole: the new hole, then the next counter step (PN)
+; k1     check: fill the counter hole
+cy4_k1
+    0 1 L k2_hd2               ; [k1]
+    1 0 R PN1                  ; [cy4]
+; seed7  seed: write 0 and step right
+; cy5    wrap the cycled hole: run left over the block
+cy5
+    0 0 R cy6                  ; [seed7, cy5]
+    1 1 L cy5                  ; [cy5]
+; seed8  seed: write 1 and step right
+; cy6    wrap the cycled hole: step over cell 0
+cy6
+    0 1 R hd1                  ; [seed8]
+    1 1 R cy7_kn4              ; [cy6]
+; cy7    wrap the cycled hole: the new hole at cell 1, then the round is over (PK)
+; kn4    does not divide: the separator
+cy7_kn4
+    0 0 R kn5                  ; [kn4]
+    1 0 R PK1                  ; [cy7]
+; PN1    scan right to the next hole, then advance the counter hole (ca)
+PN1
+    0 0 R PN2                  ; [PN1]
+    1 1 R PN1                  ; [PN1]
+; PN2    scan right to the next hole, then advance the counter hole (ca)
+PN2
+    0 0 R PN1                  ; [PN2]
+    1 1 L ca1_t2               ; [PN2]
+; PK1    scan right to the next hole, then check the counter hole (k1)
+PK1
+    0 0 R PK2                  ; [PK1]
+    1 1 R PK1                  ; [PK1]
+; PK2    scan right to the next hole, then check the counter hole (k1)
+PK2
+    0 0 R PK1                  ; [PK2]
+    1 1 L cy4_k1               ; [PK2]
+; seed10 seed: write 0 and step right
+; k2     check: step left
+; hd2    Horner done: the separator
+k2_hd2
+    0 0 R hd3                  ; [seed10, hd2]
+    1 1 L k3                   ; [k2]
+; k3     check: 0: the hole was at cell 1, the counter divides (kd); 1: it does not (kn)
+k3
+    0 0 R kd3                  ; [k3]
+    1 1 R kn3                  ; [k3]
+; kd3    divides: run right over the counter
+kd3
+    0 0 R kd4_ba4              ; [kd3]
+    1 1 R kd3                  ; [kd3]
+; kd4    divides: the separator
+; ba4    advance the base hole: the new hole, then one more copy: to R (MC)
+kd4_ba4
+    0 0 R kd5                  ; [kd4]
+    1 0 R MC1                  ; [ba4]
+; kd5    divides: 0: no block follows (the pair test): HALT; 1: Pi | m, composite (PM)
+kd5
+    0 0 R halt                 ; [kd5]
+    1 1 R PM1                  ; [kd5]
+; kn3    does not divide: run right over the block
+kn3
+    0 0 R cy7_kn4              ; [kn3]
+    1 1 R kn3                  ; [kn3]
+; kn5    does not divide: 0: no block follows (pair test failed, cl); 1: the next block
+kn5
+    0 0 L cl1                  ; [kn5]
+    1 1 R kn6                  ; [kn5]
+; kn6    next block, cell 1: 1: a list block, mark it, trial (ca2); 0: M: m is prime (rt1)
+kn6
+    0 0 L rt1                  ; [kn6]
+    1 1 R ca2                  ; [kn6]
+
+; ---------- NEXT CANDIDATE: M += 1, L += 1 ------------------------------
+
+; PM1    scan right to the next hole, then run right over M (ms)
+PM1
+    0 0 R PM2                  ; [PM1]
+    1 1 R PM1                  ; [PM1]
+; PM2    scan right to the next hole, then run right over M (ms)
+PM2
+    0 0 R PM1                  ; [PM2]
+    1 1 R ms                   ; [PM2]
+; ms     composite: M += 1 (a 1 on its right end)
+ms
+    0 1 L PX1                  ; [ms]
+    1 1 R ms                   ; [ms]
+; PX1    scan left to the next hole, then pass the M hole (PY)
+PX1
+    0 0 L PX2                  ; [PX1]
+    1 1 L PX1                  ; [PX1]
+; PX2    scan left to the next hole, then pass the M hole (PY)
+PX2
+    0 0 L PX1                  ; [PX2]
+    1 1 L PY1                  ; [PX2]
+; PY1    scan left to the next hole, then reach the L hole (lp1)
+PY1
+    0 0 L PY2_rt4              ; [PY1]
+    1 1 L PY1                  ; [PY1]
+; PY2    scan left to the next hole, then reach the L hole (lp1)
+; rt4    retreat: step over cell 0
+PY2_rt4
+    0 0 L PY1                  ; [PY2]
+    1 1 R lp1_rt5              ; [PY2, rt4]
+; lp1    L += 1: fill its hole
+; rt5    retreat: mark cell 1 of the previous block, then to the right end (pw)
+lp1_rt5
+    0 1 L lp2_u2               ; [lp1]
+    1 0 R pw1                  ; [rt5]
+; lp2    L += 1: cell 0 becomes the hole
+; u2     step over P0 to P1 and mark it (kn3)
+lp2_u2
+    0 0 R kn3                  ; [u2]
+    1 0 L lp3_ea1_ea7          ; [lp2]
+; lp3    L += 1: a new cell 0 on the left
+; ea1    advance the exponent hole: fill it
+; ea7    wrap the exponent hole: the new hole at cell 1, then the exponent is used up: Horner done (hd)
+lp3_ea1_ea7
+    0 1 R lp4_ea2              ; [lp3, ea1]
+    1 0 R hd1                  ; [ea7]
+; lp4    L += 1: step back right
+; ea2    advance the exponent hole: step right
+lp4_ea2
+    0 0 R u1                   ; [lp4]
+    1 1 R ea3                  ; [ea2]
+; u1     run right over L to the separator
+u1
+    0 0 R lp2_u2               ; [u1]
+    1 1 R u1                   ; [u1]
+
+; ---------- PAIR PASS: retreat, push R ----------------------------------
+
+; rt1    retreat: run left to the separator
+rt1
+    0 0 L rt2_ea4              ; [rt1]
+    1 1 L rt1                  ; [rt1]
+; rt2    retreat: the separator
+; ea4    advance the exponent hole: the new hole, then a round: to the base (MB)
+rt2_ea4
+    0 0 L rt3                  ; [rt2]
+    1 0 R MB1                  ; [ea4]
+; rt3    retreat: run left over the previous block
+rt3
+    0 0 R PY2_rt4              ; [rt3]
+    1 1 L rt3                  ; [rt3]
+; pw1    run right to three 0s in a row
+pw1
+    0 0 R pw2                  ; [pw1]
+    1 1 R pw1                  ; [pw1]
+; pw2    run right to three 0s: one 0 seen
+pw2
+    0 0 R pw3                  ; [pw2]
+    1 1 R pw1                  ; [pw2]
+; pw3    run right to three 0s: two 0s seen; on the third: push R = 101 (pp2)
+pw3
+    0 1 R pp2_hd4              ; [pw3]
+    1 1 R pw1                  ; [pw3]
+; pp2    push R: the hole of R
+; hd4    Horner done: cell 1: 0: the marked P0 (hz5); 1: (hn5)
+pp2_hd4
+    0 0 R pp3_hz5              ; [pp2, hd4]
+    1 1 R c2_hn5               ; [hd4]
+; pp3    push R: the last 1 of R, then find the holes (HE)
+; hz5    Horner done (P0 marked): cell 2
+pp3_hz5
+    0 1 L HE1                  ; [pp3]
+    1 1 R hz6                  ; [hz5]
+
+; ---------- HORNER: R := b R + 1, e - 1 times ---------------------------
+
+; HE1    scan left to the next hole, then R's hole (HF)
+HE1
+    0 0 L HE2                  ; [HE1]
+    1 1 L HE1                  ; [HE1]
+; HE2    scan left to the next hole, then R's hole (HF)
+HE2
+    0 0 L HE1                  ; [HE2]
+    1 1 L HF1                  ; [HE2]
+; HF1    scan left to the next hole, then the skipped hole (HG)
+HF1
+    0 0 L HF2                  ; [HF1]
+    1 1 L HF1                  ; [HF1]
+; HF2    scan left to the next hole, then the skipped hole (HG)
+HF2
+    0 0 L HF1                  ; [HF2]
+    1 1 L HG1                  ; [HF2]
+; HG1    scan left to the next hole, then the base hole (HH)
+HG1
+    0 0 L HG2                  ; [HG1]
+    1 1 L HG1                  ; [HG1]
+; HG2    scan left to the next hole, then the base hole (HH)
+HG2
+    0 0 L HG1                  ; [HG2]
+    1 1 L HH1                  ; [HG2]
+; HH1    scan left to the next hole, then the exponent hole: advance it (ea)
+HH1
+    0 0 L HH2_ea6              ; [HH1]
+    1 1 L HH1                  ; [HH1]
+; HH2    scan left to the next hole, then the exponent hole: advance it (ea)
+; ea6    wrap the exponent hole: step over cell 0
+HH2_ea6
+    0 0 L HH1                  ; [HH2]
+    1 1 R lp3_ea1_ea7          ; [HH2, ea6]
+; ea3    advance the exponent hole: 1: not its last cell; 0: it was, wrap
+ea3
+    0 0 L ea5                  ; [ea3]
+    1 1 L rt2_ea4              ; [ea3]
+; ea5    wrap the exponent hole: run left over the block
+ea5
+    0 0 R HH2_ea6              ; [ea5]
+    1 1 L ea5                  ; [ea5]
+; MB1    scan right to the next hole, then advance the base hole (ba)
+MB1
+    0 0 R MB2                  ; [MB1]
+    1 1 R MB1                  ; [MB1]
+; MB2    scan right to the next hole, then advance the base hole (ba)
+MB2
+    0 0 R MB1                  ; [MB2]
+    1 1 L ba1_mR               ; [MB2]
+; ba1    advance the base hole: fill it
+; mR     merge: fill R's cursor, run right over R
+ba1_mR
+    0 1 R ba2_m2               ; [ba1, mR]
+    1 1 R ba1_mR               ; [mR]
+; ba2    advance the base hole: step right
+; m2     merge: fill the separator
+ba2_m2
+    0 1 R m3                   ; [m2]
+    1 1 R ba3                  ; [ba2]
+; ba3    advance the base hole: 1: not its last cell; 0: it was, wrap
+ba3
+    0 0 L ba5                  ; [ba3]
+    1 1 L kd4_ba4              ; [ba3]
+; ba5    wrap the base hole: run left over the block
+ba5
+    0 0 R ba6_RB2              ; [ba5]
+    1 1 L ba5                  ; [ba5]
+; ba6    wrap the base hole: step over cell 0
+; RB2    scan left to the next hole, then the marker (rf)
+ba6_RB2
+    0 0 L RB1                  ; [RB2]
+    1 1 R ba7_rf               ; [ba6, RB2]
+; ba7    wrap the base hole: the new hole at cell 1, then the base went round: merge (MM)
+; rf     fill the marker, then retreat (rt1)
+ba7_rf
+    0 1 L rt1                  ; [rf]
+    1 0 R MM1                  ; [ba7]
+; MC1    scan right to the next hole, then the skipped hole (MD)
+MC1
+    0 0 R MC2                  ; [MC1]
+    1 1 R MC1                  ; [MC1]
+; MC2    scan right to the next hole, then the skipped hole (MD)
+MC2
+    0 0 R MC1                  ; [MC2]
+    1 1 R MD1                  ; [MC2]
+; MD1    scan right to the next hole, then R's copy cursor: copy one cell (c1)
+MD1
+    0 0 R MD2                  ; [MD1]
+    1 1 R MD1                  ; [MD1]
+; MD2    scan right to the next hole, then R's copy cursor: copy one cell (c1)
+MD2
+    0 0 R MD1                  ; [MD2]
+    1 1 R c1                   ; [MD2]
+; MM1    scan right to the next hole, then the skipped hole (MN)
+MM1
+    0 0 R MM2                  ; [MM1]
+    1 1 R MM1                  ; [MM1]
+; MM2    scan right to the next hole, then the skipped hole (MN)
+MM2
+    0 0 R MM1                  ; [MM2]
+    1 1 R MN1                  ; [MM2]
+; MN1    scan right to the next hole, then R's cursor: merge (mR)
+MN1
+    0 0 R MN2                  ; [MN1]
+    1 1 R MN1                  ; [MN1]
+; MN2    scan right to the next hole, then R's cursor: merge (mR)
+MN2
+    0 0 R MN1                  ; [MN2]
+    1 1 R ba1_mR               ; [MN2]
+; c1     copy: run right over R
+c1
+    0 0 R c2_hn5               ; [c1]
+    1 1 R c1                   ; [c1]
+; c2     copy: the separator
+; hn5    Horner done: cell 2
+c2_hn5
+    0 0 R c3                   ; [c2]
+    1 1 R hn6                  ; [hn5]
+; c3     copy: run right over Q and append a 1
+c3
+    0 1 L c4                   ; [c3]
+    1 1 R c3                   ; [c3]
+; c4     copy: run left over Q
+c4
+    0 0 L c5_m4                ; [c4]
+    1 1 L c4                   ; [c4]
+; c5     copy: the separator
+; m4     merge: erase its last cell, then find the holes again (HE)
+c5_m4
+    0 0 L start_c6             ; [c5]
+    1 0 L HE1                  ; [m4]
+; seed1  seed: write 0 and step right
+; a2     copy: step right
+a2
+    0 0 R ca4_ca7              ; [seed1]
+    1 1 R a3_pz1               ; [a2]
+; a3     copy: 1: the next cursor (a4); 0: R is copied (d1)
+; pz1    P0 done: fill P0's hole
+a3_pz1
+    0 0 L d1                   ; [a3]
+    1 1 L a4_pz2               ; [a3, pz1]
+; a4     copy: the new cursor, copy the next cell (c1)
+; pz2    P0 done: step back right
+a4_pz2
+    0 1 R PO1                  ; [pz2]
+    1 0 R c1                   ; [a4]
+; seed12 seed: write 0 and step right
+; d1     one copy done: run left over R
+d1
+    0 0 R cy1_d2               ; [seed12, d1]
+    1 1 L d1                   ; [d1]
+; d3     one copy done: the cursor at cell 1, back to the base (NB)
+; pz3    P0 done: fill the old M's hole, then M += 1 and L += 1 (PM)
+d3_pz3
+    0 1 R PM1                  ; [pz3]
+    1 0 L NB1                  ; [d3]
+; NB1    scan left to the next hole, then the skipped hole (NC)
+NB1
+    0 0 L NB2                  ; [NB1]
+    1 1 L NB1                  ; [NB1]
+; NB2    scan left to the next hole, then the skipped hole (NC)
+NB2
+    0 0 L NB1                  ; [NB2]
+    1 1 L NC1                  ; [NB2]
+; NC1    scan left to the next hole, then the base hole: advance it (ba)
+NC1
+    0 0 L NC2                  ; [NC1]
+    1 1 L NC1                  ; [NC1]
+; NC2    scan left to the next hole, then the base hole: advance it (ba)
+NC2
+    0 0 L NC1                  ; [NC2]
+    1 1 R ba1_mR               ; [NC2]
+; m3     merge: run right over Q
+m3
+    0 0 L c5_m4                ; [m3]
+    1 1 R m3                   ; [m3]
+
+; ---------- HORNER DONE: H2, the test, or the P0 step -------------------
+
+; seed9  seed: write 0 and step right
+; hd1    Horner done: run right over the exponent
+hd1
+    0 0 R k2_hd2               ; [seed9, hd1]
+    1 1 R hd1                  ; [hd1]
+; seed11 seed: write 1 and step right
+; hd3    Horner done: the next block, cell 0
+hd3
+    0 1 R d1                   ; [seed11]
+    1 1 R pp2_hd4              ; [hd3]
+; hn6    Horner done: 0: the block was P0, the exponent L: H1 done, H2 (pw2); 1: H2 done (tw)
+hn6
+    0 0 R pw2                  ; [hn6]
+    1 1 R tw1                  ; [hn6]
+; hz6    Horner done (P0 marked): 0: H1 for P0 done (pz1); 1: H2 done (tw)
+hz6
+    0 0 L a3_pz1               ; [hz6]
+    1 1 R tw1                  ; [hz6]
+; tw1    run right to three 0s in a row
+tw1
+    0 0 R tw2                  ; [tw1]
+    1 1 R tw1                  ; [tw1]
+; tw2    run right to three 0s: one 0 seen
+tw2
+    0 0 R tw3                  ; [tw2]
+    1 1 R tw1                  ; [tw2]
+; tw3    run right to three 0s: two 0s seen; on the third: the test CYC(B, A) (t1)
+tw3
+    0 0 L t1                   ; [tw3]
+    1 1 R tw1                  ; [tw3]
+; t1     test: run left over the 0s right of B
+t1
+    0 0 L t1                   ; [t1]
+    1 1 L ca1_t2               ; [t1]
+
+; ---------- CLEAN UP after a failed test --------------------------------
+
+; cl1    clean up: run left to B
+cl1
+    0 0 L cl1                  ; [cl1]
+    1 0 L cl3_cl5              ; [cl1]
+; cl3    clean up: erase B
+; cl5    clean up: erase A
+cl3_cl5
+    0 0 L cl4_cl6              ; [cl3, cl5]
+    1 0 L cl3_cl5              ; [cl3, cl5]
+; cl4    clean up: the separator
+; cl6    clean up: A's cell 0
+cl4_cl6
+    0 0 L cl3_cl5              ; [cl4]
+    1 0 L cl7                  ; [cl6]
+; cl7    clean up: run left to M
+cl7
+    0 0 L cl7                  ; [cl7]
+    1 1 L RA1                  ; [cl7]
+; RA1    scan left to the next hole, then past M's hole (RB)
+RA1
+    0 0 L RA2                  ; [RA1]
+    1 1 L RA1                  ; [RA1]
+; RA2    scan left to the next hole, then past M's hole (RB)
+RA2
+    0 0 L RA1                  ; [RA2]
+    1 1 L RB1                  ; [RA2]
+; RB1    scan left to the next hole, then the marker (rf)
+RB1
+    0 0 L ba6_RB2              ; [RB1]
+    1 1 L RB1                  ; [RB1]
+
+; ---------- P0 STEP: the new M ------------------------------------------
+
+; PO1    scan right to the next hole, then the old M's hole (pz3)
+PO1
+    0 0 R PO2                  ; [PO1]
+    1 1 R PO1                  ; [PO1]
+; PO2    scan right to the next hole, then the old M's hole (pz3)
+PO2
+    0 0 R PO1                  ; [PO2]
+    1 1 L d3_pz3               ; [PO2]

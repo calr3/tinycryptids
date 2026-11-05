@@ -1,0 +1,415 @@
+; ============================================================================
+; A 80-state, 2-symbol Turing machine that HALTS IFF CARMICHAEL'S TOTIENT
+; CONJECTURE FAILS: iff some m >= 1 has phi(n) != phi(m) for every n != m.
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/Carmichael/M80.lean, theorem TM.Carmichael.M80.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 117-state design of build.py / carmichael.txt with
+;   states merged. States are merged only when their defined transitions
+;   agree, so each state below plays one or more ROLES of the design (its name
+;   joins them). Each transition line is tagged [role] with the role(s) that
+;   use it. A '-' line is never used.
+;
+; TAPE:  1 K 00 1 R 00 V 1 00 f 0 B 1
+;   K, R: k and r slots (k + r = M), each with one hole (a single 0);
+;   V: v+1 slots, its hole on slot v+1-c after c coprime pairs (none once c > v);
+;   f: one M with phi(M) = v found so far in this window;
+;   B: s slots, its hole moving left one slot per round.
+;
+; SEARCH: for v = 2, 3, ...: for M = 2 .. s+1 count the M with phi(M) = v;
+;   a second one ends the window early; a window with exactly one HALTS
+;   (s + 1 >= 2 v^2, and every n with phi(n) = v has n <= 2 v^2).
+;
+; ROUND (M): for k = 1 .. M-1, r = M-k:
+;   test    ticks advance both holes cyclically; when K's hole wraps (every k
+;           ticks), R's hole at old position 0 -> coprime, at r-1 -> not.
+;           (the walk 0, k, 2k, ... mod r reaches 1 before 0 iff gcd(k, r) = 1)
+;   count   coprime: V's hole one slot left.
+;   shift   (k, r) -> (k+1, r-1), until r = 1.
+;   end     V's hole on slot 1 iff phi(M) = v; flag; B's hole one slot left
+;           (off B: the window is over); V's hole back; (M-1, 1) -> (1, M).
+; NEXT v: V gains a slot, B 4 slots per slot of V, K/R -> (1, 1).
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0  seed: write V
+; SH3    shift: the new separator
+start_SH3
+    0 1 R RW1                      ; [seed0]
+    1 0 L SH4                      ; [SH3]
+
+; ---------- TEST: the walk of R's hole ----------------------------------
+
+; KA     test: find K's hole (going left), advance it
+KA
+    0 1 R KN                       ; [KA]
+    1 1 L KA                       ; [KA]
+; KN     test: K's next cell; 0: off K, wrap
+KN
+    0 0 L KW                       ; [KN]
+    1 0 R TR1                      ; [KN]
+; KW     test: K wraps: left to K's start
+KW
+    0 0 R KW1                      ; [KW]
+    1 1 L KW                       ; [KW]
+; seed2  seed: write V
+; KW1    test: K's start cell
+KW1
+    0 1 R VG4__GB6                 ; [seed2]
+    1 1 R KW2__CV5                 ; [KW1]
+; KW2    test: K's hole on a1, check R
+; CV5    coprime: V's hole
+KW2__CV5
+    0 1 L CV6                      ; [CV5]
+    1 0 R TR2__TC1__GR2            ; [KW2]
+; TR1    test: right across K
+TR1
+    0 0 R TR2__TC1__GR2            ; [TR1]
+    1 1 R TR1                      ; [TR1]
+; TR2    test: the separator
+; TC1    check: right across K
+; GR2    growth: the separator
+TR2__TC1__GR2
+    0 0 R TR3__TC2__GR3            ; [TR2, TC1, GR2]
+    1 1 R TR2__TC1__GR2            ; [TC1]
+; TR3    test: R's start cell
+; TC2    check: the separator
+; GR3    growth: the flag
+TR3__TC2__GR3
+    0 0 R TC3__GR4                 ; [TC2, GR3]
+    1 1 R TR4                      ; [TR3]
+; TC3    check: R's start cell
+; GR4    growth: the cell after it
+TC3__GR4
+    0 0 R GX                       ; [GR4]
+    1 1 R TC4                      ; [TC3]
+; TR4    test: find R's hole, advance it
+TR4
+    0 1 R RN__RW2__RS12            ; [TR4]
+    1 1 R TR4                      ; [TR4]
+; RN     test: R's next cell; 0: off R, wrap
+; RW2    test: R's hole on b1
+; RS12   reset (M-1, 1) -> (1, M)
+RN__RW2__RS12
+    0 0 L RW                       ; [RN]
+    1 0 L GK1                      ; [RN, RW2, RS12]
+; TC4    check: b1: 0 -> coprime
+TC4
+    0 0 R CV1                      ; [TC4]
+    1 1 R TC5                      ; [TC4]
+; TC5    check: find R's hole, advance it
+TC5
+    0 1 R CN                       ; [TC5]
+    1 1 R TC5                      ; [TC5]
+; CN     check: 0: R wraps -> not coprime
+CN
+    0 0 L CW                       ; [CN]
+    1 0 L GK1                      ; [CN]
+; RW     test: R wraps: left to R's start
+RW
+    0 0 R RW1                      ; [RW]
+    1 1 L RW                       ; [RW]
+; seed1  seed: write V
+; RW1    test: R's start cell
+RW1
+    0 1 R KW1                      ; [seed1]
+    1 1 R RN__RW2__RS12            ; [RW1]
+; CW     not coprime: left to R's start
+CW
+    0 0 R CW1__CV2                 ; [CW]
+    1 1 L CW                       ; [CW]
+; CW1    not coprime: R's start cell
+; CV2    coprime: the separator
+CW1__CV2
+    0 0 R CV3                      ; [CV2]
+    1 1 R CW2__BK2                 ; [CW1]
+; CW2    not coprime: R's hole on b1
+; BK2    back: the separator
+CW2__BK2
+    0 0 L BK3                      ; [BK2]
+    1 0 R EC1                      ; [CW2]
+; GK1    test: left across R
+GK1
+    0 0 L GK2__GD3                 ; [GK1]
+    1 1 L GK1                      ; [GK1]
+; GK2    test: the separator
+; GD3    growth done: V's hole on its last slot
+GK2__GD3
+    0 0 L KA                       ; [GK2]
+    1 0 L RS5__GD4                 ; [GD3]
+
+; ---------- COPRIME: count in V -----------------------------------------
+
+; CV1    coprime: right across R
+CV1
+    0 0 R CW1__CV2                 ; [CV1]
+    1 1 R CV1                      ; [CV1]
+; CV3    coprime: find V's hole
+CV3
+    0 0 R CV4                      ; [CV3]
+    1 1 R CV3                      ; [CV3]
+; CV4    coprime: after a 0: 1 -> it was the hole
+CV4
+    0 0 L CVS                      ; [CV4]
+    1 1 L KW2__CV5                 ; [CV4]
+; CV6    coprime: the hole one slot left (0: off V)
+CV6
+    0 0 L CW2__BK2                 ; [CV6]
+    1 0 L BK1                      ; [CV6]
+; CVS    coprime: V has no hole
+CVS
+    0 0 L BK1                      ; [CVS]
+    -
+; BK1    back: left across V
+BK1
+    0 0 L CW2__BK2                 ; [BK1]
+    1 1 L BK1                      ; [BK1]
+; BK3    back: find R's hole
+BK3
+    0 0 R EC1                      ; [BK3]
+    1 1 L BK3                      ; [BK3]
+
+; ---------- SHIFT / END CHECK -------------------------------------------
+
+; EC1    r = 1? (0: round end; 1: shift)
+EC1
+    0 0 R RE1                      ; [EC1]
+    1 0 L SH2                      ; [EC1]
+; SH2    shift: R's new start
+SH2
+    0 1 L start_SH3                ; [SH2]
+    -
+; SH4    shift: the separator
+SH4
+    0 0 L SH5                      ; [SH4]
+    -
+; SH5    shift: K's new slot
+SH5
+    0 1 L KA                       ; [SH5]
+    -
+
+; ---------- ROUND END: match, flag, B -----------------------------------
+
+; RE1    round end: the separator
+RE1
+    0 0 R RE2__RS7                 ; [RE1]
+    -
+; RE2    round end: V's slot 1: 0 -> a match
+; RS7    reset (M-1, 1) -> (1, M)
+RE2__RS7
+    0 1 R MV1__RS8                 ; [RE2, RS7]
+    1 1 R NV1                      ; [RE2]
+; MV1    match: right across V
+; RS8    reset (M-1, 1) -> (1, M)
+MV1__RS8
+    0 0 R MV2__RS9                 ; [MV1, RS8]
+    1 1 R MV1__RS8                 ; [MV1]
+; MV2    match: the separator
+; RS9    reset (M-1, 1) -> (1, M)
+MV2__RS9
+    0 0 R MF__RS10                 ; [MV2, RS9]
+    -
+; MF     match: the flag (1: a second match, next v)
+; RS10   reset (M-1, 1) -> (1, M)
+MF__RS10
+    0 1 R F1c                      ; [MF]
+    1 0 R RS11__VGb                ; [MF, RS10]
+; NV1    no match: right across V, fill its hole
+NV1
+    0 0 R NV2                      ; [NV1]
+    1 1 R NV1                      ; [NV1]
+; NV2    no match: after a 0
+NV2
+    0 0 R NF                       ; [NV2]
+    1 1 L NV3__RT6                 ; [NV2]
+; NV3    no match: fill V's hole
+; RT6    return: V's hole on slot v+1
+NV3__RT6
+    0 1 R NV1                      ; [NV3]
+    1 0 L RT7                      ; [RT6]
+; NF     no match: the flag
+NF
+    0 0 R F0c                      ; [NF]
+    1 1 R F1c                      ; [NF]
+; F0c    flag 0: the cell after it
+F0c
+    0 0 R F0s                      ; [F0c]
+    -
+; F1c    flag 1: the cell after it
+F1c
+    0 0 R F1s                      ; [F1c]
+    -
+; F0s    flag 0: B's slot 1 (0: window over, next v)
+F0s
+    0 0 L RT5__VG1__GB2            ; [F0s]
+    1 1 R BA1__A4                  ; [F0s]
+; F1s    flag 1: B's slot 1 (0: window over, HALT)
+F1s
+    0 0 L halt                     ; [F1s]
+    1 1 R BA1__A4                  ; [F1s]
+; BA1    B: find its hole
+; A4     append: 1 (B's end)
+BA1__A4
+    0 1 L BA2__RT3__A5             ; [BA1, A4]
+    1 1 R BA1__A4                  ; [BA1]
+; BA2    B: the hole one slot left
+; RT3    return: the separator
+; A5     append: back
+BA2__RT3__A5
+    0 0 L RT4__GB1                 ; [RT3, A5]
+    1 0 L RT1                      ; [BA2]
+; RT1    return: left across B
+RT1
+    0 0 L RT2                      ; [RT1]
+    1 1 L RT1                      ; [RT1]
+; RT2    return: the flag
+RT2
+    0 0 L BA2__RT3__A5             ; [RT2]
+    1 1 L BA2__RT3__A5             ; [RT2]
+; RT4    return: the separator
+; GB1    growth: left across B
+RT4__GB1
+    0 0 L RT5__VG1__GB2            ; [RT4, GB1]
+    1 1 L RT4__GB1                 ; [GB1]
+; RT5    return: V's end cell
+; VG1    next v: left over the separator
+; GB2    growth: the flag
+RT5__VG1__GB2
+    0 0 L VG2__GB3__GD1            ; [VG1, GB2]
+    1 1 L NV3__RT6                 ; [RT5]
+; RT7    return: left across V
+RT7
+    0 0 L RT8__EI1                 ; [RT7]
+    1 1 L RT7                      ; [RT7]
+; RT8    return: the separator
+; EI1    K/R -> (1, 1): b1
+RT8__EI1
+    0 0 L RS1__EI2                 ; [RT8, EI1]
+    -
+
+; ---------- RESET (M-1, 1) -> (1, M) ------------------------------------
+
+; RS1    reset (M-1, 1) -> (1, M)
+; EI2    K/R -> (1, 1): R's start
+RS1__EI2
+    0 1 L RS2__EI3                 ; [RS1, EI2]
+    1 1 L RS2__EI3                 ; [EI2]
+; RS2    reset (M-1, 1) -> (1, M)
+; EI3    K/R -> (1, 1): the separator
+RS2__EI3
+    0 0 L EI4                      ; [EI3]
+    1 1 L RS3                      ; [RS2]
+; RS3    reset (M-1, 1) -> (1, M)
+RS3
+    0 1 L RS4                      ; [RS3]
+    -
+; RS4    reset (M-1, 1) -> (1, M)
+RS4
+    0 1 L RS5__GD4                 ; [RS4]
+    -
+; RS5    reset (M-1, 1) -> (1, M)
+; GD4    growth done: left across V
+RS5__GD4
+    0 0 L RS6__GD5                 ; [RS5, GD4]
+    1 1 L RS5__GD4                 ; [RS5, GD4]
+; RS6    reset (M-1, 1) -> (1, M)
+; GD5    growth done: the separator
+RS6__GD5
+    0 0 L RT8__EI1                 ; [GD5]
+    1 0 L RE2__RS7                 ; [RS6]
+; RS11   reset (M-1, 1) -> (1, M)
+; VGb    second match: the cell after the flag
+RS11__VGb
+    0 0 R VGc                      ; [VGb]
+    1 1 R RN__RW2__RS12            ; [RS11]
+
+; ---------- NEXT v ------------------------------------------------------
+
+; VGc    second match: B's slot 1 joins the separator
+VGc
+    0 0 L RT5__VG1__GB2            ; [VGc]
+    1 0 L RT5__VG1__GB2            ; [VGc]
+; VG2    next v: the flag
+; GB3    growth: the separator
+; GD1    growth done: right across V
+VG2__GB3__GD1
+    0 0 L VG3__GB4__GD2            ; [VG2, GB3, GD1]
+    1 1 R VG2__GB3__GD1            ; [GD1]
+; VG3    next v: the separator
+; GB4    growth: the separator
+; GD2    growth done: V's end cell
+VG3__GB4__GD2
+    0 0 L VG4__GB6                 ; [VG3, GB4]
+    1 1 L GK2__GD3                 ; [GD2]
+; VG4    next v: V's new end cell
+; GB6    growth: find the cursor
+VG4__GB6
+    0 1 L VG5__GB7                 ; [VG4, GB6]
+    1 1 L VG4__GB6                 ; [GB6]
+; VG5    next v: V's new slot, the cursor
+; GB7    growth: the cursor one slot left (0: off V, done)
+VG5__GB7
+    0 0 R VG2__GB3__GD1            ; [GB7]
+    1 0 R GR1                      ; [VG5, GB7]
+; GR1    growth: right across V
+GR1
+    0 0 R TR2__TC1__GR2            ; [GR1]
+    1 1 R GR1                      ; [GR1]
+; GX     growth: right across B, filling its hole
+GX
+    0 0 R GY                       ; [GX]
+    1 1 R GX                       ; [GX]
+; GY     growth: after a 0 (0: past B's end)
+GY
+    0 0 L A1                       ; [GY]
+    1 1 L GF                       ; [GY]
+; GF     growth: fill B's hole
+GF
+    0 1 R GX                       ; [GF]
+    -
+; A1     append: 1
+A1
+    0 1 R A2                       ; [A1]
+    -
+; A2     append: 1
+A2
+    0 1 R A3                       ; [A2]
+    -
+; A3     append: 0 (B's hole)
+A3
+    0 0 R BA1__A4                  ; [A3]
+    -
+; EI4    K/R -> (1, 1): the separator
+EI4
+    0 0 L EI5                      ; [EI4]
+    -
+; EI5    K/R -> (1, 1): a1
+EI5
+    0 0 L EI6                      ; [EI5]
+    1 0 L EI6                      ; [EI5]
+; EI6    K/R -> (1, 1): K's start
+EI6
+    0 1 L E1                       ; [EI6]
+    1 1 L E1                       ; [EI6]
+; E1     erase the rest of K
+E1
+    0 0 L E2                       ; [E1]
+    1 0 L E1                       ; [E1]
+; E2     erase: after a 0
+E2
+    0 0 L E3                       ; [E2]
+    1 0 L E1                       ; [E2]
+; E3     erase: after 0 0 (0: done)
+E3
+    0 0 R Z                        ; [E3]
+    1 0 L E1                       ; [E3]
+; Z      right to K's start
+Z
+    0 0 R Z                        ; [Z]
+    1 1 R KA                       ; [Z]

@@ -1,0 +1,383 @@
+; ============================================================================
+; A 71-state, 2-symbol Turing machine that HALTS IFF THE ERDOS-MOSER
+; CONJECTURE FAILS: iff 1^k + 2^k + ... + (m-1)^k = m^k for some k >= 2, m >= 1.
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/ErdosMoser/M71.lean, theorem
+; TM.ErdosMoser.M71.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 117-state design of build.py / erdosmoser.txt with
+;   states merged. States are merged only when their defined transitions
+;   agree, so each state below plays one or more ROLES of the design (its name
+;   joins them). Each transition line is tagged [role] with the role(s) that
+;   use it. A '-' line is never used.
+;
+; TAPE:  K 00 M 00 A 00 R 00 Q
+;   K: k + 2 cells, the exponent cursor (hole) on cells 1 .. k + 1; it rests
+;     on cell 1 (the anchor) between powers.
+;   M: m + 3 cells, a marker hole on cell p (1 <= p <= m); the cells right of
+;     it are the base block: base = m + 1 - p, cursor on cells p + 2 .. m + 2
+;     (no hole at the start of a round: the cursor is then on p + 2).
+;   A = 1 + the sum so far (cells), R the running power, Q scratch.
+;
+; SEARCH: the pairs (k, m) along the diagonals k + m = s, from (2, 2).
+; PER PAIR:
+;   powers  the marker starts on cell m (base 1) and moves one cell left
+;           after each power: bases 1, 2, ..., m. Each power: R := 1, then k
+;           rounds of R := R * base (copy R base - 1 times onto Q, merge),
+;           counted by the exponent cursor.
+;   next    marker on cell p >= 2: it moves left, R is added into A, R := 1.
+;   compare marker on cell 1 (R = m^k): zig-zag A against R: equal -> HALT;
+;           else clear, write A = 0 and R = 1, the marker on cell m', and
+;           the next pair: (k + 1, m - 1) (the separator between K and M
+;           moves right) or (2, k) after (k, 1).
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0  seed: write K and M
+; a4     copy: R cursor advanced
+start_a4
+    0 1 R d1                       ; [seed0]
+    1 0 R c1                       ; [a4]
+
+; ---------- POWERS ------------------------------------------------------
+
+; bAt    base step: on the base cursor (or its first cell)
+bAt
+    0 1 R bA2                      ; [bAt]
+    1 1 R bA2                      ; [bAt]
+; bA2    base step: next cell (0: round done), cursor advanced
+bA2
+    0 0 L bD1                      ; [bA2]
+    1 0 R MC1                      ; [bA2]
+; MC1    parser: to the R cursor, copy
+MC1
+    0 0 R MC2                      ; [MC1]
+    1 1 R MC1                      ; [MC1]
+; MC2    parser: to the R cursor, copy
+MC2
+    0 0 R MC1                      ; [MC2]
+    1 1 R c1                       ; [MC2]
+; seed5  seed: write K and M
+; bD1    round done: left to the marker
+bD1
+    0 0 R bD2                      ; [seed5, bD1]
+    1 1 L bD1                      ; [bD1]
+; seed6  seed: write K and M
+; bD2    round done: base cell 0
+bD2
+    0 1 R m4                       ; [seed6]
+    1 1 R MM1                      ; [bD2]
+; MM1    parser: to the R cursor, merge
+MM1
+    0 0 R MM2                      ; [MM1]
+    1 1 R MM1                      ; [MM1]
+; MM2    parser: to the R cursor, merge
+MM2
+    0 0 R MM1                      ; [MM2]
+    1 1 R mR                       ; [MM2]
+; c1     copy: right across R
+c1
+    0 0 R c2__Q4__cr10             ; [c1]
+    1 1 R c1                       ; [c1]
+; c2     copy: the separator
+; Q4     add: the gap
+; cr10   restore: write 00 A 00 R
+c2__Q4__cr10
+    0 0 R c3__cr11                 ; [c2, cr10]
+    1 0 L LF1                      ; [Q4]
+; c3     copy: right across Q, append 1
+; cr11   restore: write 00 A 00 R
+c3__cr11
+    0 1 L c4__D1__D4__D7           ; [c3, cr11]
+    1 1 R c3__cr11                 ; [c3]
+; c4     copy: left across Q
+; D1     restore: back to M
+; D4     restore: back to M
+; D7     restore: back to M
+c4__D1__D4__D7
+    0 0 L c5__D2__D5__P1           ; [c4, D1, D4, D7]
+    1 1 L c4__D1__D4__D7           ; [c4]
+; c5     copy: the separator
+; D2     restore: back to M
+; D5     restore: back to M
+; P1     pattern: M's last cell
+c5__D2__D5__P1
+    0 0 L c6                       ; [c5]
+    1 1 L D3__D6__P2               ; [D2, D5, P1]
+; seed8  seed: write K and M
+; c6     copy: find the R cursor
+c6
+    0 1 R a2                       ; [seed8, c6]
+    1 1 L c6                       ; [c6]
+; seed9  seed: write K and M
+; a2     copy: R cursor next cell
+a2
+    0 1 R eD3__cr4                 ; [seed9]
+    1 1 R a3                       ; [a2]
+; a3     copy: 2 cells on (0: R copied)
+a3
+    0 0 L d1                       ; [a3]
+    1 1 L start_a4                 ; [a3]
+; seed1  seed: write K and M
+; d1     copy done: left across R
+d1
+    0 0 R d2__G3                   ; [seed1, d1]
+    1 1 L d1                       ; [d1]
+; seed2  seed: write K and M
+; d2     copy done: R cell 0
+; G3     (2, k): old anchor filled
+d2__G3
+    0 1 R C1__G4                   ; [seed2, G3]
+    1 1 R d3                       ; [d2]
+; seed4  seed: write K and M
+; d3     copy done: R cursor on cell 1
+d3
+    0 0 R bD1                      ; [seed4]
+    1 0 L NB1                      ; [d3]
+; NB1    parser: back to the base cursor
+NB1
+    0 0 L NB2                      ; [NB1]
+    1 1 L NB1                      ; [NB1]
+; NB2    parser: back to the base cursor
+NB2
+    0 0 L NB1                      ; [NB2]
+    1 1 R bAt                      ; [NB2]
+; mR     merge: right across R
+mR
+    0 1 R m2__P3                   ; [mR]
+    1 1 R mR                       ; [mR]
+; m2     merge: fill the separator
+; P3     pattern: the marker on M cell L-3
+m2__P3
+    0 1 R m3                       ; [m2]
+    1 0 L CP2__P4                  ; [P3]
+; m3     merge: right across Q
+m3
+    0 0 L m4                       ; [m3]
+    1 1 R m3                       ; [m3]
+; seed7  seed: write K and M
+; m4     merge: erase
+m4
+    0 1 R c6                       ; [seed7]
+    1 0 L m5__eAt                  ; [m4]
+; m5     merge: erase
+; eAt    exponent step: on the cursor
+m5__eAt
+    0 1 R eA2                      ; [eAt]
+    1 0 L LE1                      ; [m5]
+; LE1    parser: left: past the R cursor
+LE1
+    0 0 L LE2                      ; [LE1]
+    1 1 L LE1                      ; [LE1]
+; LE2    parser: left: past the R cursor
+LE2
+    0 0 L LE1                      ; [LE2]
+    1 1 L LF1                      ; [LE2]
+; LF1    parser: left: past the marker
+LF1
+    0 0 L LF2                      ; [LF1]
+    1 1 L LF1                      ; [LF1]
+; LF2    parser: left: past the marker
+LF2
+    0 0 L LF1                      ; [LF2]
+    1 1 L LG1                      ; [LF2]
+; LG1    parser: left: to the exponent cursor
+LG1
+    0 0 L LG2                      ; [LG1]
+    1 1 L LG1                      ; [LG1]
+; LG2    parser: left: to the exponent cursor
+LG2
+    0 0 L LG1                      ; [LG2]
+    1 1 R m5__eAt                  ; [LG2]
+; eA2    exponent step: next cell (0: the power is done)
+eA2
+    0 0 L eD1                      ; [eA2]
+    1 0 R MB1                      ; [eA2]
+; MB1    parser: to the marker, next round
+MB1
+    0 0 R MB2                      ; [MB1]
+    1 1 R MB1                      ; [MB1]
+; MB2    parser: to the marker, next round
+MB2
+    0 0 R MB1                      ; [MB2]
+    1 1 R bAt                      ; [MB2]
+; eD1    power done: left across K
+eD1
+    0 0 R eD2__cr3                 ; [eD1]
+    1 1 L eD1                      ; [eD1]
+; eD2    power done: K cell 0
+; cr3    clear: left to M
+eD2__cr3
+    0 0 L eD2__cr3                 ; [cr3]
+    1 1 R eD3__cr4                 ; [eD2, cr3]
+; eD3    power done: the anchor on K cell 1
+; cr4    restore: write 00 A 00 R
+eD3__cr4
+    0 0 R cr5__R3                  ; [cr4]
+    1 0 R MN1                      ; [eD3]
+; MN1    parser: to the marker, power done
+MN1
+    0 0 R MN2                      ; [MN1]
+    1 1 R MN1                      ; [MN1]
+; MN2    parser: to the marker, power done
+MN2
+    0 0 R MN1                      ; [MN2]
+    1 1 L N1__P6                   ; [MN2]
+
+; ---------- NEXT BASE, ADD R INTO A -------------------------------------
+
+; N1     next base: on the marker
+; P6     next pair: left across M
+N1__P6
+    0 0 L N2__cr6__S1__G1          ; [N1, P6]
+    1 1 L N1__P6                   ; [P6]
+; N2     next base: cell before
+; cr6    restore: write 00 A 00 R
+; S1     next pair (k+1, m-1): K gains a cell
+; G1     (2, k): K grows on the left
+N2__cr6__S1__G1
+    0 1 R cr7__S2__G2              ; [cr6, S1, G1]
+    1 1 L N3                       ; [N2]
+; N3     next base: 2 cells before (0: marker on cell 1, compare)
+N3
+    0 0 R C1__G4                   ; [N3]
+    1 1 R N4__N5                   ; [N3]
+; N4     next base: the marker moves left
+; N5     next base: old marker filled
+N4__N5
+    0 1 R MQ1                      ; [N5]
+    1 0 R N4__N5                   ; [N4]
+; MQ1    parser: to the R cursor, add R into A
+MQ1
+    0 0 R MQ2                      ; [MQ1]
+    1 1 R MQ1                      ; [MQ1]
+; MQ2    parser: to the R cursor, add R into A
+MQ2
+    0 0 R MQ1                      ; [MQ2]
+    1 1 L q0__q2__Q3               ; [MQ2]
+; q0     add R into A: fill the R cursor
+; q2     add: fill the separator
+; Q3     add: the gap
+q0__q2__Q3
+    0 1 L q1__q3__Q2               ; [q0, q2]
+    1 0 L c2__Q4__cr10             ; [Q3]
+; q1     add: R cell 0
+; q3     add: fill the separator
+; Q2     add: R cell 0
+q1__q3__Q2
+    0 1 R q4                       ; [q3]
+    1 1 L q0__q2__Q3               ; [q1, Q2]
+; q4     add: right across R, append 1
+q4
+    0 1 L Q1__cr9                  ; [q4]
+    1 1 R q4                       ; [q4]
+; Q1     add: R = 1 0 1, its hole
+; cr9    restore: write 00 A 00 R
+Q1__cr9
+    0 1 R c2__Q4__cr10             ; [cr9]
+    1 0 L q1__q3__Q2               ; [Q1]
+
+; ---------- COMPARE, CLEAR ----------------------------------------------
+
+; seed3  seed: write K and M
+; C1     compare: M cell 0
+; G4     (2, k): K cell 2
+C1__G4
+    0 1 R d3                       ; [seed3]
+    1 1 R C2__G5                   ; [C1, G4]
+; C2     compare: fill the marker
+; G5     (2, k): new separator
+C2__G5
+    0 1 R CP1                      ; [C2]
+    1 0 R cr8__S3__G6              ; [G5]
+; CP1    parser: to the R cursor, compare
+CP1
+    0 0 R CP2__P4                  ; [CP1]
+    1 1 R CP1                      ; [CP1]
+; CP2    parser: to the R cursor, compare
+; P4     pattern: M cell L-4
+CP2__P4
+    0 0 R CP1                      ; [CP2]
+    1 1 L cp5__P5                  ; [CP2, P4]
+; cp5    compare: fill the R cursor
+; P5     pattern: M cell L-5 (0: m = 1)
+cp5__P5
+    0 1 L cp6__R1                  ; [cp5, P5]
+    1 1 L N1__P6                   ; [P5]
+; cp6    compare: erase R cell 0
+; R1     (k, 1) -> (2, k): fill the separator
+cp6__R1
+    0 1 L R2                       ; [R1]
+    1 0 L zH1                      ; [cp6]
+; zH1    zig-zag: left to A's last cell, erase it
+zH1
+    0 0 L zH1                      ; [zH1]
+    1 0 L zA1                      ; [zH1]
+; zA1    zig-zag: A's cell before (0: A is empty)
+zA1
+    0 0 R zK1                      ; [zA1]
+    1 1 R zG1                      ; [zA1]
+; zG1    zig-zag: right to R's first cell, erase it
+zG1
+    0 0 R zG1                      ; [zG1]
+    1 0 R zZ1                      ; [zG1]
+; zZ1    zig-zag: R's next cell (0: R is empty)
+zZ1
+    0 0 L X1                       ; [zZ1]
+    1 1 L zH1                      ; [zZ1]
+; zK1    zig-zag: A empty: right to R, erase
+zK1
+    0 0 R zK1                      ; [zK1]
+    1 0 R zK2                      ; [zK1]
+; zK2    zig-zag: R's next cell (0: equal, HALT)
+zK2
+    0 0 R halt                     ; [zK2]
+    1 0 R cr1                      ; [zK2]
+; cr1    clear: erase R
+cr1
+    0 0 L eD2__cr3                 ; [cr1]
+    1 0 R cr1                      ; [cr1]
+; X1     clear: left to A
+X1
+    0 0 L X1                       ; [X1]
+    1 0 L X2                       ; [X1]
+; X2     clear: erase A
+X2
+    0 0 L eD2__cr3                 ; [X2]
+    1 0 L X2                       ; [X2]
+; cr5    restore: write 00 A 00 R
+; R3     (2, k): K cell 0 / the blank
+cr5__R3
+    0 0 R N2__cr6__S1__G1          ; [cr5, R3]
+    1 1 L R2                       ; [R3]
+; cr7    restore: write 00 A 00 R
+; S2     next pair: the separator
+; G2     (2, k): the anchor
+cr7__S2__G2
+    0 0 R cr8__S3__G6              ; [cr7, S2]
+    1 0 R d2__G3                   ; [G2]
+; cr8    restore: write 00 A 00 R
+; S3     next pair: M loses cell 0
+; G6     (2, k): new separator
+cr8__S3__G6
+    0 0 R Q1__cr9                  ; [cr8]
+    1 0 L LG2                      ; [S3, G6]
+
+; ---------- NEXT PAIR ---------------------------------------------------
+
+; D3     restore: back to M
+; D6     restore: back to M
+; P2     pattern: M cell L-2
+D3__D6__P2
+    0 0 L c4__D1__D4__D7           ; [D3, D6]
+    1 1 L m2__P3                   ; [P2]
+; R2     (2, k): left across K
+R2
+    0 0 L cr5__R3                  ; [R2]
+    1 1 L R2                       ; [R2]

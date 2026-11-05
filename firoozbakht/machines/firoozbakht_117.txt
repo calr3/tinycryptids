@@ -1,0 +1,356 @@
+; Minimised from firoozbakht.txt by minimize.py
+; 117 states, 2 symbols
+
+blank_symbol: 0
+
+seed0
+    0 1 R seed1
+    1 1 L k3
+seed1
+    0 0 R seed2
+    1 1 L seed1
+seed2
+    0 1 R seed3
+    1 1 R seed6
+seed3
+    0 1 R seed4
+    1 0 L PK1
+seed4
+    0 1 R seed5
+    1 1 R ca3
+seed5
+    0 0 R seed6
+    1 1 R seed5
+seed6
+    0 0 R seed7
+    1 0 R PC1
+seed7
+    0 1 R seed8
+    1 1 R dk4
+seed8
+    0 1 R seed9
+    1 1 R cy3
+seed9
+    0 1 R seed10
+    1 1 L seed9
+seed10
+    0 1 R seed11
+    1 1 R Ca3
+seed11
+    0 0 R seed12
+    1 1 R seed11
+seed12
+    0 0 R seed13
+    1 0 L PN1
+seed13
+    0 1 R seed14
+    1 1 R cn6
+seed14
+    0 0 R seed15
+    1 0 L m5
+seed15
+    0 1 R seed16
+    1 0 R cw1
+seed16
+    0 1 R ms
+    1 1 R ea3
+ca3
+    0 0 L seed1
+    1 1 L seed6
+PC1
+    0 0 R PC2
+    1 1 R PC1
+PC2
+    0 0 R PC1
+    1 1 L seed7
+cy3
+    0 0 L cy5
+    1 1 L seed12
+cy5
+    0 0 R cy6
+    1 1 L cy5
+cy6
+    0 0 L PN1
+    1 1 R seed3
+PN1
+    0 0 L cy6
+    1 1 L PN1
+PK1
+    0 0 L PK2
+    1 1 L PK1
+PK2
+    0 0 L PK1
+    1 1 R k1
+k1
+    0 1 L seed0
+    1 0 R MB1
+k3
+    0 0 R PM1
+    1 1 R kn3
+kn3
+    0 0 R kn4
+    1 1 R kn3
+kn4
+    0 0 R kn4
+    1 1 R kn6
+kn6
+    0 0 L rt1
+    1 1 R seed4
+PM1
+    0 0 R PM2
+    1 1 R PM1
+PM2
+    0 0 R PM1
+    1 1 R ms
+ms
+    0 1 L PX1
+    1 1 R ms
+PX1
+    0 0 L PX2
+    1 1 L PX1
+PX2
+    0 0 L PX1
+    1 1 L PY1
+PY1
+    0 0 L PY2
+    1 1 L PY1
+PY2
+    0 0 L PY1
+    1 1 R v1
+v1
+    0 0 R kn3
+    1 0 R PD1
+rt1
+    0 0 L rt2
+    1 1 L rt1
+rt2
+    0 0 L rt3
+    1 0 R Cc1
+rt3
+    0 0 R rt4
+    1 1 L rt3
+rt4
+    0 0 L HH1
+    1 1 R seed15
+cw1
+    0 0 R cw2
+    1 1 R cw1
+cw2
+    0 0 R cw3
+    1 1 R cw1
+cw3
+    0 1 R s2
+    1 1 R cw1
+s2
+    0 1 L sY
+    1 0 R MC1
+sY
+    0 0 L Cc1
+    1 1 L sY
+Cc1
+    0 0 R Cc2
+    1 1 R Cc1
+Cc2
+    0 0 R Cc3
+    1 0 L e2
+Cc3
+    0 1 L Cc4
+    1 1 R Cc3
+Cc4
+    0 0 L Cc5
+    1 1 L Cc4
+Cc5
+    0 0 L seed9
+    1 1 R a3
+Ca3
+    0 0 L Cd1
+    1 1 L rt2
+Cd1
+    0 0 R Cd2
+    1 1 L Cd1
+Cd2
+    0 1 L HE1
+    1 1 R seed11
+cn6
+    0 1 R m3
+    1 0 R pw1
+pw1
+    0 0 R pw2
+    1 1 R pw1
+pw2
+    0 0 R pw3
+    1 1 R pw1
+pw3
+    0 1 R Cd1
+    1 1 R pw1
+HE1
+    0 0 L HE2
+    1 1 L HE1
+HE2
+    0 0 L HE1
+    1 1 L HF1
+HF1
+    0 0 L HF2
+    1 1 L HF1
+HF2
+    0 0 L HF1
+    1 1 L HG1
+HG1
+    0 0 L HG2
+    1 1 L HG1
+HG2
+    0 0 L HG1
+    1 1 L HH1
+HH1
+    0 0 L rt4
+    1 1 L HH1
+ea3
+    0 0 L ea5
+    1 1 L k1
+ea5
+    0 0 R PY2
+    1 1 L ea5
+MB1
+    0 0 R MB2
+    1 1 R MB1
+MB2
+    0 0 R MB1
+    1 1 L ba1
+ba1
+    0 1 R ba2
+    1 0 R MM1
+ba2
+    0 1 R mR
+    1 1 R ba3
+ba3
+    0 0 L ba5
+    1 1 L s2
+ba5
+    0 0 R ba6
+    1 1 L ba5
+ba6
+    0 0 L NC1
+    1 1 R ba1
+MC1
+    0 0 R MC2
+    1 1 R MC1
+MC2
+    0 0 R MC1
+    1 1 R MD1
+MD1
+    0 0 R MD2
+    1 1 R MD1
+MD2
+    0 0 R MD1
+    1 1 R c1
+MM1
+    0 0 R MM2
+    1 1 R MM1
+MM2
+    0 0 R MM1
+    1 1 R MN1
+MN1
+    0 0 R MN2
+    1 1 R MN1
+MN2
+    0 0 R MN1
+    1 1 R mR
+c1
+    0 0 R c2
+    1 1 R c1
+c2
+    0 0 R c3
+    1 0 R c1
+c3
+    0 1 L c4
+    1 1 R c3
+c4
+    0 0 L c5
+    1 1 L c4
+c5
+    0 0 L c6
+    1 0 L z8
+c6
+    0 1 R Cc5
+    1 1 L c6
+a3
+    0 0 L d1
+    1 1 L c2
+d1
+    0 0 R d2
+    1 1 L d1
+d2
+    0 0 L QA1
+    1 1 R d3
+d3
+    0 1 L QB1
+    1 0 L NB1
+NB1
+    0 0 L NB2
+    1 1 L NB1
+NB2
+    0 0 L NB1
+    1 1 L NC1
+NC1
+    0 0 L ba6
+    1 1 L NC1
+mR
+    0 1 R cn6
+    1 1 R mR
+m3
+    0 0 L seed14
+    1 1 R m3
+m5
+    0 0 L ms
+    1 0 L HE1
+PD1
+    0 0 R PD2
+    1 1 R PD1
+PD2
+    0 0 R PD1
+    1 1 R seed5
+dk4
+    0 0 R z0
+    1 1 L QA1
+QA1
+    0 0 L d2
+    1 1 L QA1
+QB1
+    0 0 L QB2
+    1 1 L QB1
+QB2
+    0 0 L QB1
+    1 1 L ba2
+z0
+    0 0 L z11
+    1 1 R z0
+z11
+    0 0 L z11
+    1 0 L z2
+z2
+    0 0 R halt
+    1 1 R z3
+z3
+    0 0 R z3
+    1 1 R z4
+z4
+    0 0 R z5
+    1 1 R z4
+z5
+    0 0 L c4
+    1 1 R z4
+z8
+    0 0 L Cc2
+    1 1 L z9
+z9
+    0 0 L z10
+    1 1 L z9
+z10
+    0 0 L z11
+    1 1 L z9
+e2
+    0 0 L e2
+    1 0 L e3
+e3
+    0 0 L seed14
+    1 0 L e3

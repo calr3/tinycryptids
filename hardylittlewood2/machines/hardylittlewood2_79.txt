@@ -1,0 +1,242 @@
+; Minimised from hardylittlewood2.txt by minimize.py
+; 79 states, 2 symbols
+
+blank_symbol: 0
+
+seed0
+    0 1 R seed1
+    1 1 R seed13
+seed1
+    0 1 R seed2
+    1 1 R ma3
+seed2
+    0 1 R seed3
+    1 1 R seed2
+seed3
+    0 0 R seed4
+    1 1 R k3
+seed4
+    0 0 R seed5
+    1 0 R seed15
+seed5
+    0 1 R seed6
+    1 1 R seed6
+seed6
+    0 0 R seed7
+    1 0 R seed7
+seed7
+    0 1 R seed8
+    1 0 R seed24
+seed8
+    0 0 R seed9
+    1 1 L seed8
+seed9
+    0 0 R seed10
+    1 0 R Zs
+seed10
+    0 1 R seed11
+    1 1 L Bb
+seed11
+    0 1 R seed12
+    1 0 L H1s
+seed12
+    0 1 R seed13
+    1 1 R seed21
+seed13
+    0 0 R seed14
+    1 0 R c1p
+seed14
+    0 0 R seed15
+    1 1 R seed3
+seed15
+    0 1 R seed16
+    1 1 R sh5
+seed16
+    0 0 R seed17
+    1 1 L seed16
+seed17
+    0 1 R seed18
+    1 1 R seed18
+seed18
+    0 1 R seed19
+    1 0 R PR1
+seed19
+    0 1 R seed20
+    1 0 L PB1
+seed20
+    0 1 R seed21
+    1 1 R ra3
+seed21
+    0 1 R seed22
+    1 1 R seed0
+seed22
+    0 0 R seed23
+    1 1 L seed22
+seed23
+    0 0 R seed24
+    1 1 R rs3
+seed24
+    0 1 R seed25
+    1 1 R c2
+seed25
+    0 1 R sh6
+    1 0 R seed24
+ma3
+    0 0 L seed16
+    1 1 L seed18
+PR1
+    0 0 R PR2
+    1 1 R PR1
+PR2
+    0 0 R PR1
+    1 1 L seed19
+ra3
+    0 0 L PK1
+    1 1 L ra4
+ra4
+    0 0 L t2
+    1 0 L PM1
+PM1
+    0 0 L PM2
+    1 1 L PM1
+PM2
+    0 0 L PM1
+    1 1 R seed0
+PK1
+    0 0 L PK2
+    1 1 L PK1
+PK2
+    0 0 L PK1
+    1 1 L seed14
+k3
+    0 1 L seed22
+    1 0 L H1a
+rs3
+    0 1 R a2
+    1 0 R seed2
+sh5
+    0 0 R c1
+    1 1 R sh6
+sh6
+    0 0 L PS1
+    1 1 L ra4
+c1
+    0 1 R c2
+    1 1 R c1
+c2
+    0 1 R c3
+    1 1 R a2
+c3
+    0 1 R rs3
+    1 1 R c3
+a2
+    0 1 L RL
+    1 1 R W8
+c1p
+    0 1 R c2p
+    1 1 R c1p
+c2p
+    0 1 R c3p
+    1 1 L RL2
+c3p
+    0 1 R e1
+    1 1 R c3p
+e1
+    0 1 R c1
+    1 0 R W10
+RL
+    0 0 L c2p
+    1 1 L RL
+RL2
+    0 0 L seed5
+    1 1 L seed5
+W8
+    0 0 L seed8
+    1 0 R e1
+W10
+    0 1 L seed10
+    1 1 R ra4
+PS1
+    0 0 L sh6
+    1 1 L PS1
+t2
+    0 0 L t3
+    1 1 L H1a
+t3
+    0 0 L H5a
+    1 1 L seed19
+PB1
+    0 0 L PB2
+    1 1 L PB1
+PB2
+    0 0 L PB1
+    1 1 R W10
+Bb
+    0 0 L Bn1
+    1 1 R seed11
+Bn1
+    0 0 L Bn2
+    1 1 L seed11
+Bn2
+    0 1 L Ta
+    1 1 L k3
+Ta
+    0 1 R EP1
+    1 1 L Tb
+Tb
+    0 0 L Bb
+    1 1 R k3
+H1a
+    0 0 L H2a
+    1 1 L H1a
+H2a
+    0 0 L t2
+    1 1 L H1a
+H5a
+    0 1 L H6a
+    1 1 L H6a
+H6a
+    0 1 R AR1
+    1 1 L H6a
+AR1
+    0 0 R AR2
+    1 1 R AR1
+AR2
+    0 0 R AR1
+    1 1 R AQ1
+AQ1
+    0 0 R AQ2
+    1 1 R AQ1
+AQ2
+    0 0 R AQ1
+    1 1 L Bn2
+H1s
+    0 0 L H2s
+    1 1 L H1s
+H2s
+    0 0 L H3s
+    1 1 L H1s
+H3s
+    0 0 L W8
+    1 1 L H1s
+Zs
+    0 0 R halt
+    1 1 R SR1
+SR1
+    0 0 R SR2
+    1 1 R SR1
+SR2
+    0 0 R SR1
+    1 1 L W10
+EP1
+    0 0 R EP2
+    1 1 R EP1
+EP2
+    0 0 R EP1
+    1 1 R EQ1
+EQ1
+    0 0 R EQ2
+    1 1 R EQ1
+EQ2
+    0 0 R EQ1
+    1 1 L seed11

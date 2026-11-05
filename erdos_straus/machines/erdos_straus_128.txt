@@ -1,0 +1,389 @@
+; Minimised from ../erdos_straus/erdos_straus.txt by minimize_clique.py
+; 128 states, 2 symbols
+
+blank_symbol: 0
+
+seed0
+    0 1 R seed1
+    1 1 L w8
+seed1
+    0 1 R seed2
+    1 0 L seed7
+seed2
+    0 0 R seed3
+    1 1 R seed2
+seed3
+    0 0 R seed4
+    1 1 L YK1
+seed4
+    0 1 R seed5
+    1 1 R ul4
+seed5
+    0 1 R seed6
+    1 1 R gd1
+seed6
+    0 1 R seed7
+    1 0 R ce1
+seed7
+    0 1 R seed8
+    1 0 L XA1
+seed8
+    0 0 R seed9
+    1 1 R seed8
+seed9
+    0 0 R seed10
+    1 1 L k1
+seed10
+    0 1 R seed11
+    1 1 R f4
+seed11
+    0 1 R er5
+    1 0 R NE1
+g1
+    0 0 L g2
+    1 1 L g1
+g2
+    0 0 L g3
+    1 1 L w4
+g3
+    0 0 L g4
+    1 1 L g3
+g4
+    0 0 L g5
+    -
+g5
+    0 0 R g6
+    1 1 L g5
+g6
+    0 1 R sa9
+    1 1 R g7
+g7
+    0 1 R mc2
+    1 0 R cb1
+gd1
+    0 0 R gd2
+    1 1 R gd1
+gd2
+    0 0 R g6
+    1 1 R ra2
+cb1
+    0 0 R cb2
+    1 1 R cb1
+cb2
+    0 0 R cb3
+    -
+cb3
+    0 1 R cb4
+    1 1 R cb3
+cb4
+    0 0 R cb5
+    1 0 R seed8
+cb5
+    0 0 R seed2
+    1 0 R cb6
+cb6
+    0 1 R cb7
+    1 1 R cb6
+cb7
+    0 1 L CL1
+    -
+CL1
+    0 0 L CL2
+    1 1 L CL1
+CL2
+    0 0 L CL1
+    1 1 R ca1
+ca1
+    0 1 R ca2
+    -
+ca2
+    0 0 L q1
+    1 0 R cb1
+q1
+    0 0 L q2
+    1 1 L q1
+q2
+    0 0 L q3
+    -
+q3
+    0 0 L q4
+    1 1 L q3
+q4
+    0 1 R S3
+    1 1 R w0
+w0
+    0 1 L w1
+    1 1 L w6
+w1
+    0 0 L k1
+    1 1 L w2
+w2
+    0 0 L S4
+    1 1 L g2
+w4
+    0 0 L S3
+    1 1 L w0
+w6
+    0 0 L S2
+    1 1 L seed0
+w8
+    0 0 L S1
+    1 0 R gd1
+S4
+    0 1 R S3
+    1 1 R S3
+S3
+    0 1 R S2
+    1 1 R S2
+S2
+    0 1 R S1
+    1 1 R S1
+S1
+    0 1 R Z1
+    1 1 R Z1
+Z1
+    0 0 R Z2
+    1 0 R Z2
+Z2
+    0 0 R halt
+    1 0 R H1
+H1
+    0 0 R halt
+    1 1 R H2
+H2
+    0 0 R halt
+    1 1 R H3
+H3
+    0 0 R halt
+    1 1 R su1
+su1
+    0 0 R su2
+    1 1 R su1
+su2
+    0 0 R su3
+    1 1 R su1
+su3
+    0 0 L sa1
+    1 1 R su1
+sa1
+    0 0 L sa2
+    1 1 L sa12
+sa2
+    0 0 L sa3
+    1 1 L sa2
+sa3
+    0 0 L sa2
+    1 1 L sa4
+sa4
+    0 0 L l2
+    1 0 R seed5
+sa9
+    0 1 R sa10
+    1 0 L PM1
+sa10
+    0 0 R sa11
+    1 1 L sa10
+sa11
+    0 0 R sa12
+    1 1 R seed6
+sa12
+    0 1 L YK1
+    1 1 L sa12
+YK1
+    0 0 L YK2
+    1 1 L YK1
+YK2
+    0 0 L YK1
+    1 1 L ym1
+ym1
+    0 0 L ym2
+    1 1 L ym1
+ym2
+    0 0 L sa10
+    -
+ce1
+    0 0 R ce2
+    1 1 R ce1
+ce2
+    0 0 R ce3
+    1 1 R ce1
+ce3
+    0 0 L ce4
+    1 1 R ce1
+ce4
+    0 0 L ce5
+    1 1 R ce4
+ce5
+    0 1 L MK1
+    1 1 L seed11
+MK1
+    0 0 L MK2
+    1 1 L MK1
+MK2
+    0 0 L MK1
+    1 1 L MM1
+MM1
+    0 0 L MM2
+    1 1 L MM1
+MM2
+    0 0 L MM1
+    1 1 R g7
+mc2
+    0 0 L u1
+    1 0 R ce1
+u1
+    0 0 L u2
+    1 1 L u1
+u2
+    0 0 L u3
+    1 1 L u1
+u3
+    0 0 R ul4
+    1 1 L u1
+ul4
+    0 0 R ul5
+    1 1 R seed2
+ul5
+    0 0 R ul6
+    1 1 R ul5
+ul6
+    0 0 R ms3
+    1 1 R ul7
+ul7
+    0 1 R x4
+    1 0 R seed8
+f4
+    0 0 R l1
+    1 1 R seed8
+k1
+    0 1 L k2
+    1 1 L k1
+k2
+    0 1 L nr4
+    1 0 L AC1
+l1
+    0 0 L l2
+    1 1 R l1
+l2
+    0 0 L n4
+    1 1 L l3
+l3
+    0 1 R x1
+    1 1 R l4
+l4
+    0 1 R ul7
+    1 0 R l5
+l5
+    0 0 R l6
+    1 1 L l5
+l6
+    0 1 L AK1
+    1 1 R mw3
+AK1
+    0 0 L AK2
+    1 1 L AK1
+AK2
+    0 0 L AK1
+    1 1 L AC1
+AC1
+    0 0 L AC2
+    1 1 L AC1
+AC2
+    0 0 L AC1
+    1 1 R cb3
+ms3
+    0 1 R l3
+    1 1 R ms4
+ms4
+    0 1 R ma2
+    1 0 R ms5
+ms5
+    0 0 R gd1
+    1 1 R ms5
+x1
+    0 1 R ra2
+    1 1 R l4
+x4
+    0 0 R x5
+    1 1 R x4
+x5
+    0 0 R x6
+    1 0 R ce4
+x6
+    0 0 L x7
+    1 0 R x6
+x7
+    0 0 L x7
+    1 0 L x8
+x8
+    0 1 R xa2
+    1 0 L seed1
+XA1
+    0 0 L XA2
+    1 1 L XA1
+XA2
+    0 0 L XA1
+    1 1 R x8
+xa2
+    0 0 R ms5
+    1 1 R xa2
+ma2
+    0 0 L l5
+    1 0 R PR1
+mw3
+    0 1 L nc2
+    1 0 R PR1
+PR1
+    0 0 R PR2
+    1 1 R PR1
+PR2
+    0 0 R PR1
+    1 1 L x1
+ra2
+    0 1 L g1
+    1 1 R ra3
+ra3
+    0 0 L e1
+    1 1 L sa9
+PM1
+    0 0 L PM2
+    1 1 L PM1
+PM2
+    0 0 L PM1
+    1 1 R ms4
+e1
+    0 0 L su3
+    1 1 L e1
+n4
+    0 0 R er1
+    1 1 L n4
+er1
+    0 0 R er2
+    1 0 R er1
+er2
+    0 0 R er3
+    1 0 R er1
+er3
+    0 0 R er4
+    1 0 R er1
+er4
+    0 0 L er5
+    1 0 R er1
+er5
+    0 0 L er5
+    1 1 R mw3
+nc2
+    0 0 L w1
+    1 1 L nc2
+nr4
+    0 0 L ul7
+    1 1 L nr4
+NE1
+    0 0 R NE2
+    1 1 R NE1
+NE2
+    0 0 R NE3
+    1 1 R NE1
+NE3
+    0 1 R ul5
+    1 1 R NE1

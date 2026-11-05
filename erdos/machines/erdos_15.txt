@@ -1,0 +1,51 @@
+; Erdős (powers of 2 in base 3): 15 states, 2 symbols.
+; Halts iff some 2^n with n > 8 has no digit 2 in base 3.
+; bbchallenge standard text: 1RB1RO_0RC0RC_0RD1RJ_0LE1RC_0LF1LK_0LG1LE_0LH1LF_1RI0LL_0RB1LK_1RC0RA_0LI1LN_1RM---_0RI0RO_0LK1LK_1LM1RA
+
+blank_symbol: 0
+
+A
+    0 1 R B
+    1 1 R O
+B
+    0 0 R C
+    1 0 R C
+C
+    0 0 R D
+    1 1 R J
+D
+    0 0 L E
+    1 1 R C
+E
+    0 0 L F
+    1 1 L K
+F
+    0 0 L G
+    1 1 L E
+G
+    0 0 L H
+    1 1 L F
+H
+    0 1 R I
+    1 0 L L
+I
+    0 0 R B
+    1 1 L K
+J
+    0 1 R C
+    1 0 R A
+K
+    0 0 L I
+    1 1 L N
+L
+    0 1 R M
+    -
+M
+    0 0 R I
+    1 0 R O
+N
+    0 0 L K
+    1 1 L K
+O
+    0 1 L M
+    1 1 R A

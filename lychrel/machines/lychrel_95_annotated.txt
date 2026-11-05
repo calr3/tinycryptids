@@ -1,0 +1,472 @@
+; ============================================================================
+; A 95-state, 2-symbol Turing machine that HALTS IFF REVERSE-AND-ADD FROM 196
+; REACHES A PALINDROME: iff rev10(F^k(196)) = F^k(196) for some k, where
+; F(x) = x + rev10(x) (196 is the smallest candidate Lychrel number).
+; Start on a blank tape in the first state. A transition to `halt` halts.
+; Lean proof: lean/TinyCryptids/Lychrel/M95.lean, theorem TM.Lychrel.M95.halts_iff.
+; ============================================================================
+;
+; HOW TO READ THIS FILE
+;   The machine is the 134-state design of build.py / lychrel.txt with states
+;   merged. States are merged only when their defined transitions agree, so
+;   each state below plays one or more ROLES of the design (its name joins
+;   them). Each transition line is tagged [role] with the role(s) that use it.
+;   A '-' line is never used.
+;
+; TAPE (numbers in unary; separators are runs of >= 2 zeros, a hole is one 0):
+;      D 00 X G T 00 A 00 Q 00 P
+;   D  12 cells d0..d11 with a hole at d(p+1): a counter p mod 10.
+;   X  x + 3 cells.  T: t + 3 cells with a hole (the cursor of the division),
+;      or T is X itself in a round's first iteration.  A: a + 1 cells.
+;   Q, P: made at the right end by their first cell (Q with 3 cells).
+;
+; ONE ROUND (for the current x):  T := x, A := 0;
+;   while T > 0: A := 10 A + T mod 10, T := T div 10   (so A = rev10 x);
+;   if A = x: HALT;  x := x + A.
+;   division  p += 1 (a wrap of p appends a cell to Q) and T's hole moves one
+;             cell right, until it reaches T's last cell: Q = T div 10, p =
+;             T mod 10.  T is erased, unless it is X.
+;   multiply  append a cell to P, p -= 1; when p wraps to 9, erase A's first
+;             cell (if A has one cell: stop).  P = 10 A + d.  Then A's last
+;             cell is erased: Q and P are the new T and A.  T = 0: compare.
+;   compare   a hole walks X from cell x + 1 down to 1, moving one cell of A to
+;             X's end per position; A down to its last cell with the hole at
+;             cell 1: HALT.  Else the hole is filled (or the rest of A moved)
+;             and X's hole goes to cell 1: the next round, T = X.
+;   seed      D, X (x = 1) and the multiplication for T = 59, A = 1: the run
+;             computes A = 195 and the first round is for x = 196.
+; ============================================================================
+
+blank_symbol: 0
+
+
+; ---------- START -------------------------------------------------------
+
+; seed0  seed: write the first tape
+; fE     p += 1: the new hole, then to T's hole (n)
+start_fE
+    0 1 R fw3                      ; [seed0]
+    1 0 R nP                       ; [fE]
+
+; ---------- DIVISION BY 10 (p += 1, T's hole) ---------------------------
+
+; hFP    parser: left to D's hole, p += 1
+hFP
+    0 0 L hFZ1                     ; [hFP]
+    1 1 L hFP                      ; [hFP]
+; hFZ1   parser: left to D's hole, p += 1
+hFZ1
+    0 0 L hFZ2                     ; [hFZ1]
+    1 1 R fA                       ; [hFZ1]
+; hFZ2   parser: left to D's hole, p += 1
+hFZ2
+    0 0 L hFZ2                     ; [hFZ2]
+    1 1 L hFP                      ; [hFZ2]
+; seed15 seed: write the first tape
+; fA     p += 1: on D's hole, fill it
+fA
+    0 1 R fC                       ; [seed15, fA]
+    -
+; seed16 seed: write the first tape
+; fC     p += 1: next cell
+fC
+    0 1 R seed17                   ; [seed16]
+    1 1 R fD                       ; [fC]
+; fD     p += 1: 2 cells on (0: D's end, wrap)
+fD
+    0 0 L fw1                      ; [fD]
+    1 1 L start_fE                 ; [fD]
+; seed10 seed: write the first tape
+; fw1    p wraps: left across D
+fw1
+    0 0 R fw2                      ; [seed10, fw1]
+    1 1 L fw1                      ; [fw1]
+; seed11 seed: write the first tape
+; fw2    p wraps: d0
+fw2
+    0 1 R bw3                      ; [seed11]
+    1 1 R fw3                      ; [fw2]
+; seed1  seed: write the first tape
+; fw3    p wraps: the hole on d1, then past T's hole (w)
+fw3
+    0 1 R bE                       ; [seed1]
+    1 0 R wP                       ; [fw3]
+; nP     parser: right to T's hole, advance it
+nP
+    0 0 R nZ1                      ; [nP]
+    1 1 R nP                       ; [nP]
+; nZ1    parser: right to T's hole, advance it
+nZ1
+    0 0 R nZ2                      ; [nZ1]
+    1 1 L e5__a1                   ; [nZ1]
+; nZ2    parser: right to T's hole, advance it
+nZ2
+    0 0 R nZ2                      ; [nZ2]
+    1 1 R nP                       ; [nZ2]
+; wP     parser: right past T's hole, append to Q
+wP
+    0 0 R wZ1                      ; [wP]
+    1 1 R wP                       ; [wP]
+; wZ1    parser: right past T's hole, append to Q
+wZ1
+    0 0 R wZ2                      ; [wZ1]
+    1 1 R e1                       ; [wZ1]
+; wZ2    parser: right past T's hole, append to Q
+wZ2
+    0 0 R wZ2                      ; [wZ2]
+    1 1 R wP                       ; [wZ2]
+; e1     append to Q: right across T
+e1
+    0 0 R e2                       ; [e1]
+    1 1 R e1                       ; [e1]
+; e2     append to Q: the gap
+e2
+    0 0 R e2                       ; [e2]
+    1 1 R e3                       ; [e2]
+; e3     append to Q: right across A
+e3
+    0 0 R e4                       ; [e3]
+    1 1 R e3                       ; [e3]
+; e4     append to Q: the separator
+e4
+    0 0 R e5__a1                   ; [e4]
+    -
+; e5     append to Q: 0: no Q yet, make it
+; a1     advance T's hole: fill it
+e5__a1
+    0 1 R c1__a2                   ; [e5, a1]
+    1 1 R e6__c2                   ; [e5]
+; e6     append to Q: right across Q, append
+; c2     make Q: its cell 3, back to T's hole (bk)
+e6__c2
+    0 1 L bkP                      ; [e6, c2]
+    1 1 R e6__c2                   ; [e6]
+; c1     make Q: its cell 2
+; a2     advance T's hole: next cell
+c1__a2
+    0 1 R e6__c2                   ; [c1]
+    1 1 R a3                       ; [a2]
+; bkP    parser: left back to T's hole, advance it
+bkP
+    0 0 L bkZ1                     ; [bkP]
+    1 1 L bkP                      ; [bkP]
+; bkZ1   parser: left back to T's hole, advance it
+bkZ1
+    0 0 L bkZ2                     ; [bkZ1]
+    1 1 R e5__a1                   ; [bkZ1]
+; bkZ2   parser: left back to T's hole, advance it
+bkZ2
+    0 0 L bkZ2                     ; [bkZ2]
+    1 1 L bkP                      ; [bkZ2]
+; a3     advance T's hole: 2 cells on (0: T's end, the division is over)
+a3
+    0 0 L wd1                      ; [a3]
+    1 1 L a4__it6                  ; [a3]
+; seed4  seed: write the first tape
+; a4     advance T's hole: the new hole, back to D (hF)
+; it6    iteration end: the hole on T's cell 1, back to D (hF)
+a4__it6
+    0 1 R it5                      ; [seed4]
+    1 0 L hFP                      ; [a4, it6]
+; er     erase T: erase it, then make P (rP4)
+er
+    0 0 R rP4                      ; [er]
+    1 0 R er                       ; [er]
+
+; ---------- MULTIPLICATION (p -= 1, P := 10 A + d) ----------------------
+
+; wd1    division over: left across T
+wd1
+    0 0 L wd2__tz1                 ; [wd1]
+    1 1 L wd1                      ; [wd1]
+; wd2    division over: 0 left of T
+; tz1    t = 0: erase T
+wd2__tz1
+    0 0 L wd3                      ; [wd2]
+    1 0 L tz2                      ; [tz1]
+; wd3    division over: 1: two 0s and D, T is X (keep it); 0: a gap, erase T
+wd3
+    0 0 R wd5                      ; [wd3]
+    1 1 R rP2                      ; [wd3]
+; wd5    erase T: the gap
+wd5
+    0 0 R wd6                      ; [wd5]
+    -
+; wd6    erase T: the gap
+wd6
+    0 0 R er                       ; [wd6]
+    -
+; hBP    parser: left to D's hole, p -= 1
+hBP
+    0 0 L hBZ1                     ; [hBP]
+    1 1 L hBP                      ; [hBP]
+; hBZ1   parser: left to D's hole, p -= 1
+hBZ1
+    0 0 L hBZ2                     ; [hBZ1]
+    1 1 R bA__cA2                  ; [hBZ1]
+; hBZ2   parser: left to D's hole, p -= 1
+hBZ2
+    0 0 L hBZ2                     ; [hBZ2]
+    1 1 L hBP                      ; [hBZ2]
+; bA     p -= 1: on D's hole, fill it
+; cA2    consume A: erase its first cell, then append to P (rP5)
+bA__cA2
+    0 1 L bC                       ; [bA]
+    1 0 R rP5                      ; [cA2]
+; seed7  seed: write the first tape
+; bC     p -= 1: the cell before
+bC
+    0 1 R kv2                      ; [seed7]
+    1 1 L bD                       ; [bC]
+; bD     p -= 1: 2 cells back (0: D's start, wrap)
+bD
+    0 0 R bw1                      ; [bD]
+    1 1 R bE                       ; [bD]
+; seed2  seed: write the first tape
+; bE     p -= 1: the new hole, then append to P (rP1)
+bE
+    0 1 R it3                      ; [seed2]
+    1 0 R rP1                      ; [bE]
+; bw1    p wraps to 9: right across D
+bw1
+    0 0 L bw2                      ; [bw1]
+    1 1 R bw1                      ; [bw1]
+; seed27 seed: write the first tape
+; bw2    p wraps: d11
+bw2
+    0 1 R iE                       ; [seed27]
+    1 1 L bw3                      ; [bw2]
+; seed12 seed: write the first tape
+; bw3    p wraps: the hole on d10, then consume A (rA)
+bw3
+    0 0 R seed13                   ; [seed12]
+    1 0 R rA1                      ; [bw3]
+; rP1    append to P: right across D
+rP1
+    0 0 R rP2                      ; [rP1]
+    1 1 R rP1                      ; [rP1]
+; rP2    append to P: the separator
+rP2
+    0 0 R rP2                      ; [rP2]
+    1 1 R rP3                      ; [rP2]
+; rP3    append to P: right across X
+rP3
+    0 0 R rP4                      ; [rP3]
+    1 1 R rP3                      ; [rP3]
+; rP4    append to P: the gap
+rP4
+    0 0 R rP4                      ; [rP4]
+    1 1 R rP5                      ; [rP4]
+; rP5    append to P: right across A
+rP5
+    0 0 R rP6                      ; [rP5]
+    1 1 R rP5                      ; [rP5]
+; rP6    append to P: the separator
+rP6
+    0 0 R rP7                      ; [rP6]
+    -
+; seed32 seed: write the first tape
+; rP7    append to P: right across Q
+rP7
+    0 0 R rP8__ix3                 ; [seed32, rP7]
+    1 1 R rP7                      ; [rP7]
+; seed33 seed: write the first tape
+; rP8    append to P: the separator
+; ix3    next round: the hole on X's cell 1, then to D (hF)
+rP8__ix3
+    0 0 R rP9                      ; [seed33, rP8]
+    1 0 L hFP                      ; [ix3]
+; seed34 seed: write the first tape
+; rP9    append to P: right across P, append, back to D (hB)
+rP9
+    0 1 L hBP                      ; [seed34, rP9]
+    1 1 R rP9                      ; [rP9]
+; rA1    consume A: right across D
+rA1
+    0 0 R rA2                      ; [rA1]
+    1 1 R rA1                      ; [rA1]
+; rA2    consume A: the separator
+rA2
+    0 0 R rA2                      ; [rA2]
+    1 1 R rA3                      ; [rA2]
+; rA3    consume A: right across X
+rA3
+    0 0 R rA4                      ; [rA3]
+    1 1 R rA3                      ; [rA3]
+; rA4    consume A: the gap
+rA4
+    0 0 R rA4                      ; [rA4]
+    1 1 R cA1                      ; [rA4]
+; cA1    consume A: its second cell (0: A has one cell, the iteration ends)
+cA1
+    0 0 L iE                       ; [cA1]
+    1 1 L bA__cA2                  ; [cA1]
+; seed28 seed: write the first tape
+; iE     iteration end: erase A's last cell
+iE
+    0 1 R tz3                      ; [seed28]
+    1 0 R it1                      ; [iE]
+; it1    iteration end: right to Q
+it1
+    0 0 R it1                      ; [it1]
+    1 1 R it2                      ; [it1]
+; seed26 seed: write the first tape
+; it2    iteration end: Q cell 1
+it2
+    0 1 R bw2                      ; [seed26]
+    1 1 R it3                      ; [it2]
+; seed3  seed: write the first tape
+; it3    iteration end: Q cell 2
+it3
+    0 1 R a4__it6                  ; [seed3]
+    1 1 R it4                      ; [it3]
+; it4    iteration end: Q cell 3 (0: t = 0, compare)
+it4
+    0 0 L wd2__tz1                 ; [it4]
+    1 1 L it5                      ; [it4]
+; seed5  seed: write the first tape
+; it5    iteration end: back
+it5
+    0 1 R fl0                      ; [seed5]
+    1 1 L a4__it6                  ; [it5]
+; seed31 seed: write the first tape
+; tz2    t = 0: erase T
+tz2
+    0 1 R rP7                      ; [seed31]
+    1 0 L tz3                      ; [tz2]
+; seed29 seed: write the first tape
+; tz3    t = 0: erase T, then compare
+tz3
+    0 1 R ka4                      ; [seed29]
+    1 0 L cm0                      ; [tz3]
+
+; ---------- COMPARE, x := x + A -----------------------------------------
+
+; seed13 seed: write the first tape
+seed13
+    0 0 R seed14                   ; [seed13]
+    -
+; seed14 seed: write the first tape
+seed14
+    0 1 R fA                       ; [seed14]
+    -
+; seed17 seed: write the first tape
+seed17
+    0 1 R fl3                      ; [seed17]
+    -
+; seed21 seed: write the first tape
+seed21
+    0 1 R seed22                   ; [seed21]
+    -
+; seed22 seed: write the first tape
+seed22
+    0 0 R kv1                      ; [seed22]
+    -
+; seed25 seed: write the first tape
+seed25
+    0 1 R it2                      ; [seed25]
+    -
+; cm0    compare: left to X
+cm0
+    0 0 L cm0                      ; [cm0]
+    1 1 L cm1__fl4                 ; [cm0]
+; cm1    compare: X's hole on cell x + 1
+; fl4    fill X's hole
+cm1__fl4
+    0 1 L ix1__fl5                 ; [fl4]
+    1 0 R ka1                      ; [cm1]
+; ka1    compare: right across X
+ka1
+    0 0 R ka2                      ; [ka1]
+    1 1 R ka1                      ; [ka1]
+; ka2    compare: the gap
+ka2
+    0 0 R ka2                      ; [ka2]
+    1 1 R ka3                      ; [ka2]
+; ka3    compare: A's second cell (0: A has one cell left)
+ka3
+    0 0 L fl0                      ; [ka3]
+    1 1 L ka4                      ; [ka3]
+; seed30 seed: write the first tape
+; ka4    compare: erase A's first cell
+ka4
+    0 1 R tz2                      ; [seed30]
+    1 0 L kd1                      ; [ka4]
+; kd1    compare: left across the gap
+kd1
+    0 0 L kd1                      ; [kd1]
+    1 1 R kd2                      ; [kd1]
+; kd2    compare: append the cell to X
+kd2
+    0 1 L kh1                      ; [kd2]
+    -
+; kh1    compare: left across X
+kh1
+    0 0 L kh2                      ; [kh1]
+    1 1 L kh1                      ; [kh1]
+; kh2    compare: after a 0 (0: no hole, the rest of A is moved)
+kh2
+    0 0 R kr1                      ; [kh2]
+    1 1 L kv1                      ; [kh2]
+; kr1    compare: no hole, back to X
+kr1
+    0 0 R ka1                      ; [kr1]
+    -
+; seed23 seed: write the first tape
+; kv1    compare: hole one cell left (0: it was on cell 1, fill it)
+kv1
+    0 0 R kn1                      ; [seed23, kv1]
+    1 1 R kv2                      ; [kv1]
+; seed8  seed: write the first tape
+; kv2    compare: the new hole
+kv2
+    0 1 R fl7                      ; [seed8]
+    1 0 R kv3__kn2                 ; [kv2]
+; kv3    compare: fill the old hole
+; kn2    compare: fill the hole on cell 1
+kv3__kn2
+    0 1 R ka1                      ; [kv3, kn2]
+    -
+; seed24 seed: write the first tape
+; kn1    compare: X cell 0
+kn1
+    0 1 R seed25                   ; [seed24]
+    1 1 R kv3__kn2                 ; [kn1]
+; seed6  seed: write the first tape
+; fl0    A has one cell: left
+fl0
+    0 1 R bC                       ; [seed6]
+    1 1 L fl1                      ; [fl0]
+; fl1    A has one cell: the gap
+fl1
+    0 0 L fl1                      ; [fl1]
+    1 1 L fl2                      ; [fl1]
+; fl2    A has one cell: left across X
+fl2
+    0 0 L fl3                      ; [fl2]
+    1 1 L fl2                      ; [fl2]
+; seed18 seed: write the first tape
+; fl3    A has one cell: after a 0 (0: no hole)
+fl3
+    0 0 R ix1__fl5                 ; [seed18, fl3]
+    1 1 L fl6                      ; [fl3]
+; fl6    A has one cell: 0 here: the hole is on cell 1, A = x, HALT
+fl6
+    0 0 R halt                     ; [fl6]
+    1 1 R fl7                      ; [fl6]
+; seed9  seed: write the first tape
+; fl7    fill X's hole: the cell before it
+fl7
+    0 1 R fw1                      ; [seed9]
+    1 1 R cm1__fl4                 ; [fl7]
+; seed19 seed: write the first tape
+; ix1    next round: left across X
+; fl5    next round: the separator
+ix1__fl5
+    0 0 R ix2                      ; [seed19, ix1, fl5]
+    1 1 L ix1__fl5                 ; [ix1]
+; seed20 seed: write the first tape
+; ix2    next round: X cell 0
+ix2
+    0 1 R seed21                   ; [seed20]
+    1 1 R rP8__ix3                 ; [ix2]
